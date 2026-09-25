@@ -80,6 +80,7 @@ Playlist buildXtreamPlaylist({
           group: (group == null || group.isEmpty) ? null : group,
           logo: logo.isEmpty ? null : logo,
           tvgId: epgId.isEmpty ? null : epgId,
+          id: '$id',
         ));
   }
 
