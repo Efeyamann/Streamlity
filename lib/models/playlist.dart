@@ -63,3 +63,9 @@ class Playlist {
     for (final c in channels) c.group ?? ungrouped,
   }.toList();
 }
+
+/// Arama için karşılaştırma anahtarı. Türkçe İ/I/ı ve i aynı sayılır;
+/// sağlayıcılar "FİLMLER" de "FILMLER" de yazabiliyor.
+String searchKey(String s) => s.toLowerCase().replaceAll(_iVariants, 'i');
+
+final _iVariants = RegExp('i̇|ı');

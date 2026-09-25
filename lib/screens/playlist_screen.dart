@@ -206,7 +206,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   }
 
   List<Channel> _visibleChannels(Playlist playlist) {
-    final query = _query.toLowerCase();
+    final query = searchKey(_query);
     final favoritesOnly = _group == _favoritesGroup;
     return playlist.channels.where((c) {
       if (favoritesOnly) {
@@ -216,7 +216,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       }
       // Aramada başlık satırları anlamsız.
       return query.isEmpty ||
-          (!c.isSeparator && c.name.toLowerCase().contains(query));
+          (!c.isSeparator && searchKey(c.name).contains(query));
     }).toList();
   }
 
@@ -389,7 +389,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   }
 }
 
-class _GroupList extends StatelessWidget {
+class _GroupList extends StatefulWidget {
   const _GroupList({
     required this.groups,
     required this.selected,
@@ -407,32 +407,63 @@ class _GroupList extends StatelessWidget {
   final ValueChanged<String?> onSelected;
 
   @override
+  State<_GroupList> createState() => _GroupListState();
+}
+
+class _GroupListState extends State<_GroupList> {
+  String _query = '';
+
+  @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: groups.length + 2,
-      itemBuilder: (context, i) {
-        final group = switch (i) {
-          0 => null,
-          1 => favoritesKey,
-          _ => groups[i - 2],
-        };
-        return ListTile(
-          dense: true,
-          leading: i == 1 ? const Icon(Icons.star, size: 18) : null,
-          minLeadingWidth: 0,
-          title: Text(
-            switch (i) {
-              0 => 'Tümü ($total)',
-              1 => 'Favoriler ($favoritesCount)',
-              _ => group!,
-            },
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+    final query = searchKey(_query.trim());
+    final groups = query.isEmpty
+        ? widget.groups
+        : widget.groups.where((g) => searchKey(g).contains(query)).toList();
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: TextField(
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search),
+              hintText: 'Kategori ara',
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (v) => setState(() => _query = v),
           ),
-          selected: group == selected,
-          onTap: () => onSelected(group),
-        );
-      },
+        ),
+        Expanded(
+          child: ListView.builder(
+            // Aramada "Tümü" ve "Favoriler" gizlenir.
+            itemCount: query.isEmpty ? groups.length + 2 : groups.length,
+            itemBuilder: (context, i) {
+              if (query.isNotEmpty) i += 2;
+              final group = switch (i) {
+                0 => null,
+                1 => widget.favoritesKey,
+                _ => groups[i - 2],
+              };
+              return ListTile(
+                dense: true,
+                leading: i == 1 ? const Icon(Icons.star, size: 18) : null,
+                minLeadingWidth: 0,
+                title: Text(
+                  switch (i) {
+                    0 => 'Tümü (${widget.total})',
+                    1 => 'Favoriler (${widget.favoritesCount})',
+                    _ => group!,
+                  },
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                selected: group == widget.selected,
+                onTap: () => widget.onSelected(group),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

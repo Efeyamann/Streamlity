@@ -91,4 +91,11 @@ void main() {
       expect(await store.read(xtream), isEmpty);
     });
   });
+
+  test('arama anahtarı Türkçe İ/I farkını yok sayar', () {
+    expect(searchKey('TR| TÜRKİYE 4K').contains(searchKey('türkiye')), isTrue);
+    expect(searchKey('TR| FIMLER 4K').contains(searchKey('fimler')), isTrue);
+    expect(searchKey('Kızılcık').contains(searchKey('KIZILCIK')), isTrue);
+    expect(searchKey('Spor'), 'spor');
+  });
 }
