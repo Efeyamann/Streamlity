@@ -5,7 +5,10 @@ import 'package:media_kit/media_kit.dart' hide Playlist;
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../models/playlist.dart';
+import '../models/playlist_source.dart';
 import '../services/playlist_loader.dart';
+import '../services/source_store.dart';
+import 'source_form.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,8 +21,10 @@ class _HomeScreenState extends State<HomeScreen> {
   late final Player _player = Player();
   late final VideoController _videoController = VideoController(_player);
 
+  final _store = const SourceStore();
+  PlaylistSource? _source;
   Playlist? _playlist;
-  bool _loading = false;
+  bool _loading = true;
   String? _error;
 
   /// null: tüm kanallar.
@@ -41,6 +46,16 @@ class _HomeScreenState extends State<HomeScreen> {
         return AppExitResponse.exit;
       },
     );
+    _restore();
+  }
+
+  Future<void> _restore() async {
+    final saved = await _store.read();
+    if (saved == null) {
+      setState(() => _loading = false);
+    } else {
+      await _load(saved);
+    }
   }
 
   @override
@@ -56,32 +71,36 @@ class _HomeScreenState extends State<HomeScreen> {
     await _player.dispose();
   }
 
-  Future<void> _load(String source) async {
-    source = source.trim();
-    if (source.isEmpty) return;
+  Future<void> _load(PlaylistSource source) async {
     setState(() {
+      _source = source;
       _loading = true;
       _error = null;
     });
     try {
-      final playlist = await loadPlaylist(source);
+      final playlist = await loadSource(source);
+      await _store.write(source);
+      if (!mounted) return;
       setState(() {
         _playlist = playlist;
         _group = null;
         _query = '';
       });
     } on PlaylistException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _closePlaylist() {
+  /// Oynatmayı durdurur ve kayıtlı kaynağı siler; açılışta giriş ekranı gelir.
+  Future<void> _signOut() async {
     _player.stop();
+    await _store.clear();
     setState(() {
       _playlist = null;
       _current = null;
+      _error = null;
     });
   }
 
@@ -105,7 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final playlist = _playlist;
     if (playlist == null) {
       return Scaffold(
-        body: _PlaylistSourceForm(
+        body: SourceForm(
+          // Form alanları yalnız ilk kurulumda doldurulur; açılışta kayıt
+          // okunduktan sonra formu o kaynakla yeniden kur.
+          key: ObjectKey(_source),
+          initial: _source,
           loading: _loading,
           error: _error,
           onSubmit: _load,
@@ -114,14 +137,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final channels = _visibleChannels(playlist);
+    final expiresAt = playlist.expiresAt;
     return Scaffold(
       appBar: AppBar(
         title: Text(_current?.name ?? 'Streamlity'),
         actions: [
+          if (expiresAt != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                'Bitiş: ${expiresAt.day.toString().padLeft(2, '0')}.'
+                '${expiresAt.month.toString().padLeft(2, '0')}.'
+                '${expiresAt.year}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           IconButton(
-            tooltip: 'Listeyi kapat',
-            icon: const Icon(Icons.playlist_remove),
-            onPressed: _closePlaylist,
+            tooltip: 'Çıkış yap',
+            icon: const Icon(Icons.logout),
+            onPressed: _signOut,
           ),
         ],
       ),
@@ -182,77 +216,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 : Video(controller: _videoController),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlaylistSourceForm extends StatefulWidget {
-  const _PlaylistSourceForm({
-    required this.loading,
-    required this.error,
-    required this.onSubmit,
-  });
-
-  final bool loading;
-  final String? error;
-  final ValueChanged<String> onSubmit;
-
-  @override
-  State<_PlaylistSourceForm> createState() => _PlaylistSourceFormState();
-}
-
-class _PlaylistSourceFormState extends State<_PlaylistSourceForm> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Streamlity',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _controller,
-                enabled: !widget.loading,
-                decoration: InputDecoration(
-                  labelText: 'M3U listesi (URL veya dosya yolu)',
-                  border: const OutlineInputBorder(),
-                  errorText: widget.error,
-                  errorMaxLines: 3,
-                ),
-                onSubmitted: widget.onSubmit,
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: widget.loading
-                    ? null
-                    : () => widget.onSubmit(_controller.text),
-                child: widget.loading
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Yükle'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

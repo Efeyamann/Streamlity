@@ -18,14 +18,17 @@ class Channel {
 }
 
 class Playlist {
-  Playlist({required this.channels, this.epgUrl});
+  Playlist({required this.channels, this.epgUrl, this.expiresAt});
 
   static const ungrouped = 'Grupsuz';
 
   final List<Channel> channels;
 
-  /// Başlıktaki `url-tvg` / `x-tvg-url` değeri.
+  /// M3U başlığındaki `url-tvg` / `x-tvg-url` ya da Xtream `xmltv.php` adresi.
   final String? epgUrl;
+
+  /// Xtream hesabının bitiş tarihi; sınırsız hesaplarda ve M3U'da null.
+  final DateTime? expiresAt;
 
   /// Gruplar, listede ilk göründükleri sırayla.
   late final List<String> groups = {
