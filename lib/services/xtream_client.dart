@@ -9,15 +9,7 @@ import 'playlist_loader.dart';
 
 /// Xtream Codes `player_api.php` üzerinden canlı kanalları yükler.
 Future<Playlist> loadXtream(XtreamSource source) async {
-  final info = await _get(source, const {}) as Map<String, dynamic>?;
-  final user = info?['user_info'] as Map<String, dynamic>?;
-  if (user == null || '${user['auth']}' != '1') {
-    throw const PlaylistException('Kullanıcı adı veya şifre hatalı.');
-  }
-  final status = '${user['status'] ?? ''}';
-  if (status.isNotEmpty && status != 'Active') {
-    throw PlaylistException('Hesap kullanılamıyor (durum: $status).');
-  }
+  final user = await verifyXtream(source);
 
   final (categories, streams) = await (
     _get(source, const {'action': 'get_live_categories'}),
@@ -42,6 +34,23 @@ Future<Playlist> loadXtream(XtreamSource source) async {
     throw const PlaylistException('Hesapta canlı kanal bulunamadı.');
   }
   return playlist;
+}
+
+/// Giriş bilgilerini ve hesap durumunu denetler; kanal listesini indirmez.
+/// Hesap bilgisini (`user_info`) döndürür.
+Future<Map<String, dynamic>> verifyXtream(XtreamSource source) async {
+  final info = await _get(source, const {});
+  final user = info is Map<String, dynamic>
+      ? info['user_info'] as Map<String, dynamic>?
+      : null;
+  if (user == null || '${user['auth']}' != '1') {
+    throw const PlaylistException('Kullanıcı adı veya şifre hatalı.');
+  }
+  final status = '${user['status'] ?? ''}';
+  if (status.isNotEmpty && status != 'Active') {
+    throw PlaylistException('Hesap kullanılamıyor (durum: $status).');
+  }
+  return user;
 }
 
 /// API yanıtlarını [Playlist]'e dönüştürür. Kanallar kategori sırasıyla,
@@ -97,6 +106,8 @@ DateTime? _parseExpiry(Object? value) {
   return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
 }
 
+const _authFailureCodes = {401, 403, 513};
+
 Future<dynamic> _get(XtreamSource source, Map<String, String> params) async {
   final uri = Uri.parse('${source.server}/player_api.php').replace(
     queryParameters: {
@@ -114,6 +125,10 @@ Future<dynamic> _get(XtreamSource source, Map<String, String> params) async {
     throw PlaylistException('Sunucuya bağlanılamadı: $e');
   }
   if (response.statusCode != 200) {
+    // Paneller yanlış girişte 200 + auth=0 yerine bu kodları da döndürüyor.
+    if (_authFailureCodes.contains(response.statusCode)) {
+      throw const PlaylistException('Kullanıcı adı veya şifre hatalı.');
+    }
     throw PlaylistException('Sunucu ${response.statusCode} döndürdü.');
   }
   try {

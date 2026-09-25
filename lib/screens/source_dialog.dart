@@ -1,0 +1,274 @@
+import 'package:flutter/material.dart';
+
+import '../models/playlist_source.dart';
+import '../models/saved_source.dart';
+import '../services/favorites_store.dart';
+import '../services/playlist_loader.dart';
+import '../services/xtream_client.dart';
+
+/// Liste ekleme ya da düzenleme penceresi. Kaydedilen listeyi döndürür;
+/// vazgeçilirse null. [existing] içindeki bir listeyle aynı kaynak yeniden
+/// eklenemez.
+Future<SavedSource?> showSourceDialog(
+  BuildContext context, {
+  SavedSource? initial,
+  List<SavedSource> existing = const [],
+}) =>
+    showDialog<SavedSource>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _SourceDialog(initial: initial, existing: existing),
+    );
+
+class _SourceDialog extends StatefulWidget {
+  const _SourceDialog({required this.initial, required this.existing});
+
+  final SavedSource? initial;
+  final List<SavedSource> existing;
+
+  @override
+  State<_SourceDialog> createState() => _SourceDialogState();
+}
+
+class _SourceDialogState extends State<_SourceDialog>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
+  final _name = TextEditingController();
+  final _server = TextEditingController();
+  final _username = TextEditingController();
+  final _password = TextEditingController();
+  final _m3u = TextEditingController();
+  bool _showPassword = false;
+  bool _checking = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    final source = initial?.source;
+    _tabs = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: source is M3uSource ? 1 : 0,
+    )..addListener(() => setState(() => _error = null));
+    _name.text = initial?.name ?? '';
+    switch (source) {
+      case XtreamSource():
+        _server.text = source.server;
+        _username.text = source.username;
+        _password.text = source.password;
+      case M3uSource():
+        _m3u.text = source.location;
+      case null:
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    for (final c in [_name, _server, _username, _password, _m3u]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  /// Sağlayıcının verdiği `get.php?username=..&password=..` linki sunucu
+  /// alanına yapıştırılırsa alanları ondan doldurur.
+  void _onServerChanged(String value) {
+    final parsed = XtreamSource.tryParseLink(value);
+    if (parsed == null) return;
+    setState(() {
+      // İmleci sona koy; aksi halde yapıştırılan metin seçili kalıyor.
+      _server.value = TextEditingValue(
+        text: parsed.server,
+        selection: TextSelection.collapsed(offset: parsed.server.length),
+      );
+      _username.text = parsed.username;
+      _password.text = parsed.password;
+    });
+  }
+
+  PlaylistSource? _source() {
+    if (_tabs.index == 0) {
+      if (_server.text.trim().isEmpty || _username.text.trim().isEmpty) {
+        return null;
+      }
+      return XtreamSource(
+        server: _server.text,
+        username: _username.text.trim(),
+        password: _password.text,
+      );
+    }
+    final location = _m3u.text.trim();
+    return location.isEmpty ? null : M3uSource(location);
+  }
+
+  Future<void> _submit() async {
+    if (_checking) return;
+    final source = _source();
+    if (source == null) {
+      setState(() => _error = _tabs.index == 0
+          ? 'Sunucu adresi ve kullanıcı adı gerekli.'
+          : 'Liste adresi ya da dosya yolu gerekli.');
+      return;
+    }
+    // Aynı sunucu + kullanıcı adı (ya da aynı M3U adresi) aynı listedir.
+    final key = FavoritesStore.sourceKey(source);
+    final duplicate = widget.existing
+        .where((s) =>
+            s.id != widget.initial?.id &&
+            FavoritesStore.sourceKey(s.source) == key)
+        .firstOrNull;
+    if (duplicate != null) {
+      setState(() => _error = 'Bu liste zaten ekli: "${duplicate.name}".');
+      return;
+    }
+    setState(() {
+      _checking = true;
+      _error = null;
+    });
+    try {
+      // Yanlış şifre, liste eklenmeden yakalansın. M3U'yu doğrulamak tüm
+      // listeyi indirmek demek; o yüzden açılışa bırakılır.
+      if (source is XtreamSource) await verifyXtream(source);
+    } on PlaylistException catch (e) {
+      if (mounted) {
+        setState(() {
+          _checking = false;
+          _error = e.message;
+        });
+      }
+      return;
+    }
+    if (!mounted) return;
+    final name = _name.text.trim();
+    final initial = widget.initial;
+    Navigator.of(context).pop(
+      initial == null
+          ? SavedSource(
+              id: SavedSource.newId(),
+              name: name.isEmpty ? SavedSource.defaultName(source) : name,
+              source: source,
+            )
+          : initial.copyWith(
+              name: name.isEmpty ? SavedSource.defaultName(source) : name,
+              source: source,
+            ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !_checking;
+    return AlertDialog(
+      title: Text(widget.initial == null ? 'Liste ekle' : 'Listeyi düzenle'),
+      content: SizedBox(
+        width: 480,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TabBar(
+              controller: _tabs,
+              tabs: const [Tab(text: 'Xtream Codes'), Tab(text: 'M3U')],
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _name,
+              enabled: enabled,
+              decoration: const InputDecoration(
+                labelText: 'Liste adı (isteğe bağlı)',
+                hintText: 'Örn. Ev, Spor paketi',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            AnimatedBuilder(
+              animation: _tabs,
+              builder: (context, _) => _tabs.index == 0
+                  ? _xtreamFields(enabled)
+                  : _m3uFields(enabled),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: enabled ? () => Navigator.of(context).pop() : null,
+          child: const Text('Vazgeç'),
+        ),
+        FilledButton(
+          onPressed: enabled ? _submit : null,
+          child: _checking
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(widget.initial == null ? 'Ekle' : 'Kaydet'),
+        ),
+      ],
+    );
+  }
+
+  Widget _xtreamFields(bool enabled) {
+    return Column(
+      children: [
+        TextField(
+          controller: _server,
+          enabled: enabled,
+          decoration: const InputDecoration(
+            labelText: 'Sunucu adresi',
+            hintText: 'http://sunucu:8080 veya sağlayıcının M3U linki',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: _onServerChanged,
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _username,
+          enabled: enabled,
+          decoration: const InputDecoration(
+            labelText: 'Kullanıcı adı',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _password,
+          enabled: enabled,
+          obscureText: !_showPassword,
+          decoration: InputDecoration(
+            labelText: 'Şifre',
+            border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              icon: Icon(
+                  _showPassword ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _showPassword = !_showPassword),
+            ),
+          ),
+          onSubmitted: (_) => _submit(),
+        ),
+      ],
+    );
+  }
+
+  Widget _m3uFields(bool enabled) {
+    return TextField(
+      controller: _m3u,
+      enabled: enabled,
+      decoration: const InputDecoration(
+        labelText: 'M3U listesi (URL veya dosya yolu)',
+        border: OutlineInputBorder(),
+      ),
+      onSubmitted: (_) => _submit(),
+    );
+  }
+}

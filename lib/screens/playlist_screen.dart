@@ -8,26 +8,36 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../models/epg.dart';
 import '../models/playlist.dart';
 import '../models/playlist_source.dart';
+import '../models/saved_source.dart';
 import '../services/epg_loader.dart';
 import '../services/favorites_store.dart';
 import '../services/playlist_loader.dart';
-import '../services/source_store.dart';
 import '../services/stall_watchdog.dart';
-import 'source_form.dart';
+import 'sources_screen.dart' show formatDate;
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+/// Bir listenin kanalları, yayın akışı ve oynatıcı. Geri gidilince oynatıcı
+/// kapanır.
+class PlaylistScreen extends StatefulWidget {
+  const PlaylistScreen({
+    super.key,
+    required this.saved,
+    required this.onLoaded,
+  });
+
+  final SavedSource saved;
+
+  /// Liste yüklenince; ana sayfadaki kartın özet bilgileri için.
+  final void Function(int channelCount, DateTime? expiresAt) onLoaded;
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<PlaylistScreen> createState() => _PlaylistScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _PlaylistScreenState extends State<PlaylistScreen> {
   late final Player _player = Player();
   late final VideoController _videoController = VideoController(_player);
 
-  final _store = const SourceStore();
-  PlaylistSource? _source;
+  PlaylistSource get _source => widget.saved.source;
   Playlist? _playlist;
   bool _loading = true;
   String? _error;
@@ -103,16 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _stallTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!_playerDisposed) _watchdog.check(playing: _player.state.playing);
     });
-    _restore();
-  }
-
-  Future<void> _restore() async {
-    final saved = await _store.read();
-    if (saved == null) {
-      setState(() => _loading = false);
-    } else {
-      await _load(saved);
-    }
+    _load();
   }
 
   @override
@@ -133,16 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
     await _player.dispose();
   }
 
-  Future<void> _load(PlaylistSource source) async {
+  Future<void> _load() async {
     setState(() {
-      _source = source;
       _loading = true;
       _error = null;
     });
     try {
-      final playlist = await loadSource(source);
-      await _store.write(source);
-      final favorites = await _favoritesStore.read(source);
+      final playlist = await loadSource(_source);
+      final favorites = await _favoritesStore.read(_source);
       if (!mounted) return;
       setState(() {
         _playlist = playlist;
@@ -150,6 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _group = null;
         _query = '';
       });
+      widget.onLoaded(playlist.channelCount, playlist.expiresAt);
       _loadEpg(playlist);
     } on PlaylistException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -189,23 +189,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Oynatmayı durdurur ve kayıtlı kaynağı siler; açılışta giriş ekranı gelir.
-  Future<void> _signOut() async {
-    _watchdog.stop();
-    _player.stop();
-    await _store.clear();
-    setState(() {
-      _playlist = null;
-      _current = null;
-      _error = null;
-      _epg = null;
-      _epgError = null;
-      _epgLoading = false;
-      _epgCheckedAt = null;
-      _favorites = {};
-    });
-  }
-
   void _play(Channel channel) {
     setState(() => _current = channel);
     _lastPosition = Duration.zero;
@@ -215,7 +198,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _toggleFavorite(Channel channel) {
     final source = _source;
-    if (source == null) return;
     setState(() {
       _favorites = {..._favorites};
       if (!_favorites.remove(channel.key)) _favorites.add(channel.key);
@@ -243,14 +225,18 @@ class _HomeScreenState extends State<HomeScreen> {
     final playlist = _playlist;
     if (playlist == null) {
       return Scaffold(
-        body: SourceForm(
-          // Form alanları yalnız ilk kurulumda doldurulur; açılışta kayıt
-          // okunduktan sonra formu o kaynakla yeniden kur.
-          key: ObjectKey(_source),
-          initial: _source,
-          loading: _loading,
-          error: _error,
-          onSubmit: _load,
+        appBar: AppBar(title: Text(widget.saved.name)),
+        body: Center(
+          child: _loading || _error == null
+              ? const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Kanal listesi yükleniyor…'),
+                  ],
+                )
+              : _LoadError(message: _error!, onRetry: _load),
         ),
       );
     }
@@ -260,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final onAir = _epg?.current(_current?.tvgId, _now);
     return Scaffold(
       appBar: AppBar(
-        title: Text(_current?.name ?? 'Streamlity'),
+        title: Text(_current?.name ?? widget.saved.name),
         actions: [
           if (_epgLoading)
             const Padding(
@@ -288,17 +274,11 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                'Bitiş: ${expiresAt.day.toString().padLeft(2, '0')}.'
-                '${expiresAt.month.toString().padLeft(2, '0')}.'
-                '${expiresAt.year}',
+                'Bitiş: ${formatDate(expiresAt)}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
-          IconButton(
-            tooltip: 'Çıkış yap',
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Row(
@@ -649,5 +629,46 @@ class _StallOverlay extends StatelessWidget {
           ),
         );
     }
+  }
+}
+
+class _LoadError extends StatelessWidget {
+  const _LoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+          const SizedBox(height: 12),
+          Text('Liste açılamadı', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                child: const Text('Listelere dön'),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Tekrar dene'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
