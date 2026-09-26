@@ -11,4 +11,4 @@ PRODUCT_NAME = streamlity
 PRODUCT_BUNDLE_IDENTIFIER = io.github.efeyamann.streamlity
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 io.github.efeyamann. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Streamlity contributors. Licensed under GPL-3.0.

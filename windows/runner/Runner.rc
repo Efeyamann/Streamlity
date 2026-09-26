@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "Streamlity" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "streamlity" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 io.github.efeyamann. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Streamlity contributors. Licensed under GPL-3.0." "\0"
             VALUE "OriginalFilename", "streamlity.exe" "\0"
             VALUE "ProductName", "Streamlity" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
