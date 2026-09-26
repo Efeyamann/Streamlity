@@ -58,7 +58,8 @@ class _SourcesScreenState extends State<SourcesScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Liste silinsin mi?'),
         content: Text(
-            '"${source.name}" ve bu listedeki favoriler silinecek. '
+            '"${source.name}", favori paketleri ve son izlenenleri '
+            'silinecek. '
             'Sağlayıcıdaki hesabın etkilenmez.'),
         actions: [
           TextButton(
@@ -86,7 +87,12 @@ class _SourcesScreenState extends State<SourcesScreen> {
       for (final s in _sources ?? const <SavedSource>[])
         if (s.id != source.id) s,
     ]);
-    if (!stillUsed) await FavoritesStore().write(source.source, {});
+    if (!stillUsed) {
+      await FavoritesStore().write(source.source, {});
+      await FavoritesStore.recents().writeList(source.source, []);
+      await FavoritesStore.groups().writeList(source.source, []);
+      await FavoritesStore.vodGroups().writeList(source.source, []);
+    }
   }
 
   void _open(SavedSource source) {

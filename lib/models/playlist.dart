@@ -7,6 +7,7 @@ class Channel {
     this.logo,
     this.tvgId,
     this.id,
+    this.archiveDays = 0,
   });
 
   final String name;
@@ -19,6 +20,10 @@ class Channel {
 
   /// Kaynağın verdiği kalıcı kimlik (Xtream `stream_id`); M3U'da null.
   final String? id;
+
+  /// Sağlayıcının geçmiş yayını sakladığı gün sayısı (Xtream `tv_archive`);
+  /// 0 ise geçmiş yayın yok.
+  final int archiveDays;
 
   /// Favoriler gibi cihazda saklanan veriler için anahtar. URL'de kimlik
   /// bilgisi olabildiği ve bazı sağlayıcılar URL'yi değiştirdiği için
@@ -42,7 +47,12 @@ String? _separatorLabel(String name) {
 }
 
 class Playlist {
-  Playlist({required this.channels, this.epgUrl, this.expiresAt});
+  Playlist({
+    required this.channels,
+    this.epgUrl,
+    this.expiresAt,
+    this.serverOffset,
+  });
 
   static const ungrouped = 'Grupsuz';
 
@@ -54,6 +64,10 @@ class Playlist {
 
   /// Xtream hesabının bitiş tarihi; sınırsız hesaplarda ve M3U'da null.
   final DateTime? expiresAt;
+
+  /// Xtream sunucusunun saatinin UTC'den farkı; geçmiş yayın adresleri
+  /// sunucu saatiyle yazılır. Bilinmiyorsa null.
+  final Duration? serverOffset;
 
   /// Ayraçlar hariç kanal sayısı.
   late final int channelCount = channels.where((c) => !c.isSeparator).length;

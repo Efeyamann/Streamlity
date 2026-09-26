@@ -9,11 +9,11 @@ import 'playlist_loader.dart';
 
 /// Xtream Codes `player_api.php` üzerinden canlı kanalları yükler.
 Future<Playlist> loadXtream(XtreamSource source) async {
-  final user = await verifyXtream(source);
+  final (user, server) = await _account(source);
 
   final (categories, streams) = await (
-    _get(source, const {'action': 'get_live_categories'}),
-    _get(source, const {'action': 'get_live_streams'}),
+    xtreamApi(source, const {'action': 'get_live_categories'}),
+    xtreamApi(source, const {'action': 'get_live_streams'}),
   ).wait;
 
   final formats = (user['allowed_output_formats'] as List?)?.cast<Object?>();
@@ -27,6 +27,7 @@ Future<Playlist> loadXtream(XtreamSource source) async {
       streams: streams as List? ?? const [],
       extension: extension,
       expiresAt: _parseExpiry(user['exp_date']),
+      serverOffset: serverUtcOffset(server),
     ),
     null,
   );
@@ -38,8 +39,13 @@ Future<Playlist> loadXtream(XtreamSource source) async {
 
 /// Giriş bilgilerini ve hesap durumunu denetler; kanal listesini indirmez.
 /// Hesap bilgisini (`user_info`) döndürür.
-Future<Map<String, dynamic>> verifyXtream(XtreamSource source) async {
-  final info = await _get(source, const {});
+Future<Map<String, dynamic>> verifyXtream(XtreamSource source) async =>
+    (await _account(source)).$1;
+
+/// Hesap (`user_info`) ve sunucu (`server_info`) bilgisi.
+Future<(Map<String, dynamic>, Map<String, dynamic>?)> _account(
+    XtreamSource source) async {
+  final info = await xtreamApi(source, const {});
   final user = info is Map<String, dynamic>
       ? info['user_info'] as Map<String, dynamic>?
       : null;
@@ -50,7 +56,23 @@ Future<Map<String, dynamic>> verifyXtream(XtreamSource source) async {
   if (status.isNotEmpty && status != 'Active') {
     throw PlaylistException('Hesap kullanılamıyor (durum: $status).');
   }
-  return user;
+  final server = (info as Map<String, dynamic>)['server_info'];
+  return (user, server is Map<String, dynamic> ? server : null);
+}
+
+/// Sunucu saatinin UTC'den farkı: `time_now` (sunucu yerel saati) ile
+/// `timestamp_now` (UTC epoch) arasındaki fark, çeyrek saate yuvarlanmış.
+@visibleForTesting
+Duration? serverUtcOffset(Map<String, dynamic>? server) {
+  final local = DateTime.tryParse('${server?['time_now']}Z'.replaceFirst(' ', 'T'));
+  final epoch = int.tryParse('${server?['timestamp_now']}');
+  if (local == null || epoch == null) return null;
+  final diff = local.difference(
+      DateTime.fromMillisecondsSinceEpoch(epoch * 1000, isUtc: true));
+  const quarter = 15;
+  final minutes = (diff.inSeconds / 60 / quarter).round() * quarter;
+  if (minutes.abs() > 14 * 60) return null;
+  return Duration(minutes: minutes);
 }
 
 /// API yanıtlarını [Playlist]'e dönüştürür. Kanallar kategori sırasıyla,
@@ -62,6 +84,7 @@ Playlist buildXtreamPlaylist({
   required List<dynamic> streams,
   required String extension,
   DateTime? expiresAt,
+  Duration? serverOffset,
 }) {
   final categoryNames = <String, String>{
     for (final c in categories.whereType<Map<String, dynamic>>())
@@ -82,6 +105,9 @@ Playlist buildXtreamPlaylist({
     final logo = '${s['stream_icon'] ?? ''}'.trim();
     final epgId = '${s['epg_channel_id'] ?? ''}'.trim();
     final group = categoryNames[categoryId];
+    final archive = '${s['tv_archive'] ?? ''}' == '1'
+        ? int.tryParse('${s['tv_archive_duration'] ?? ''}') ?? 0
+        : 0;
 
     byCategory.putIfAbsent(categoryId, () => []).add(Channel(
           name: name.isEmpty ? 'Kanal $id' : name,
@@ -90,6 +116,7 @@ Playlist buildXtreamPlaylist({
           logo: logo.isEmpty ? null : logo,
           tvgId: epgId.isEmpty ? null : epgId,
           id: '$id',
+          archiveDays: archive,
         ));
   }
 
@@ -97,6 +124,7 @@ Playlist buildXtreamPlaylist({
     channels: [for (final list in byCategory.values) ...list],
     epgUrl: '${source.server}/xmltv.php?username=$user&password=$pass',
     expiresAt: expiresAt,
+    serverOffset: serverOffset,
   );
 }
 
@@ -108,7 +136,9 @@ DateTime? _parseExpiry(Object? value) {
 
 const _authFailureCodes = {401, 403, 513};
 
-Future<dynamic> _get(XtreamSource source, Map<String, String> params) async {
+/// `player_api.php` çağrısı; yanıt JSON'u ayrı isolate'te çözülür.
+Future<dynamic> xtreamApi(
+    XtreamSource source, Map<String, String> params) async {
   final uri = Uri.parse('${source.server}/player_api.php').replace(
     queryParameters: {
       'username': source.username,

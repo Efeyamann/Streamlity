@@ -84,6 +84,25 @@ void main() {
       expect(content, isNot(contains('gizli')));
     });
 
+    test('son izlenenler ayrı dosyada ve sırasıyla saklanır', () async {
+      final favorites = FavoritesStore(directory: () async => dir);
+      final recents = FavoritesStore.recents(directory: () async => dir);
+      await favorites.write(xtream, {'1'});
+      await recents.writeList(xtream, ['3', '1', '2']);
+
+      expect(await FavoritesStore.recents(directory: () async => dir)
+          .readList(xtream), ['3', '1', '2']);
+      expect(await FavoritesStore(directory: () async => dir).read(xtream),
+          {'1'});
+
+      final groups = FavoritesStore.groups(directory: () async => dir);
+      await groups.writeList(xtream, ['TR| SPORTS VIP', 'TR| HABER']);
+      expect(await FavoritesStore.groups(directory: () async => dir)
+          .readList(xtream), ['TR| SPORTS VIP', 'TR| HABER']);
+      expect(await FavoritesStore(directory: () async => dir).read(xtream),
+          {'1'});
+    });
+
     test('bozuk dosyada boş başlar', () async {
       File('${dir.path}${Platform.pathSeparator}favorites.json')
           .writeAsStringSync('{bozuk');

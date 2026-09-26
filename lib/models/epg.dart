@@ -81,3 +81,21 @@ class Epg {
     return lo - 1;
   }
 }
+
+/// Yayın akışı ekranı için: [now] gününden [pastDays] gün öncesinin başından
+/// itibaren programlar, yerel saatle günlere ayrılmış. Gün anahtarları yerel
+/// gece yarısı.
+Map<DateTime, List<Programme>> scheduleByDay(
+    List<Programme> programmes, DateTime now, {int pastDays = 0}) {
+  final local = now.toLocal();
+  final today = DateTime(local.year, local.month, local.day - pastDays);
+  final days = <DateTime, List<Programme>>{};
+  for (final p in programmes) {
+    if (!p.stop.isAfter(today)) continue;
+    final start = p.start.toLocal();
+    final day = DateTime(start.year, start.month, start.day);
+    // Gece yarısından önce başlayıp bugüne taşan program bugünün başında.
+    (days[day.isBefore(today) ? today : day] ??= []).add(p);
+  }
+  return days;
+}

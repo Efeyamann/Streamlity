@@ -88,4 +88,24 @@ void main() {
       expect(combined.programmesFor('Other.tv'), isNotEmpty);
     });
   });
+
+  test('yayın akışı bugünden başlayarak yerel günlere ayrılır', () {
+    Programme p(DateTime start, DateTime stop) => Programme(
+        start: start.toUtc(), stop: stop.toUtc(), title: '$start');
+    final now = DateTime(2026, 9, 25, 14);
+    final days = scheduleByDay([
+      p(DateTime(2026, 9, 24, 20), DateTime(2026, 9, 24, 22)), // dün, atlanır
+      p(DateTime(2026, 9, 24, 23), DateTime(2026, 9, 25, 1)), // bugüne taşar
+      p(DateTime(2026, 9, 25, 13), DateTime(2026, 9, 25, 15)),
+      p(DateTime(2026, 9, 26, 9), DateTime(2026, 9, 26, 10)),
+    ], now);
+    expect(days.keys, [DateTime(2026, 9, 25), DateTime(2026, 9, 26)]);
+    expect(days[DateTime(2026, 9, 25)]!.length, 2);
+    expect(days[DateTime(2026, 9, 26)]!.single.start.toLocal().hour, 9);
+
+    final withPast = scheduleByDay([
+      p(DateTime(2026, 9, 24, 20), DateTime(2026, 9, 24, 22)),
+    ], now, pastDays: 1);
+    expect(withPast.keys, [DateTime(2026, 9, 24)]);
+  });
 }

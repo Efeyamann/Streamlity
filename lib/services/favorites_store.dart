@@ -7,16 +7,33 @@ import 'package:path_provider/path_provider.dart';
 
 import '../models/playlist_source.dart';
 
-/// Favori kanalların anahtarlarını ([Channel.key]) kaynak başına saklar.
+/// Kanal anahtarı ([Channel.key]) listelerini kaynak başına saklar:
+/// favoriler ve son izlenenler, her biri ayrı dosyada.
 ///
 /// Gizli veri değil; uygulama destek klasöründe tek bir JSON dosyasında
 /// tutulur. Kaynak kimliği (M3U adresi kimlik bilgisi içerebilir) yalnız
 /// özetiyle yazılır.
 class FavoritesStore {
-  FavoritesStore({Future<Directory> Function()? directory})
-      : _directory = directory ?? getApplicationSupportDirectory;
+  FavoritesStore({
+    Future<Directory> Function()? directory,
+    this.fileName = 'favorites.json',
+  }) : _directory = directory ?? getApplicationSupportDirectory;
+
+  /// Favori kategoriler (kanal paketleri); anahtar grup adı, eklenme
+  /// sırasıyla.
+  FavoritesStore.groups({Future<Directory> Function()? directory})
+      : this(directory: directory, fileName: 'favorite_groups.json');
+
+  /// Film ve dizi kategorilerinden favoriler; anahtar `m:<id>` / `s:<id>`.
+  FavoritesStore.vodGroups({Future<Directory> Function()? directory})
+      : this(directory: directory, fileName: 'favorite_vod_groups.json');
+
+  /// Son izlenenler; en yenisi başta.
+  FavoritesStore.recents({Future<Directory> Function()? directory})
+      : this(directory: directory, fileName: 'recents.json');
 
   final Future<Directory> Function() _directory;
+  final String fileName;
   Map<String, List<String>>? _cache;
   Future<void> _pending = Future.value();
 
@@ -30,7 +47,7 @@ class FavoritesStore {
   }
 
   Future<File> _file() async =>
-      File('${(await _directory()).path}${Platform.pathSeparator}favorites.json');
+      File('${(await _directory()).path}${Platform.pathSeparator}$fileName');
 
   Future<Map<String, List<String>>> _readAll() async {
     if (_cache != null) return _cache!;
@@ -49,16 +66,23 @@ class FavoritesStore {
   }
 
   Future<Set<String>> read(PlaylistSource source) async =>
-      (await _readAll())[sourceKey(source)]?.toSet() ?? {};
+      (await readList(source)).toSet();
+
+  Future<void> write(PlaylistSource source, Set<String> keys) =>
+      writeList(source, keys.toList());
+
+  /// Sırası korunan liste.
+  Future<List<String>> readList(PlaylistSource source) async =>
+      (await _readAll())[sourceKey(source)] ?? [];
 
   /// Yazmalar sıraya alınır; hızlı art arda değişikliklerde son hal kazanır.
-  Future<void> write(PlaylistSource source, Set<String> keys) {
+  Future<void> writeList(PlaylistSource source, List<String> keys) {
     return _pending = _pending.then((_) async {
       final all = await _readAll();
       if (keys.isEmpty) {
         all.remove(sourceKey(source));
       } else {
-        all[sourceKey(source)] = keys.toList();
+        all[sourceKey(source)] = [...keys];
       }
       final file = await _file();
       await file.parent.create(recursive: true);
@@ -66,6 +90,6 @@ class FavoritesStore {
       final temp = File('${file.path}.tmp');
       await temp.writeAsString(jsonEncode(all), flush: true);
       await temp.rename(file.path);
-    }).catchError((Object e) => debugPrint('Favoriler kaydedilemedi: $e'));
+    }).catchError((Object e) => debugPrint('$fileName kaydedilemedi: $e'));
   }
 }
