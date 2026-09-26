@@ -50,7 +50,7 @@ class AppRail<T> extends StatelessWidget {
         width: width,
         decoration: BoxDecoration(
           color: c.surface,
-          border: Border(right: BorderSide(color: c.border)),
+          border: BorderDirectional(end: BorderSide(color: c.border)),
         ),
         child: Column(
           children: [
@@ -118,7 +118,7 @@ class _RailButtonState extends State<RailButton> {
         message: widget.tooltip ?? widget.label,
         preferBelow: false,
         verticalOffset: 0,
-        margin: const EdgeInsets.only(left: AppRail.width),
+        margin: const EdgeInsetsDirectional.only(start: AppRail.width),
         child: FocusableActionDetector(
           mouseCursor: SystemMouseCursors.click,
           onShowHoverHighlight: (v) => setState(() => _hovered = v),
@@ -135,18 +135,18 @@ class _RailButtonState extends State<RailButton> {
               child: Stack(
                 children: [
                   // Seçili bölüm göstergesi.
-                  AnimatedPositioned(
+                  AnimatedPositionedDirectional(
                     duration: motion.base,
                     curve: Motion.enter,
-                    left: 0,
+                    start: 0,
                     top: selected ? 16 : 32,
                     bottom: selected ? 16 : 32,
                     width: 3,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: selected ? c.accent : Colors.transparent,
-                        borderRadius: const BorderRadius.horizontal(
-                            right: Radius.circular(3)),
+                        borderRadius: const BorderRadiusDirectional.horizontal(
+                            end: Radius.circular(3)),
                       ),
                     ),
                   ),

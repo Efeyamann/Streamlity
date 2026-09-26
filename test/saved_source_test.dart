@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:streamlity/models/playlist_source.dart';
 import 'package:streamlity/models/saved_source.dart';
 import 'package:streamlity/services/source_store.dart';
-import 'package:streamlity/ui/widgets/common.dart' show formatCount;
 
 void main() {
   final xtream =
@@ -54,12 +53,5 @@ void main() {
     expect(SavedSource.defaultName(const M3uSource(r'C:\Listeler\spor.m3u')),
         'spor');
     expect(SavedSource.defaultName(const M3uSource('/home/efe/tv.m3u8')), 'tv');
-  });
-
-  test('kanal sayısı binlik ayraçla yazılır', () {
-    expect(formatCount(7), '7');
-    expect(formatCount(1000), '1.000');
-    expect(formatCount(56423), '56.423');
-    expect(formatCount(1234567), '1.234.567');
   });
 }

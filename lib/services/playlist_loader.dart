@@ -12,13 +12,32 @@ import 'xtream_client.dart';
 /// Bazı sağlayıcılar Dart'ın varsayılan User-Agent'ını reddediyor.
 const userAgent = 'Streamlity/0.1';
 
-class PlaylistException implements Exception {
-  const PlaylistException(this.message);
+/// Liste yüklenirken oluşan hata türleri; kullanıcıya gösterilen metin
+/// arayüz dilinde üretilir (bkz. `errorText`).
+enum PlaylistError {
+  httpStatus,
+  fetchFailed,
+  noChannels,
+  noLiveChannels,
+  badLogin,
+  accountUnavailable,
+  connectFailed,
+  invalidResponse,
+  noMovies,
+  noSeries,
+  epgFailed,
+}
 
-  final String message;
+class PlaylistException implements Exception {
+  const PlaylistException(this.error, [this.detail]);
+
+  final PlaylistError error;
+
+  /// HTTP kodu, hesap durumu ya da alttaki hatanın metni.
+  final String? detail;
 
   @override
-  String toString() => message;
+  String toString() => detail == null ? error.name : '${error.name}: $detail';
 }
 
 Future<Playlist> loadSource(PlaylistSource source) => switch (source) {
@@ -35,7 +54,8 @@ Future<Playlist> loadM3u(String source) async {
           .get(Uri.parse(source), headers: const {'User-Agent': userAgent})
           .timeout(const Duration(seconds: 30));
       if (response.statusCode != 200) {
-        throw PlaylistException('Sunucu ${response.statusCode} döndürdü.');
+        throw PlaylistException(
+            PlaylistError.httpStatus, '${response.statusCode}');
       }
       content = utf8.decode(response.bodyBytes, allowMalformed: true);
     } else {
@@ -45,13 +65,13 @@ Future<Playlist> loadM3u(String source) async {
   } on PlaylistException {
     rethrow;
   } on Exception catch (e) {
-    throw PlaylistException('Liste alınamadı: $e');
+    throw PlaylistException(PlaylistError.fetchFailed, '$e');
   }
 
   // Büyük listelerde arayüzü kilitlememek için ayrı isolate'te ayrıştır.
   final playlist = await compute(parseM3u, content);
   if (playlist.channels.isEmpty) {
-    throw const PlaylistException('Listede kanal bulunamadı.');
+    throw const PlaylistException(PlaylistError.noChannels);
   }
   return playlist;
 }

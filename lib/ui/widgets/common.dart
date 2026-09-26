@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../tokens.dart';
 
 /// Liste bölümlerinin küçük, büyük harfli başlığı.
@@ -24,7 +25,7 @@ class SectionHeader extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              label.toUpperCase(),
+              context.l10n.upper(label),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context)
@@ -79,7 +80,7 @@ class _SearchFieldState extends State<SearchField> {
           builder: (context, value, _) => value.text.isEmpty
               ? const SizedBox.shrink()
               : IconButton(
-                  tooltip: 'Temizle',
+                  tooltip: context.l10n.clear,
                   iconSize: IconSizes.sm,
                   icon: const Icon(Icons.close),
                   onPressed: () {
@@ -96,9 +97,10 @@ class _SearchFieldState extends State<SearchField> {
 
 /// Kırmızı nokta ve "CANLI" etiketi.
 class LiveBadge extends StatelessWidget {
-  const LiveBadge({super.key, this.label = 'CANLI', this.compact = false});
+  const LiveBadge({super.key, this.label, this.compact = false});
 
-  final String label;
+  /// Varsayılan "CANLI".
+  final String? label;
   final bool compact;
 
   @override
@@ -120,7 +122,7 @@ class LiveBadge extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              label,
+              label ?? context.l10n.liveBadge,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: c.onAccent,
                     fontSize: compact ? 9 : 10,
@@ -355,7 +357,8 @@ class _NavRowState extends State<NavRow> {
             child: AnimatedContainer(
               duration: motion.fast,
               height: widget.height,
-              padding: const EdgeInsets.only(left: Space.sm, right: Space.xxs),
+              padding: const EdgeInsetsDirectional.only(
+                  start: Space.sm, end: Space.xxs),
               decoration: BoxDecoration(
                 color: selected
                     ? c.muted
@@ -364,7 +367,7 @@ class _NavRowState extends State<NavRow> {
                         : Colors.transparent,
                 borderRadius: Radii.mdAll,
                 border: selected
-                    ? Border(left: BorderSide(color: c.accent, width: 3))
+                    ? BorderDirectional(start: BorderSide(color: c.accent, width: 3))
                     : null,
               ),
               child: Row(
@@ -391,7 +394,7 @@ class _NavRowState extends State<NavRow> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: Text(
-                        formatCount(count),
+                        context.l10n.count(count),
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: c.fgMuted,
                           fontFeatures: const [FontFeature.tabularFigures()],
@@ -414,15 +417,4 @@ class _NavRowState extends State<NavRow> {
       ),
     );
   }
-}
-
-/// 56488 -> "56.488".
-String formatCount(int n) {
-  final s = n.toString();
-  final out = StringBuffer();
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) out.write('.');
-    out.write(s[i]);
-  }
-  return out.toString();
 }

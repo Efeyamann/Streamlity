@@ -110,7 +110,7 @@ Future<Epg> _download(List<String> urls, Set<String> ids, EpgCache cache,
   }
   await cache.prune(_pruneAfter);
   if (parts.isEmpty) {
-    throw PlaylistException('Yayın akışı alınamadı: $lastError');
+    throw PlaylistException(PlaylistError.epgFailed, '$lastError');
   }
   return Epg.combine(parts);
 }
@@ -120,7 +120,8 @@ Future<List<int>> _fetch(String url) async {
       .get(Uri.parse(url), headers: const {'User-Agent': userAgent})
       .timeout(const Duration(minutes: 2));
   if (response.statusCode != 200) {
-    throw PlaylistException('Sunucu ${response.statusCode} döndürdü.');
+    throw PlaylistException(
+        PlaylistError.httpStatus, '${response.statusCode}');
   }
   return response.bodyBytes;
 }

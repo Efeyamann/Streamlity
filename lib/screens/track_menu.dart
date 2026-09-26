@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart' hide Playlist;
 
+import '../l10n/l10n.dart';
+
 /// Oynatıcının ses ve altyazı parçaları için üst çubuk menüleri. Seçilecek
 /// bir şey yoksa (tek ses, altyazı yok) hiçbir şey göstermez.
 class TrackMenus extends StatelessWidget {
@@ -10,6 +12,7 @@ class TrackMenus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return StreamBuilder<Tracks>(
       stream: player.stream.tracks,
       initialData: player.state.tracks,
@@ -27,26 +30,26 @@ class TrackMenus extends StatelessWidget {
           children: [
             if (audio.length > 1)
               _TrackButton<AudioTrack>(
-                tooltip: 'Ses dili',
+                tooltip: l.audioLanguage,
                 icon: Icons.audiotrack,
                 currentId: () => _currentId(
                     player.state.track.audio.id, 'audio'),
                 items: [
                   for (final t in audio)
-                    (t, t.id, trackLabel(t.id, t.title, t.language)),
+                    (t, t.id, trackLabel(l, t.id, t.title, t.language)),
                 ],
                 onSelected: player.setAudioTrack,
               ),
             if (subtitles.isNotEmpty)
               _TrackButton<SubtitleTrack>(
-                tooltip: 'Altyazı',
+                tooltip: l.subtitles,
                 icon: Icons.subtitles,
                 currentId: () => _currentId(
                     player.state.track.subtitle.id, 'sub'),
                 items: [
-                  (SubtitleTrack.no(), 'no', 'Kapalı'),
+                  (SubtitleTrack.no(), 'no', l.subtitlesOff),
                   for (final t in subtitles)
-                    (t, t.id, trackLabel(t.id, t.title, t.language)),
+                    (t, t.id, trackLabel(l, t.id, t.title, t.language)),
                 ],
                 onSelected: player.setSubtitleTrack,
               ),
@@ -136,94 +139,106 @@ class _TrackButton<T> extends StatelessWidget {
   }
 }
 
+/// Parça dil kodları -> dilin kendi adı. Arayüz dili ne olursa olsun
+/// aynıdır; izleyen kişi kendi dilini her durumda tanır.
 const _languages = {
   'tur': 'Türkçe',
   'tr': 'Türkçe',
-  'eng': 'İngilizce',
-  'en': 'İngilizce',
-  'ger': 'Almanca',
-  'deu': 'Almanca',
-  'de': 'Almanca',
-  'fre': 'Fransızca',
-  'fra': 'Fransızca',
-  'fr': 'Fransızca',
-  'ara': 'Arapça',
-  'ar': 'Arapça',
-  'rus': 'Rusça',
-  'ru': 'Rusça',
-  'spa': 'İspanyolca',
-  'es': 'İspanyolca',
-  'ita': 'İtalyanca',
-  'it': 'İtalyanca',
-  'kur': 'Kürtçe',
-  'aze': 'Azerice',
-  'chi': 'Çince',
-  'zho': 'Çince',
-  'zh': 'Çince',
-  'jpn': 'Japonca',
-  'ja': 'Japonca',
-  'kor': 'Korece',
-  'ko': 'Korece',
-  'por': 'Portekizce',
-  'pt': 'Portekizce',
-  'dut': 'Felemenkçe',
-  'nld': 'Felemenkçe',
-  'nl': 'Felemenkçe',
-  'pol': 'Lehçe',
-  'pl': 'Lehçe',
-  'gre': 'Yunanca',
-  'ell': 'Yunanca',
-  'el': 'Yunanca',
-  'bul': 'Bulgarca',
-  'bg': 'Bulgarca',
-  'rum': 'Rumence',
-  'ron': 'Rumence',
-  'ro': 'Rumence',
-  'hun': 'Macarca',
-  'hu': 'Macarca',
-  'cze': 'Çekçe',
-  'ces': 'Çekçe',
-  'cs': 'Çekçe',
-  'slo': 'Slovakça',
-  'slk': 'Slovakça',
-  'slv': 'Slovence',
-  'hrv': 'Hırvatça',
-  'srp': 'Sırpça',
-  'bos': 'Boşnakça',
-  'alb': 'Arnavutça',
-  'sqi': 'Arnavutça',
-  'ukr': 'Ukraynaca',
-  'uk': 'Ukraynaca',
-  'swe': 'İsveççe',
-  'sv': 'İsveççe',
-  'nor': 'Norveççe',
-  'nob': 'Norveççe',
-  'dan': 'Danca',
-  'da': 'Danca',
-  'fin': 'Fince',
-  'fi': 'Fince',
-  'est': 'Estonca',
-  'lit': 'Litvanca',
-  'lav': 'Letonca',
-  'ice': 'İzlandaca',
-  'isl': 'İzlandaca',
-  'heb': 'İbranice',
-  'he': 'İbranice',
-  'per': 'Farsça',
-  'fas': 'Farsça',
-  'hin': 'Hintçe',
-  'hi': 'Hintçe',
+  'eng': 'English',
+  'en': 'English',
+  'ger': 'Deutsch',
+  'deu': 'Deutsch',
+  'de': 'Deutsch',
+  'fre': 'Français',
+  'fra': 'Français',
+  'fr': 'Français',
+  'ara': 'العربية',
+  'ar': 'العربية',
+  'rus': 'Русский',
+  'ru': 'Русский',
+  'spa': 'Español',
+  'es': 'Español',
+  'ita': 'Italiano',
+  'it': 'Italiano',
+  'kur': 'Kurdî',
+  'aze': 'Azərbaycanca',
+  'chi': '中文',
+  'zho': '中文',
+  'zh': '中文',
+  'jpn': '日本語',
+  'ja': '日本語',
+  'kor': '한국어',
+  'ko': '한국어',
+  'por': 'Português',
+  'pt': 'Português',
+  'dut': 'Nederlands',
+  'nld': 'Nederlands',
+  'nl': 'Nederlands',
+  'pol': 'Polski',
+  'pl': 'Polski',
+  'gre': 'Ελληνικά',
+  'ell': 'Ελληνικά',
+  'el': 'Ελληνικά',
+  'bul': 'Български',
+  'bg': 'Български',
+  'rum': 'Română',
+  'ron': 'Română',
+  'ro': 'Română',
+  'hun': 'Magyar',
+  'hu': 'Magyar',
+  'cze': 'Čeština',
+  'ces': 'Čeština',
+  'cs': 'Čeština',
+  'slo': 'Slovenčina',
+  'slk': 'Slovenčina',
+  'slv': 'Slovenščina',
+  'hrv': 'Hrvatski',
+  'srp': 'Српски',
+  'bos': 'Bosanski',
+  'alb': 'Shqip',
+  'sqi': 'Shqip',
+  'ukr': 'Українська',
+  'uk': 'Українська',
+  'swe': 'Svenska',
+  'sv': 'Svenska',
+  'nor': 'Norsk',
+  'nob': 'Norsk',
+  'dan': 'Dansk',
+  'da': 'Dansk',
+  'fin': 'Suomi',
+  'fi': 'Suomi',
+  'est': 'Eesti',
+  'lit': 'Lietuvių',
+  'lav': 'Latviešu',
+  'ice': 'Íslenska',
+  'isl': 'Íslenska',
+  'heb': 'עברית',
+  'he': 'עברית',
+  'per': 'فارسی',
+  'fas': 'فارسی',
+  'hin': 'हिन्दी',
+  'hi': 'हिन्दी',
+  'ben': 'বাংলা',
+  'bn': 'বাংলা',
+  'ind': 'Bahasa Indonesia',
+  'id': 'Bahasa Indonesia',
+  'urd': 'اردو',
+  'ur': 'اردو',
 };
 
-/// Menüde görünen parça adı: dil adı ve varsa sağlayıcının başlığı.
-String trackLabel(String id, String? title, String? language) {
+/// Menüde görünen parça adı: dilin kendi adı ve varsa sağlayıcının başlığı.
+String trackLabel(
+    AppLocalizations l, String id, String? title, String? language) {
   final code = language?.trim().toLowerCase();
   final lang = code == null || code.isEmpty || code == 'und'
       ? null
       : _languages[code] ?? code.toUpperCase();
   final name = title?.trim();
-  if (lang != null && name != null && name.isNotEmpty && name != lang) {
+  if (lang != null &&
+      name != null &&
+      name.isNotEmpty &&
+      name.toLowerCase() != lang.toLowerCase()) {
     return '$lang ($name)';
   }
-  return lang ?? (name != null && name.isNotEmpty ? name : 'Parça $id');
+  return lang ?? (name != null && name.isNotEmpty ? name : l.trackNumber(id));
 }

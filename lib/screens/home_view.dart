@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/epg.dart';
 import '../models/playlist.dart';
 import '../services/watch_progress_store.dart';
@@ -50,17 +51,19 @@ class HomeView extends StatelessWidget {
   final ValueChanged<Channel> onPlayChannel;
   final ValueChanged<String> onOpenGroup;
 
-  static String greeting(DateTime now) => switch (now.hour) {
-        >= 5 && < 12 => 'Günaydın',
-        >= 12 && < 18 => 'İyi günler',
-        >= 18 && < 23 => 'İyi akşamlar',
-        _ => 'İyi geceler',
+  static String greeting(AppLocalizations l, DateTime now) =>
+      switch (now.hour) {
+        >= 5 && < 12 => l.greetingMorning,
+        >= 12 && < 18 => l.greetingDay,
+        >= 18 && < 23 => l.greetingEvening,
+        _ => l.greetingNight,
       };
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
+    final l = context.l10n;
     final empty = continueWatching.isEmpty &&
         recentChannels.isEmpty &&
         favoriteGroups.isEmpty &&
@@ -73,13 +76,10 @@ class HomeView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(greeting(now), style: theme.textTheme.displaySmall),
+              Text(greeting(l, now), style: theme.textTheme.displaySmall),
               const SizedBox(height: Space.xxs),
               Text(
-                empty
-                    ? '$listName hazır. Bir kanal aç ya da film seç, '
-                        'izlediklerin burada birikir.'
-                    : 'Kaldığın yerden devam et ya da yeni bir şey keşfet.',
+                empty ? l.homeIntroEmpty(listName) : l.homeIntro,
                 style: theme.textTheme.bodyLarge?.copyWith(color: c.fgMuted),
               ),
               const SizedBox(height: Space.lg),
@@ -96,7 +96,7 @@ class HomeView extends StatelessWidget {
         if (continueWatching.isNotEmpty) ...[
           const SizedBox(height: Space.xl),
           Shelf(
-            title: 'İzlemeye devam et',
+            title: l.continueWatching,
             count: continueWatching.length,
             itemCount: continueWatching.length,
             itemWidth: 160,
@@ -108,10 +108,8 @@ class HomeView extends StatelessWidget {
               return PosterCard(
                 title: meta.title,
                 poster: meta.poster,
-                subtitle: meta.subtitle ??
-                    (left > Duration.zero
-                        ? '${left.inMinutes} dk kaldı'
-                        : null),
+                subtitle: watchSubtitle(l, meta) ??
+                    (left > Duration.zero ? l.minutesLeft(left.inMinutes) : null),
                 progress: e.progress.fraction,
                 fallbackIcon: meta.isEpisode
                     ? Icons.video_library_outlined
@@ -124,7 +122,7 @@ class HomeView extends StatelessWidget {
         if (channelsLoading || recentChannels.isNotEmpty) ...[
           const SizedBox(height: Space.xl),
           Shelf(
-            title: 'Son izlenen kanallar',
+            title: l.recentChannels,
             count: channelsLoading ? null : recentChannels.length,
             itemCount: channelsLoading ? 5 : recentChannels.length,
             itemWidth: ChannelCard.width,
@@ -140,7 +138,7 @@ class HomeView extends StatelessWidget {
                 logo: channel.logo,
                 programme: programme?.title,
                 progress: programme?.progress(now),
-                caption: channel.group,
+                caption: channel.group == null ? null : l.group(channel.group!),
                 onTap: () => onPlayChannel(channel),
               );
             },
@@ -153,7 +151,7 @@ class HomeView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Favori paketler', style: theme.textTheme.titleMedium),
+                Text(l.favoritePackages, style: theme.textTheme.titleMedium),
                 const SizedBox(height: Space.sm),
                 Wrap(
                   spacing: Space.sm,
@@ -161,7 +159,7 @@ class HomeView extends StatelessWidget {
                   children: [
                     for (final g in favoriteGroups)
                       _GroupChip(
-                        label: g,
+                        label: l.group(g),
                         count: groupCounts[g],
                         onTap: () => onOpenGroup(g),
                       ),
@@ -244,7 +242,7 @@ class _ShortcutCardState extends State<_ShortcutCard> {
                       Text(s.label, style: theme.textTheme.titleSmall),
                       if (s.detail case final detail?)
                         Text(detail,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodySmall),
                     ],
@@ -289,7 +287,7 @@ class _GroupChip extends StatelessWidget {
               Text(label, style: theme.textTheme.labelLarge),
               if (count != null) ...[
                 const SizedBox(width: Space.xs),
-                Text(formatCount(count!),
+                Text(context.l10n.count(count!),
                     style: theme.textTheme.labelMedium
                         ?.copyWith(color: c.fgMuted)),
               ],

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../tokens.dart';
 import 'channel_tile.dart';
-import 'common.dart';
 
 /// Başlıklı yatay raf. Taşarsa başlığın yanında kaydırma okları çıkar.
 class Shelf extends StatefulWidget {
@@ -88,6 +88,8 @@ class _ShelfState extends State<Shelf> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
+    // Sağdan sola dillerde "geri" sağı gösterir.
+    final rtl = Directionality.of(context) == TextDirection.rtl;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -98,7 +100,7 @@ class _ShelfState extends State<Shelf> {
               Text(widget.title, style: theme.textTheme.titleMedium),
               if (widget.count case final count?) ...[
                 const SizedBox(width: Space.xs),
-                Text(formatCount(count),
+                Text(context.l10n.count(count),
                     style: theme.textTheme.labelMedium
                         ?.copyWith(color: c.fgMuted)),
               ],
@@ -107,16 +109,16 @@ class _ShelfState extends State<Shelf> {
               if (_canBack || _canForward) ...[
                 const SizedBox(width: Space.xs),
                 IconButton(
-                  tooltip: 'Geri kaydır',
+                  tooltip: context.l10n.scrollBack,
                   visualDensity: VisualDensity.compact,
                   onPressed: _canBack ? () => _page(-1) : null,
-                  icon: const Icon(Icons.chevron_left),
+                  icon: Icon(rtl ? Icons.chevron_right : Icons.chevron_left),
                 ),
                 IconButton(
-                  tooltip: 'İleri kaydır',
+                  tooltip: context.l10n.scrollForward,
                   visualDensity: VisualDensity.compact,
                   onPressed: _canForward ? () => _page(1) : null,
-                  icon: const Icon(Icons.chevron_right),
+                  icon: Icon(rtl ? Icons.chevron_left : Icons.chevron_right),
                 ),
               ],
             ],

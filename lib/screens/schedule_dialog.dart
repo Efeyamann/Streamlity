@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/epg.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets/common.dart';
@@ -44,27 +45,13 @@ class _ScheduleDialog extends StatelessWidget {
   final DateTime now;
   final int archiveDays;
 
-  static const _weekdays = [
-    'Pazartesi',
-    'Salı',
-    'Çarşamba',
-    'Perşembe',
-    'Cuma',
-    'Cumartesi',
-    'Pazar',
-  ];
-
-  static String _dayLabel(DateTime day, DateTime today) {
-    final diff = day.difference(today).inDays;
-    final date = '${day.day.toString().padLeft(2, '0')}.'
-        '${day.month.toString().padLeft(2, '0')}';
-    return switch (diff) {
-      0 => 'Bugün',
-      1 => 'Yarın',
-      -1 => 'Dün',
-      _ => '${_weekdays[day.weekday - 1]} $date',
-    };
-  }
+  static String _dayLabel(AppLocalizations l, DateTime day, DateTime today) =>
+      switch (day.difference(today).inDays) {
+        0 => l.today,
+        1 => l.tomorrow,
+        -1 => l.yesterday,
+        _ => l.weekdayDate(day),
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +60,7 @@ class _ScheduleDialog extends StatelessWidget {
     final today = DateTime(local.year, local.month, local.day);
     final todayIndex = days.keys.toList().indexOf(today);
     final c = AppColors.of(context);
+    final l = context.l10n;
     return Dialog(
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
@@ -85,7 +73,7 @@ class _ScheduleDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(
+                padding: const EdgeInsetsDirectional.fromSTEB(
                     Space.lg, Space.md, Space.xs, Space.xs),
                 child: Row(
                   children: [
@@ -94,7 +82,7 @@ class _ScheduleDialog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            channelName.toUpperCase(),
+                            l.upper(channelName),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context)
@@ -103,7 +91,7 @@ class _ScheduleDialog extends StatelessWidget {
                                 ?.copyWith(color: c.fgMuted),
                           ),
                           const SizedBox(height: 2),
-                          Text('Yayın akışı',
+                          Text(l.schedule,
                               style: Theme.of(context).textTheme.titleLarge),
                           if (archiveDays > 0) ...[
                             const SizedBox(height: Space.xs),
@@ -114,8 +102,7 @@ class _ScheduleDialog extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
-                                    'Geçmiş $archiveDays gün izlenebilir, '
-                                    'programa tıkla',
+                                    l.archiveHint(archiveDays),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style:
@@ -129,7 +116,7 @@ class _ScheduleDialog extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Kapat',
+                      tooltip: l.close,
                       icon: const Icon(Icons.close),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
@@ -137,11 +124,11 @@ class _ScheduleDialog extends StatelessWidget {
                 ),
               ),
               if (days.isEmpty)
-                const SizedBox(
+                SizedBox(
                   height: 260,
                   child: EmptyState(
                     icon: Icons.event_busy,
-                    title: 'Bu kanal için program yok',
+                    title: l.noProgrammes,
                   ),
                 )
               else ...[
@@ -150,7 +137,7 @@ class _ScheduleDialog extends StatelessWidget {
                   tabAlignment: TabAlignment.start,
                   tabs: [
                     for (final day in days.keys)
-                      Tab(text: _dayLabel(day, today)),
+                      Tab(text: _dayLabel(l, day, today)),
                   ],
                 ),
                 Flexible(
@@ -207,16 +194,11 @@ class _DayListState extends State<_DayList> {
     super.dispose();
   }
 
-  static String _time(DateTime t) {
-    final local = t.toLocal();
-    return '${local.hour.toString().padLeft(2, '0')}:'
-        '${local.minute.toString().padLeft(2, '0')}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final c = AppColors.of(context);
+    final l = context.l10n;
     final now = widget.now;
     const tabular = [FontFeature.tabularFigures()];
     return ListView.builder(
@@ -232,13 +214,13 @@ class _DayListState extends State<_DayList> {
         final row = Container(
           decoration: BoxDecoration(
             color: onAir ? c.accent.withValues(alpha: 0.10) : null,
-            border: Border(
-              left: BorderSide(
+            border: BorderDirectional(
+              start: BorderSide(
                   color: onAir ? c.accent : Colors.transparent, width: 3),
               bottom: BorderSide(color: c.border),
             ),
           ),
-          padding: const EdgeInsets.fromLTRB(
+          padding: const EdgeInsetsDirectional.fromSTEB(
               Space.lg - 3, Space.sm, Space.lg, Space.sm),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,7 +228,7 @@ class _DayListState extends State<_DayList> {
               SizedBox(
                 width: 56,
                 child: Text(
-                  _time(p.start),
+                  l.time(p.start),
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: dim
                         ? c.fgSubtle
@@ -274,7 +256,7 @@ class _DayListState extends State<_DayList> {
                         ),
                         if (onAir) ...[
                           const SizedBox(width: Space.xs),
-                          const LiveBadge(label: 'ŞİMDİ', compact: true),
+                          LiveBadge(label: l.nowBadge, compact: true),
                         ],
                       ],
                     ),
@@ -306,9 +288,9 @@ class _DayListState extends State<_DayList> {
               ),
               if (playable)
                 Padding(
-                  padding: const EdgeInsets.only(left: Space.xs),
+                  padding: const EdgeInsetsDirectional.only(start: Space.xs),
                   child: Tooltip(
-                    message: onAir ? 'Baştan izle' : 'Geçmişten izle',
+                    message: onAir ? l.watchFromStart : l.watchFromArchive,
                     child: Icon(
                         onAir ? Icons.restart_alt : Icons.play_circle_outline,
                         size: IconSizes.md,

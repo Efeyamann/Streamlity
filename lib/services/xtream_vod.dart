@@ -21,7 +21,7 @@ Future<VodCatalog> loadVodCatalog(XtreamSource source, VodKind kind) async {
   );
   if (catalog.items.isEmpty) {
     throw PlaylistException(
-        movie ? 'Hesapta film bulunamadı.' : 'Hesapta dizi bulunamadı.');
+        movie ? PlaylistError.noMovies : PlaylistError.noSeries);
   }
   return catalog;
 }
@@ -149,7 +149,8 @@ SeriesDetails parseSeriesDetails(Map<String, dynamic> json) {
         id: '$id',
         season: season,
         number: number,
-        title: _text(e['title']) ?? 'Bölüm $number',
+        // Adsız bölümün adı arayüz dilinde ekranda kurulur.
+        title: _text(e['title']) ?? '',
         extension: _text(e['container_extension']) ?? 'mp4',
         plot: _text(meta['plot']),
         duration: _duration(meta['duration_secs'], meta['duration']),

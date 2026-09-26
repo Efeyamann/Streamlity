@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/playlist.dart' show searchKey;
 import '../models/playlist_source.dart';
 import '../models/vod.dart';
@@ -12,13 +13,17 @@ import '../ui/widgets/poster.dart';
 import 'vod_player_screen.dart';
 
 enum _Sort {
-  provider('Sağlayıcı sırası'),
-  name('Ada göre'),
-  rating('Puana göre'),
-  year('Yıla göre');
+  provider,
+  name,
+  rating,
+  year;
 
-  const _Sort(this.label);
-  final String label;
+  String label(AppLocalizations l) => switch (this) {
+        provider => l.sortProvider,
+        name => l.sortName,
+        rating => l.sortRating,
+        year => l.sortYear,
+      };
 }
 
 /// Poster ızgarasının ölçüleri; iskelet de aynısını kullanır.
@@ -152,16 +157,17 @@ class _VodBrowserState extends State<VodBrowser> {
       future: widget.catalog,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          final l = context.l10n;
           return EmptyState(
             icon: Icons.cloud_off_outlined,
             tone: AppColors.of(context).danger,
-            title: _movies ? 'Filmler alınamadı' : 'Diziler alınamadı',
-            message: '${snapshot.error}',
+            title: _movies ? l.moviesFailed : l.seriesFailed,
+            message: l.error(snapshot.error!),
             actions: [
               FilledButton.icon(
                 onPressed: widget.onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Tekrar dene'),
+                label: Text(l.retry),
               ),
             ],
           );
@@ -181,6 +187,7 @@ class _VodBrowserState extends State<VodBrowser> {
 
   Widget _categories(VodCatalog catalog) {
     final c = AppColors.of(context);
+    final l = context.l10n;
     final counts = _countsFor(catalog);
     final query = searchKey(_categoryQuery.trim());
     final cats = query.isEmpty
@@ -203,17 +210,17 @@ class _VodBrowserState extends State<VodBrowser> {
     // (anahtar, etiket, ikon, sayı, başlık mı, yıldızlı kategori mi)
     final rows = <(String?, String, IconData?, int?, bool, bool)>[
       if (query.isEmpty)
-        (null, _movies ? 'Tüm filmler' : 'Tüm diziler', Icons.apps,
+        (null, _movies ? l.allMovies : l.allSeries, Icons.apps,
             catalog.items.length, false, false),
       if (query.isEmpty && resumable > 0)
-        (_continueKey, 'İzlemeye devam et', Icons.history, resumable, false,
+        (_continueKey, l.continueWatching, Icons.history, resumable, false,
             false),
       if (pinned.isNotEmpty) ...[
-        (null, 'Favori paketler', null, null, true, false),
+        (null, l.favoritePackages, null, null, true, false),
         for (final cat in pinned)
           (cat.id, cat.name, null, counts[cat.id], false, true),
       ],
-      if (query.isEmpty) (null, 'Tüm kategoriler', null, null, true, false),
+      if (query.isEmpty) (null, l.allCategories, null, null, true, false),
       for (final cat in cats)
         (cat.id, cat.name, null, counts[cat.id], false, true),
     ];
@@ -223,7 +230,7 @@ class _VodBrowserState extends State<VodBrowser> {
           padding: const EdgeInsets.fromLTRB(
               Space.sm, Space.sm, Space.sm, Space.xxs),
           child: SearchField(
-            hint: 'Kategori ara',
+            hint: l.searchCategories,
             onChanged: (v) => setState(() => _categoryQuery = v),
           ),
         ),
@@ -246,8 +253,8 @@ class _VodBrowserState extends State<VodBrowser> {
                 trailing: category
                     ? IconButton(
                         tooltip: favorite
-                            ? 'Favori paketlerden çıkar'
-                            : 'Favori paketlere ekle',
+                            ? l.removeFromFavoritePackages
+                            : l.addToFavoritePackages,
                         iconSize: IconSizes.md,
                         visualDensity: VisualDensity.compact,
                         icon: Icon(favorite
@@ -269,7 +276,7 @@ class _VodBrowserState extends State<VodBrowser> {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
     final items = _visible(catalog);
-    final noun = _movies ? 'film' : 'dizi';
+    final l = context.l10n;
     return Column(
       children: [
         Padding(
@@ -279,12 +286,15 @@ class _VodBrowserState extends State<VodBrowser> {
             children: [
               Expanded(
                 child: SearchField(
-                  hint: _movies ? 'Film ara' : 'Dizi ara',
+                  hint: _movies ? l.searchMovies : l.searchSeries,
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
               const SizedBox(width: Space.md),
-              Text('${formatCount(items.length)} $noun',
+              Text(
+                  _movies
+                      ? l.movieCount(items.length)
+                      : l.seriesCount(items.length),
                   style: theme.textTheme.labelMedium
                       ?.copyWith(color: c.fgMuted)),
               const SizedBox(width: Space.sm),
@@ -298,7 +308,7 @@ class _VodBrowserState extends State<VodBrowser> {
                         size: IconSizes.md,
                       ),
                       onPressed: () => setState(() => _sort = s),
-                      child: Text(s.label),
+                      child: Text(s.label(l)),
                     ),
                 ],
                 builder: (context, controller, _) => OutlinedButton.icon(
@@ -306,7 +316,7 @@ class _VodBrowserState extends State<VodBrowser> {
                       ? controller.close()
                       : controller.open(),
                   icon: const Icon(Icons.sort, size: IconSizes.md),
-                  label: Text(_sort.label),
+                  label: Text(_sort.label(l)),
                 ),
               ),
             ],
@@ -316,8 +326,8 @@ class _VodBrowserState extends State<VodBrowser> {
           child: items.isEmpty
               ? EmptyState(
                   icon: Icons.search_off,
-                  title: 'Eşleşen $noun yok',
-                  message: 'Aramayı ya da kategoriyi değiştir.',
+                  title: _movies ? l.noMatchingMovies : l.noMatchingSeries,
+                  message: l.changeSearchOrCategory,
                 )
               : GridView.builder(
                   padding: const EdgeInsets.fromLTRB(
@@ -356,7 +366,7 @@ class _VodSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     return Semantics(
-      label: movies ? 'Filmler yükleniyor' : 'Diziler yükleniyor',
+      label: movies ? context.l10n.loadingMovies : context.l10n.loadingSeries,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -395,8 +405,8 @@ class _VodSkeleton extends StatelessWidget {
                       const SizedBox(width: Space.md),
                       Text(
                         movies
-                            ? 'Filmler yükleniyor…'
-                            : 'Diziler yükleniyor…',
+                            ? context.l10n.loadingMovies
+                            : context.l10n.loadingSeries,
                         style: Theme.of(context)
                             .textTheme
                             .labelMedium
@@ -478,11 +488,6 @@ Future<void> openVodItem(
   ));
 }
 
-String formatDuration(Duration d) {
-  final h = d.inHours, m = d.inMinutes % 60;
-  return h > 0 ? '$h sa $m dk' : '$m dk';
-}
-
 String formatPosition(Duration d) {
   String two(int n) => n.toString().padLeft(2, '0');
   final h = d.inHours, m = d.inMinutes % 60, s = d.inSeconds % 60;
@@ -520,6 +525,7 @@ class _MovieDialogState extends State<_MovieDialog> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
+    final l = context.l10n;
     final progress = widget.progress;
     final resumable = progress != null && progress.resumable;
     return Dialog(
@@ -582,7 +588,7 @@ class _MovieDialogState extends State<_MovieDialog> {
                                       iconColor: c.warning),
                                 if (movie.year case final y?) MetaChip('$y'),
                                 if (d?.duration case final t?)
-                                  MetaChip(formatDuration(t),
+                                  MetaChip(l.duration(t),
                                       icon: Icons.schedule),
                                 if (d?.genre case final g?) MetaChip(g),
                               ],
@@ -609,7 +615,7 @@ class _MovieDialogState extends State<_MovieDialog> {
                                           Text(
                                             d?.plot ??
                                                 movie.plot ??
-                                                'Açıklama yok.',
+                                                l.noDescription,
                                             style: theme.textTheme.bodyMedium
                                                 ?.copyWith(
                                                     color: c.fg
@@ -618,11 +624,10 @@ class _MovieDialogState extends State<_MovieDialog> {
                                           ),
                                           if (d?.director case final dir?)
                                             _Credit(
-                                                label: 'Yönetmen', value: dir),
+                                                label: l.director, value: dir),
                                           if (d?.cast case final cast?)
                                             _Credit(
-                                                label: 'Oyuncular',
-                                                value: cast),
+                                                label: l.cast, value: cast),
                                         ],
                                       ),
                                     ),
@@ -652,20 +657,20 @@ class _MovieDialogState extends State<_MovieDialog> {
                                     onPressed: () => _play(context,
                                         start: progress.position),
                                     icon: const Icon(Icons.play_arrow_rounded),
-                                    label: Text('Devam et · '
-                                        '${formatPosition(progress.position)}'),
+                                    label: Text(l.resumeAt(
+                                        formatPosition(progress.position))),
                                   ),
                                   OutlinedButton.icon(
                                     onPressed: () => _play(context),
                                     icon: const Icon(Icons.replay),
-                                    label: const Text('Baştan başla'),
+                                    label: Text(l.startOver),
                                   ),
                                 ] else
                                   FilledButton.icon(
                                     autofocus: true,
                                     onPressed: () => _play(context),
                                     icon: const Icon(Icons.play_arrow_rounded),
-                                    label: const Text('Oynat'),
+                                    label: Text(l.play),
                                   ),
                               ],
                             ),
@@ -675,11 +680,11 @@ class _MovieDialogState extends State<_MovieDialog> {
                     ],
                   ),
                 ),
-                Positioned(
+                PositionedDirectional(
                   top: Space.xs,
-                  right: Space.xs,
+                  end: Space.xs,
                   child: IconButton(
-                    tooltip: 'Kapat',
+                    tooltip: l.close,
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -755,13 +760,16 @@ class _SeriesScreenState extends State<_SeriesScreen> {
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => VodPlayerScreen(
         title: widget.series.name,
-        subtitle: '${e.season}. sezon ${e.number}. bölüm · ${e.title}',
+        subtitle: context.l10n.episodeLong(e.season, e.number,
+            e.title.isEmpty ? context.l10n.episodeFallback(e.number) : e.title),
         url: episodeUrl(widget.source, e),
         source: widget.source,
         progressKey: e.key,
         progressMeta: WatchMeta(
           title: widget.series.name,
-          subtitle: 'S${e.season} B${e.number} · ${e.title}',
+          season: e.season,
+          episode: e.number,
+          episodeTitle: e.title,
           poster: widget.series.poster,
           streamId: e.id,
           extension: e.extension,
@@ -795,6 +803,7 @@ class _SeriesScreenState extends State<_SeriesScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l = context.l10n;
     return Scaffold(
       body: FutureBuilder<SeriesDetails>(
         future: _details,
@@ -805,23 +814,22 @@ class _SeriesScreenState extends State<_SeriesScreen> {
             body = EmptyState(
               icon: Icons.cloud_off_outlined,
               tone: c.danger,
-              title: 'Dizi bilgisi alınamadı',
-              message: '${snapshot.error}',
+              title: l.seriesInfoFailed,
+              message: l.error(snapshot.error!),
               actions: [
                 FilledButton.icon(
                   onPressed: () => setState(() => _details =
                       loadSeriesDetails(widget.source, widget.series.id)),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Tekrar dene'),
+                  label: Text(l.retry),
                 ),
               ],
             );
           } else if (d == null) {
             body = _content(null);
           } else if (d.seasons.isEmpty) {
-            body = const EmptyState(
-                icon: Icons.video_library_outlined,
-                title: 'Bu dizide bölüm yok');
+            body = EmptyState(
+                icon: Icons.video_library_outlined, title: l.noEpisodes);
           } else {
             body = _content(d);
           }
@@ -832,17 +840,17 @@ class _SeriesScreenState extends State<_SeriesScreen> {
               Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
                         Space.xs, Space.xs, Space.md, 0),
                     child: Row(
                       children: [
                         IconButton(
-                          tooltip: 'Geri',
+                          tooltip: l.back,
                           icon: const Icon(Icons.arrow_back),
                           onPressed: () => Navigator.of(context).maybePop(),
                         ),
                         const SizedBox(width: Space.xs),
-                        Text('DİZİLER',
+                        Text(l.upper(l.sectionSeries),
                             style: Theme.of(context)
                                 .textTheme
                                 .labelSmall
@@ -863,6 +871,7 @@ class _SeriesScreenState extends State<_SeriesScreen> {
   /// [d] null ise bölümlerin yerinde iskelet.
   Widget _content(SeriesDetails? d) {
     final c = AppColors.of(context);
+    final l = context.l10n;
     final theme = Theme.of(context);
     final series = widget.series;
     final next = d == null ? null : _nextUp(d);
@@ -920,7 +929,7 @@ class _SeriesScreenState extends State<_SeriesScreen> {
                                   iconColor: c.warning),
                             if (series.year case final y?) MetaChip('$y'),
                             if (d != null)
-                              MetaChip('${d.seasons.length} sezon'),
+                              MetaChip(l.seasonCount(d.seasons.length)),
                           ],
                         ),
                       ],
@@ -939,8 +948,9 @@ class _SeriesScreenState extends State<_SeriesScreen> {
                   autofocus: true,
                   onPressed: () => _play(next),
                   icon: const Icon(Icons.play_arrow_rounded),
-                  label: Text('S${next.season} B${next.number} · '
-                      '${_progress[next.key]?.resumable ?? false ? 'Devam et' : 'Oynat'}'),
+                  label: Text(_progress[next.key]?.resumable ?? false
+                      ? l.resumeEpisode(l.episodeCode(next.season, next.number))
+                      : l.playEpisode(l.episodeCode(next.season, next.number))),
                 ),
                 const SizedBox(height: Space.md),
               ],
@@ -955,9 +965,9 @@ class _SeriesScreenState extends State<_SeriesScreen> {
                     style: theme.textTheme.bodyMedium
                         ?.copyWith(color: c.fg.withValues(alpha: 0.9))),
                 if (d.info.cast case final cast?)
-                  _Credit(label: 'Oyuncular', value: cast),
+                  _Credit(label: l.cast, value: cast),
                 if (d.info.director case final dir?)
-                  _Credit(label: 'Yönetmen', value: dir),
+                  _Credit(label: l.director, value: dir),
               ],
             ],
           ),
@@ -1003,7 +1013,7 @@ class _SeriesScreenState extends State<_SeriesScreen> {
                         tabs: [
                           for (final MapEntry(key: s, value: list)
                               in d.seasons.entries)
-                            Tab(text: '$s. sezon  ·  ${list.length}'),
+                            Tab(text: l.seasonTab(s, list.length)),
                         ],
                       ),
                       Expanded(
@@ -1064,6 +1074,7 @@ class _EpisodeRowState extends State<_EpisodeRow> {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
     final motion = Motion.of(context);
+    final l = context.l10n;
     final e = widget.episode;
     final p = widget.progress;
     final finished = p != null && p.finished;
@@ -1148,19 +1159,22 @@ class _EpisodeRowState extends State<_EpisodeRow> {
                                     ])),
                             const SizedBox(width: Space.xs),
                             Expanded(
-                              child: Text(e.title,
+                              child: Text(
+                                  e.title.isEmpty
+                                      ? l.episodeFallback(e.number)
+                                      : e.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.titleSmall),
                             ),
                             if (finished)
                               Tooltip(
-                                message: 'İzlendi',
+                                message: l.watched,
                                 child: Icon(Icons.check_circle,
                                     size: IconSizes.md, color: c.success),
                               )
                             else if (e.duration case final t?)
-                              Text(formatDuration(t),
+                              Text(l.duration(t),
                                   style: theme.textTheme.labelMedium
                                       ?.copyWith(color: c.fgMuted)),
                           ],
@@ -1177,7 +1191,7 @@ class _EpisodeRowState extends State<_EpisodeRow> {
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                                '${formatPosition(p.position)} izlendi',
+                                l.watchedUntil(formatPosition(p.position)),
                                 style: theme.textTheme.labelMedium
                                     ?.copyWith(color: c.accent)),
                           ),

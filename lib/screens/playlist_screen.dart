@@ -17,6 +17,7 @@ import '../services/playlist_loader.dart';
 import '../services/stall_watchdog.dart';
 import '../services/stream_slot.dart';
 import '../services/watch_progress_store.dart';
+import '../l10n/l10n.dart';
 import '../services/xtream_vod.dart';
 import '../ui/player_controls.dart';
 import '../ui/tokens.dart';
@@ -29,7 +30,7 @@ import 'home_view.dart';
 import 'search_view.dart';
 import 'vod_browser.dart';
 import 'vod_player_screen.dart';
-import 'sources_screen.dart' show formatDate;
+import 'settings_screen.dart';
 
 /// Bir listenin kanalları, yayın akışı ve oynatıcılar. Aynı anda birden
 /// fazla kanal izlenebilir. Geri gidilince oynatıcılar kapanır.
@@ -63,11 +64,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   PlaylistSource get _source => widget.saved.source;
   Playlist? _playlist;
   bool _loading = true;
-  String? _error;
+  Object? _error;
 
   Epg? _epg;
   bool _epgLoading = false;
-  String? _epgError;
+  Object? _epgError;
 
   /// Akışın en son sağlayıcıyla karşılaştırıldığı an; uzun açık kalan
   /// uygulamada yenilemek için.
@@ -178,7 +179,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       widget.onLoaded(playlist.channelCount, playlist.expiresAt);
       _loadEpg(playlist);
     } on PlaylistException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -204,7 +205,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       }
     } catch (e) {
       if (stale()) return;
-      setState(() => _epgError = '$e');
+      setState(() => _epgError = e);
     } finally {
       if (!stale()) {
         setState(() {
@@ -240,8 +241,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   /// Kanalı yeni bir karede açar ve sesi ona verir.
   void _addSlot(Channel channel) {
     if (_slots.length >= _maxSlots) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Aynı anda en fazla $_maxSlots kanal izlenebilir'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.l10n.maxSlotsReached(_maxSlots)),
       ));
       return;
     }
@@ -313,13 +314,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       XtreamSource source, Channel channel, Programme programme) async {
     final resume = _current;
     _stopLive();
-    String two(int n) => n.toString().padLeft(2, '0');
+    final l = context.l10n;
     final start = programme.start.toLocal();
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => VodPlayerScreen(
         title: programme.title,
-        subtitle: '${channel.name} · ${two(start.day)}.${two(start.month)} '
-            '${two(start.hour)}:${two(start.minute)}',
+        subtitle: '${channel.name} · ${l.weekdayDate(start)} '
+            '${l.time(start)}',
         url: catchupUrl(
           source,
           streamId: channel.id!,
@@ -371,7 +372,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => VodPlayerScreen(
         title: meta.title,
-        subtitle: meta.subtitle,
+        subtitle: watchSubtitle(context.l10n, meta),
         url: watchUrl(_source as XtreamSource, meta),
         source: _source,
         progressKey: entry.key,
@@ -411,6 +412,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   }
 
   Widget _homeBody(Playlist? playlist) {
+    final l = context.l10n;
     final xtream = _source is XtreamSource;
     final byKey = _byKey;
     return HomeView(
@@ -432,30 +434,29 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       shortcuts: [
         (
           icon: Icons.live_tv_rounded,
-          label: 'Canlı TV',
-          detail: playlist == null
-              ? null
-              : '${formatCount(playlist.channelCount)} kanal',
+          label: l.sectionLive,
+          detail:
+              playlist == null ? null : l.channelCount(playlist.channelCount),
           onTap: () => _setSection(_Section.live),
         ),
         if (xtream) ...[
           (
             icon: Icons.movie_rounded,
-            label: 'Filmler',
+            label: l.sectionMovies,
             detail: null,
             onTap: () => _setSection(_Section.movies),
           ),
           (
             icon: Icons.video_library_rounded,
-            label: 'Diziler',
+            label: l.sectionSeries,
             detail: null,
             onTap: () => _setSection(_Section.series),
           ),
         ],
         (
           icon: Icons.search_rounded,
-          label: 'Ara',
-          detail: xtream ? 'Kanal, film, dizi' : 'Kanallarda',
+          label: l.sectionSearch,
+          detail: xtream ? l.searchShortcutAll : l.searchShortcutChannels,
           onTap: () => _setSection(_Section.search),
         ),
       ],
@@ -483,6 +484,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     final canAdd = _slots.isNotEmpty &&
         _slots.length < _maxSlots &&
         !_isPlaying(channel);
+    final l = context.l10n;
     final action = await showMenu<VoidCallback>(
       context: context,
       position: RelativeRect.fromLTRB(
@@ -490,27 +492,27 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       items: [
         PopupMenuItem(
           value: () => _play(channel),
-          child: const ListTile(
-            leading: Icon(Icons.play_arrow),
-            title: Text('Oynat'),
+          child: ListTile(
+            leading: const Icon(Icons.play_arrow),
+            title: Text(l.play),
             contentPadding: EdgeInsets.zero,
           ),
         ),
         if (canAdd)
           PopupMenuItem(
             value: () => _addSlot(channel),
-            child: const ListTile(
-              leading: Icon(Icons.add_to_queue),
-              title: Text('Yan yana izle'),
+            child: ListTile(
+              leading: const Icon(Icons.add_to_queue),
+              title: Text(l.watchSideBySide),
               contentPadding: EdgeInsets.zero,
             ),
           ),
         if (_hasSchedule(channel))
           PopupMenuItem(
             value: () => _showSchedule(channel),
-            child: const ListTile(
-              leading: Icon(Icons.calendar_view_day),
-              title: Text('Yayın akışı'),
+            child: ListTile(
+              leading: const Icon(Icons.calendar_view_day),
+              title: Text(l.schedule),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -745,6 +747,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   Widget build(BuildContext context) {
     final playlist = _playlist;
     final xtream = _source is XtreamSource;
+    final l = context.l10n;
     final Widget body;
     if (_section == _Section.home) {
       body = _homeBody(playlist);
@@ -763,7 +766,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     } else if (playlist == null) {
       body = _loading || _error == null
           ? const _LiveSkeleton()
-          : _LoadError(message: _error!, onRetry: _load);
+          : _LoadError(message: l.error(_error!), onRetry: _load);
     } else {
       body = _liveBody(playlist, _visibleChannels(playlist),
           _epg?.current(_current?.tvgId, _now));
@@ -775,44 +778,49 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             selected: _section,
             onSelected: _setSection,
             items: [
-              const RailItem(
+              RailItem(
                 value: _Section.home,
                 icon: Icons.home_outlined,
                 selectedIcon: Icons.home_rounded,
-                label: 'Ana sayfa',
+                label: l.sectionHome,
               ),
-              const RailItem(
+              RailItem(
                 value: _Section.live,
                 icon: Icons.live_tv_outlined,
                 selectedIcon: Icons.live_tv,
-                label: 'Canlı TV',
+                label: l.sectionLive,
               ),
-              if (xtream) ...const [
+              if (xtream) ...[
                 RailItem(
                   value: _Section.movies,
                   icon: Icons.movie_outlined,
                   selectedIcon: Icons.movie,
-                  label: 'Filmler',
+                  label: l.sectionMovies,
                 ),
                 RailItem(
                   value: _Section.series,
                   icon: Icons.video_library_outlined,
                   selectedIcon: Icons.video_library,
-                  label: 'Diziler',
+                  label: l.sectionSeries,
                 ),
               ],
-              const RailItem(
+              RailItem(
                 value: _Section.search,
                 icon: Icons.search,
                 selectedIcon: Icons.search,
-                label: 'Ara',
+                label: l.sectionSearch,
               ),
             ],
             footer: [
               RailButton(
+                icon: Icons.settings_outlined,
+                label: l.sectionSettings,
+                onTap: () => openSettings(context),
+              ),
+              RailButton(
                 icon: Icons.layers_outlined,
-                label: 'Listeler',
-                tooltip: 'Listelere dön',
+                label: l.sectionLists,
+                tooltip: l.backToLists,
                 onTap: () => Navigator.of(context).maybePop(),
               ),
             ],
@@ -837,16 +845,17 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
     final expiresAt = playlist?.expiresAt;
+    final l = context.l10n;
     final title = switch (_section) {
-      _Section.home => 'Ana sayfa',
-      _Section.search => 'Ara',
-      _Section.live => _current?.name ?? 'Canlı TV',
-      _Section.movies => 'Filmler',
-      _Section.series => 'Diziler',
+      _Section.home => l.sectionHome,
+      _Section.search => l.sectionSearch,
+      _Section.live => _current?.name ?? l.sectionLive,
+      _Section.movies => l.sectionMovies,
+      _Section.series => l.sectionSeries,
     };
     return Container(
       height: 64,
-      padding: const EdgeInsets.only(left: Space.lg, right: Space.md),
+      padding: const EdgeInsetsDirectional.only(start: Space.lg, end: Space.md),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: c.border)),
       ),
@@ -858,7 +867,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.saved.name.toUpperCase(),
+                  l.upper(widget.saved.name),
                   style: theme.textTheme.labelSmall
                       ?.copyWith(color: c.fgMuted),
                   maxLines: 1,
@@ -879,32 +888,32 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
               TrackMenus(key: ObjectKey(active), player: active.player),
             if (appMuted.value && _slots.isNotEmpty)
               IconButton(
-                tooltip: 'Sesi aç (M)',
+                tooltip: l.unmuteShortcut,
                 icon: const Icon(Icons.volume_off),
                 onPressed: _toggleMute,
               ),
             if (_hasSchedule(_current))
               IconButton(
-                tooltip: 'Yayın akışı',
+                tooltip: l.schedule,
                 icon: const Icon(Icons.calendar_view_day),
                 onPressed: () => _showSchedule(_current!),
               ),
           ],
           if (_epgLoading)
-            const _StatusPill(
-              leading: SizedBox.square(
+            _StatusPill(
+              leading: const SizedBox.square(
                 dimension: 12,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              label: 'Yayın akışı güncelleniyor',
+              label: l.epgUpdating,
             )
-          else if (_epgError != null)
+          else if (_epgError case final error?)
             Tooltip(
-              message: _epgError!,
+              message: l.error(error),
               child: _StatusPill(
                 leading: Icon(Icons.event_busy,
                     size: IconSizes.sm, color: c.warning),
-                label: 'Yayın akışı alınamadı',
+                label: l.epgFailed,
               ),
             ),
           if (expiresAt != null)
@@ -912,7 +921,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
               leading: Icon(Icons.event_outlined,
                   size: IconSizes.sm,
                   color: _expiresSoon(expiresAt) ? c.warning : c.fgMuted),
-              label: 'Bitiş ${formatDate(expiresAt)}',
+              label: l.expiresOn(l.date(expiresAt)),
               color: _expiresSoon(expiresAt) ? c.warning : null,
             ),
         ],
@@ -924,6 +933,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       expiresAt.difference(DateTime.now()) < const Duration(days: 7);
 
   Widget _liveBody(Playlist playlist, List<Channel> channels, Programme? onAir) {
+    final l = context.l10n;
     return Row(
       children: [
         SizedBox(
@@ -933,8 +943,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             counts: playlist.groupCounts,
             selected: _group,
             specials: [
-              (null, 'Tüm kanallar', Icons.apps, playlist.channelCount),
-              (_recentsGroup, 'Son izlenenler', Icons.history,
+              (null, l.allChannels, Icons.apps, playlist.channelCount),
+              (_recentsGroup, l.recentlyWatched, Icons.history,
                   _recents.length),
             ],
             favoriteGroups: _favoriteGroups,
@@ -951,7 +961,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 padding: const EdgeInsets.fromLTRB(
                     Space.sm, Space.sm, Space.sm, Space.xxs),
                 child: SearchField(
-                  hint: 'Kanal ara',
+                  hint: l.searchChannels,
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
@@ -962,11 +972,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                             ? Icons.history
                             : Icons.search_off,
                         title: _group == _recentsGroup && _query.isEmpty
-                            ? 'Henüz kanal izlemedin'
-                            : 'Kanal bulunamadı',
+                            ? l.noRecentChannelsTitle
+                            : l.noChannelFound,
                         message: _group == _recentsGroup && _query.isEmpty
-                            ? 'İzlediğin kanallar burada görünür.'
-                            : 'Aramayı ya da kategoriyi değiştir.',
+                            ? l.noRecentChannelsMessage
+                            : l.changeSearchOrCategory,
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.only(bottom: Space.md),
@@ -997,8 +1007,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                             action: _slots.isNotEmpty && !_isPlaying(channel)
                                 ? IconButton(
                                     tooltip: _slots.length < _maxSlots
-                                        ? 'Yan yana izle'
-                                        : 'En fazla $_maxSlots kanal',
+                                        ? l.watchSideBySide
+                                        : l.maxSlotsShort(_maxSlots),
                                     icon: const Icon(Icons.add_to_queue,
                                         size: IconSizes.md),
                                     onPressed: _slots.length < _maxSlots
@@ -1077,6 +1087,7 @@ class _GroupListState extends State<_GroupList> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l = context.l10n;
     final query = searchKey(_query.trim());
     final groups = query.isEmpty
         ? widget.groups
@@ -1093,17 +1104,17 @@ class _GroupListState extends State<_GroupList> {
           (key: key, label: label, icon: icon, count: count, header: false,
               group: false),
       if (pinned.isNotEmpty) ...[
-        (key: null, label: 'Favori paketler', icon: null, count: null,
+        (key: null, label: l.favoritePackages, icon: null, count: null,
             header: true, group: false),
         for (final g in pinned)
-          (key: g, label: g, icon: null, count: widget.counts[g],
+          (key: g, label: l.group(g), icon: null, count: widget.counts[g],
               header: false, group: true),
       ],
       if (query.isEmpty)
-        (key: null, label: 'Tüm kategoriler', icon: null, count: null,
+        (key: null, label: l.allCategories, icon: null, count: null,
             header: true, group: false),
       for (final g in groups)
-        (key: g, label: g, icon: null, count: widget.counts[g],
+        (key: g, label: l.group(g), icon: null, count: widget.counts[g],
             header: false, group: true),
     ];
     return Column(
@@ -1112,7 +1123,7 @@ class _GroupListState extends State<_GroupList> {
           padding: const EdgeInsets.fromLTRB(
               Space.sm, Space.sm, Space.sm, Space.xxs),
           child: SearchField(
-            hint: 'Kategori ara',
+            hint: l.searchCategories,
             onChanged: (v) => setState(() => _query = v),
           ),
         ),
@@ -1120,7 +1131,7 @@ class _GroupListState extends State<_GroupList> {
           child: rows.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(Space.lg),
-                  child: Text('Eşleşen kategori yok',
+                  child: Text(l.noMatchingCategory,
                       style: Theme.of(context).textTheme.bodySmall),
                 )
               : ListView.builder(
@@ -1141,8 +1152,8 @@ class _GroupListState extends State<_GroupList> {
                       trailing: row.group
                           ? IconButton(
                               tooltip: favorite
-                                  ? 'Favori paketlerden çıkar'
-                                  : 'Favori paketlere ekle',
+                                  ? l.removeFromFavoritePackages
+                                  : l.addToFavoritePackages,
                               iconSize: IconSizes.md,
                               visualDensity: VisualDensity.compact,
                               icon: Icon(favorite
@@ -1175,16 +1186,11 @@ class _NowNext extends StatelessWidget {
   final DateTime now;
   final VoidCallback onSchedule;
 
-  static String _time(DateTime t) {
-    final local = t.toLocal();
-    return '${local.hour.toString().padLeft(2, '0')}:'
-        '${local.minute.toString().padLeft(2, '0')}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
+    final l = context.l10n;
     final next = this.next;
     final remaining = current.stop.difference(now).inMinutes;
     const tabular = [FontFeature.tabularFigures()];
@@ -1196,13 +1202,13 @@ class _NowNext extends StatelessWidget {
         border: Border(top: BorderSide(color: c.border)),
       ),
       padding:
-          const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.md, Space.md),
+          const EdgeInsetsDirectional.fromSTEB(Space.lg, Space.md, Space.md, Space.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const LiveBadge(label: 'ŞİMDİ'),
+              LiveBadge(label: l.nowBadge),
               const SizedBox(width: Space.sm),
               Expanded(
                 child: Text(
@@ -1216,14 +1222,14 @@ class _NowNext extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onSchedule,
                 icon: const Icon(Icons.calendar_view_day, size: IconSizes.sm),
-                label: const Text('Yayın akışı'),
+                label: Text(l.schedule),
               ),
             ],
           ),
           const SizedBox(height: Space.sm),
           Row(
             children: [
-              Text(_time(current.start), style: time),
+              Text(l.time(current.start), style: time),
               const SizedBox(width: Space.sm),
               Expanded(
                 child: ClipRRect(
@@ -1236,10 +1242,10 @@ class _NowNext extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: Space.sm),
-              Text(_time(current.stop), style: time),
+              Text(l.time(current.stop), style: time),
               if (remaining > 0) ...[
                 const SizedBox(width: Space.sm),
-                Text('$remaining dk kaldı', style: time),
+                Text(l.minutesLeft(remaining), style: time),
               ],
             ],
           ),
@@ -1257,10 +1263,10 @@ class _NowNext extends StatelessWidget {
             Text.rich(
               TextSpan(children: [
                 TextSpan(
-                    text: 'SONRA  ',
+                    text: '${l.nextLabel}  ',
                     style: theme.textTheme.labelSmall
                         ?.copyWith(color: c.fgMuted)),
-                TextSpan(text: '${_time(next.start)}  ', style: time),
+                TextSpan(text: '${l.time(next.start)}  ', style: time),
                 TextSpan(
                     text: next.title,
                     style: theme.textTheme.bodySmall?.copyWith(color: c.fg)),
@@ -1282,6 +1288,7 @@ class _NoChannel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final l = context.l10n;
     final label =
         Theme.of(context).textTheme.bodySmall?.copyWith(color: c.fgMuted);
     Widget hint(List<String> keys, String text) => Padding(
@@ -1304,15 +1311,14 @@ class _NoChannel extends StatelessWidget {
         );
     return EmptyState(
       icon: Icons.live_tv_outlined,
-      title: 'Bir kanal seç',
-      message: 'Listeden bir kanala tıkla. Sağ tıkla daha fazla seçenek, '
-          'kanal satırındaki + ile yan yana izleme.',
+      title: l.pickChannelTitle,
+      message: l.pickChannelMessage,
       footer: Column(
         children: [
-          hint(['PgUp', 'PgDn'], 'Kanal değiştir'),
-          hint(['Backspace'], 'Önceki kanal'),
-          hint(['M'], 'Sesi kapat / aç'),
-          hint(['F'], 'Tam ekran'),
+          hint(['PgUp', 'PgDn'], l.hintChangeChannel),
+          hint(['Backspace'], l.hintPreviousChannel),
+          hint(['M'], l.hintMute),
+          hint(['F'], l.hintFullscreen),
         ],
       ),
     );
@@ -1353,11 +1359,12 @@ class _SlotBar extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(Space.sm, 6, Space.xxs, Space.md),
+          padding:
+              const EdgeInsetsDirectional.fromSTEB(Space.sm, 6, Space.xxs, Space.md),
           child: Row(
             children: [
               Tooltip(
-                message: audible ? 'Ses bu karede' : 'Sessiz',
+                message: audible ? context.l10n.audioInThisTile : context.l10n.muted,
                 child: Icon(audible ? Icons.volume_up : Icons.volume_off,
                     size: IconSizes.sm, color: audible ? c.accent : c.fgMuted),
               ),
@@ -1372,14 +1379,14 @@ class _SlotBar extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: focused ? 'Izgaraya dön' : 'Büyüt',
+                tooltip: focused ? context.l10n.backToGrid : context.l10n.enlarge,
                 iconSize: IconSizes.md,
                 visualDensity: VisualDensity.compact,
                 icon: Icon(focused ? Icons.grid_view : Icons.open_in_full),
                 onPressed: onFocus,
               ),
               IconButton(
-                tooltip: 'Kareyi kapat',
+                tooltip: context.l10n.closeTile,
                 iconSize: IconSizes.md,
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.close),
@@ -1430,8 +1437,8 @@ class _StallOverlay extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'Yayın gelmiyor, yeniden bağlanılıyor '
-                        '(${watchdog.attempt}/${watchdog.maxRetries})',
+                        context.l10n.reconnecting(
+                            watchdog.attempt, watchdog.maxRetries),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                     ],
@@ -1447,13 +1454,13 @@ class _StallOverlay extends StatelessWidget {
           child: EmptyState(
             icon: Icons.signal_wifi_bad,
             tone: c.danger,
-            title: 'Kanal açılamadı',
-            message: 'Sağlayıcı yayın göndermiyor ya da bağlantı sınırı dolu.',
+            title: context.l10n.channelFailedTitle,
+            message: context.l10n.channelFailedMessage,
             actions: [
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Yeniden dene'),
+                label: Text(context.l10n.tryAgain),
               ),
             ],
           ),
@@ -1473,17 +1480,17 @@ class _LoadError extends StatelessWidget {
     return EmptyState(
       icon: Icons.cloud_off_outlined,
       tone: AppColors.of(context).danger,
-      title: 'Liste açılamadı',
+      title: context.l10n.listFailedTitle,
       message: message,
       actions: [
         OutlinedButton(
           onPressed: () => Navigator.of(context).maybePop(),
-          child: const Text('Listelere dön'),
+          child: Text(context.l10n.backToLists),
         ),
         FilledButton.icon(
           onPressed: onRetry,
           icon: const Icon(Icons.refresh),
-          label: const Text('Tekrar dene'),
+          label: Text(context.l10n.retry),
         ),
       ],
     );
@@ -1513,7 +1520,7 @@ class _LiveSkeleton extends StatelessWidget {
           ),
         );
     return Semantics(
-      label: 'Kanal listesi yükleniyor',
+      label: context.l10n.loadingChannels,
       child: ClipRect(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1551,14 +1558,14 @@ class _LiveSkeleton extends StatelessWidget {
               9,
             ),
             VerticalDivider(width: 1, color: c.border),
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: Space.md),
-                    Text('Kanal listesi yükleniyor…'),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: Space.md),
+                    Text(context.l10n.loadingChannels),
                   ],
                 ),
               ),
@@ -1582,7 +1589,7 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     return Padding(
-      padding: const EdgeInsets.only(left: Space.xs),
+      padding: const EdgeInsetsDirectional.only(start: Space.xs),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: c.surfaceRaised,

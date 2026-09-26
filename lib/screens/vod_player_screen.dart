@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart' hide Playlist;
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../l10n/l10n.dart';
 import '../models/playlist_source.dart';
 import '../services/app_mute.dart';
 import '../services/watch_progress_store.dart';
@@ -137,10 +138,11 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
       {required bool back}) {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
+    final l = context.l10n;
     return [
       if (back)
         IconButton(
-          tooltip: 'Geri',
+          tooltip: l.back,
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
@@ -167,7 +169,7 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
       ValueListenableBuilder(
         valueListenable: appMuted,
         builder: (context, muted, _) => IconButton(
-          tooltip: muted ? 'Sesi aç (M)' : 'Sessiz (M)',
+          tooltip: muted ? l.unmuteShortcut : l.muteShortcut,
           icon: Icon(muted ? Icons.volume_off : Icons.volume_up),
           onPressed: () => appMuted.value = !muted,
         ),
@@ -201,13 +203,13 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
               child: EmptyState(
                 icon: Icons.error_outline,
                 tone: c.danger,
-                title: 'Oynatılamadı',
+                title: context.l10n.playbackFailed,
                 message: error,
                 actions: [
                   OutlinedButton.icon(
                     onPressed: () => Navigator.of(context).maybePop(),
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text('Geri dön'),
+                    label: Text(context.l10n.goBack),
                   ),
                 ],
               ),

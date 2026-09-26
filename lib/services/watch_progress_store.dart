@@ -41,12 +41,17 @@ class WatchMeta {
     this.subtitle,
     this.poster,
     this.seriesId,
+    this.season,
+    this.episode,
+    this.episodeTitle,
   });
 
   /// Film adı ya da bölümse dizi adı.
   final String title;
 
-  /// Bölümde "S1 B2 · Bölüm adı".
+  /// Eski sürümlerin yazdığı hazır alt başlık ("S1 B2 · Bölüm adı");
+  /// yenileri [season], [episode] ve [episodeTitle]'dan arayüz dilinde
+  /// kurulur.
   final String? subtitle;
   final String? poster;
 
@@ -57,6 +62,10 @@ class WatchMeta {
   /// Bölümse dizinin kimliği; film ise null.
   final String? seriesId;
 
+  final int? season;
+  final int? episode;
+  final String? episodeTitle;
+
   bool get isEpisode => seriesId != null;
 
   Map<String, Object> toJson() => {
@@ -66,6 +75,9 @@ class WatchMeta {
         'subtitle': ?subtitle,
         'poster': ?poster,
         'series': ?seriesId,
+        'season': ?season,
+        'episode': ?episode,
+        'episodeTitle': ?episodeTitle,
       };
 
   static WatchMeta? fromJson(Object? json) {
@@ -73,6 +85,7 @@ class WatchMeta {
     final title = json['title'], id = json['id'], ext = json['ext'];
     if (title is! String || id is! String || ext is! String) return null;
     String? text(Object? v) => v is String ? v : null;
+    int? number(Object? v) => v is num ? v.toInt() : null;
     return WatchMeta(
       title: title,
       streamId: id,
@@ -80,6 +93,9 @@ class WatchMeta {
       subtitle: text(json['subtitle']),
       poster: text(json['poster']),
       seriesId: text(json['series']),
+      season: number(json['season']),
+      episode: number(json['episode']),
+      episodeTitle: text(json['episodeTitle']),
     );
   }
 }

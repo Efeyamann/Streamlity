@@ -164,9 +164,9 @@ class _PosterCardState extends State<PosterCard> {
                             ),
                           ),
                           if (rating != null && rating > 0)
-                            Positioned(
+                            PositionedDirectional(
                               top: 6,
-                              left: 6,
+                              start: 6,
                               child: RatingBadge(rating: rating),
                             ),
                           if (progress != null)
@@ -319,8 +319,8 @@ class Backdrop extends StatelessWidget {
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+              begin: AlignmentDirectional.centerStart,
+              end: AlignmentDirectional.centerEnd,
               colors: [c.bg.withValues(alpha: 0.7), Colors.transparent],
             ),
           ),

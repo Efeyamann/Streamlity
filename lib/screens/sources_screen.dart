@@ -4,10 +4,12 @@ import '../models/playlist_source.dart';
 import '../models/saved_source.dart';
 import '../services/favorites_store.dart';
 import '../services/source_store.dart';
+import '../l10n/l10n.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets/common.dart';
 import '../ui/widgets/logo_mark.dart';
 import 'playlist_screen.dart';
+import 'settings_screen.dart';
 import 'source_dialog.dart';
 
 /// Ana sayfa: kayıtlı listeler. Buradan liste eklenir, düzenlenir, silinir
@@ -59,15 +61,12 @@ class _SourcesScreenState extends State<SourcesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Liste silinsin mi?'),
-        content: Text(
-            '"${source.name}", favori paketleri ve son izlenenleri '
-            'silinecek. '
-            'Sağlayıcıdaki hesabın etkilenmez.'),
+        title: Text(context.l10n.deleteListTitle),
+        content: Text(context.l10n.deleteListMessage(source.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Vazgeç'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -75,7 +74,7 @@ class _SourcesScreenState extends State<SourcesScreen> {
               foregroundColor: AppColors.of(context).onAccent,
             ),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sil'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -123,6 +122,7 @@ class _SourcesScreenState extends State<SourcesScreen> {
     final sources = _sources;
     final c = AppColors.of(context);
     final theme = Theme.of(context);
+    final l = context.l10n;
     return Scaffold(
       body: sources == null
           ? const Center(child: CircularProgressIndicator())
@@ -142,28 +142,32 @@ class _SourcesScreenState extends State<SourcesScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Streamlity',
+                                Text(l.appTitle,
                                     style: theme.textTheme.headlineSmall),
                                 Text(
-                                  sources.length == 1
-                                      ? 'Listen'
-                                      : '${sources.length} liste',
+                                  l.listCount(sources.length),
                                   style: theme.textTheme.bodyMedium
                                       ?.copyWith(color: c.fgMuted),
                                 ),
                               ],
                             ),
                           ),
+                          IconButton(
+                            tooltip: l.sectionSettings,
+                            icon: const Icon(Icons.settings_outlined),
+                            onPressed: () => openSettings(context),
+                          ),
+                          const SizedBox(width: Space.xs),
                           FilledButton.icon(
                             onPressed: _add,
                             icon: const Icon(Icons.add),
-                            label: const Text('Liste ekle'),
+                            label: Text(l.addList),
                           ),
                         ],
                       ),
                       const SizedBox(height: Space.xl),
-                      const SectionHeader('Listelerin',
-                          padding: EdgeInsets.only(bottom: Space.sm)),
+                      SectionHeader(l.yourLists,
+                          padding: const EdgeInsets.only(bottom: Space.sm)),
                       Expanded(
                         child: GridView.builder(
                           padding: const EdgeInsets.only(bottom: Space.xl),
@@ -199,6 +203,7 @@ class _Welcome extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
+    final l = context.l10n;
     Widget kind(IconData icon, String title, String text) => Expanded(
           child: Container(
             padding: const EdgeInsets.all(Space.md),
@@ -229,13 +234,12 @@ class _Welcome extends StatelessWidget {
             children: [
               const LogoMark(size: 72),
               const SizedBox(height: Space.lg),
-              Text("Streamlity'ye hoş geldin",
+              Text(l.welcomeTitle,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall),
               const SizedBox(height: Space.xs),
               Text(
-                'Başlamak için bir liste ekle. İstediğin kadar liste ekleyip '
-                'aralarında geçiş yapabilirsin.',
+                l.welcomeMessage,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(color: c.fgMuted),
               ),
@@ -243,11 +247,9 @@ class _Welcome extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  kind(Icons.dns_rounded, 'Xtream Codes',
-                      'Sunucu, kullanıcı adı ve şifre. Canlı TV, film, dizi.'),
+                  kind(Icons.dns_rounded, 'Xtream Codes', l.xtreamDescription),
                   const SizedBox(width: Space.sm),
-                  kind(Icons.playlist_play_rounded, 'M3U',
-                      'Bir liste adresi ya da bilgisayardaki dosya.'),
+                  kind(Icons.playlist_play_rounded, 'M3U', l.m3uDescription),
                 ],
               ),
               const SizedBox(height: Space.lg),
@@ -255,7 +257,7 @@ class _Welcome extends StatelessWidget {
                 autofocus: true,
                 onPressed: onAdd,
                 icon: const Icon(Icons.add),
-                label: const Text('Liste ekle'),
+                label: Text(l.addList),
               ),
             ],
           ),
@@ -296,6 +298,7 @@ class _SourceCardState extends State<_SourceCard> {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
     final motion = Motion.of(context);
+    final l = context.l10n;
     final source = widget.source;
     // Ad zaten sunucu adıysa alt satırda tekrarlama.
     String host(String location) {
@@ -328,7 +331,7 @@ class _SourceCardState extends State<_SourceCard> {
           hoverColor: Colors.transparent,
           child: AnimatedContainer(
             duration: motion.fast,
-            padding: const EdgeInsets.fromLTRB(
+            padding: const EdgeInsetsDirectional.fromSTEB(
                 Space.md, Space.md, Space.xs, Space.md),
             decoration: BoxDecoration(
               borderRadius: Radii.lgAll,
@@ -380,18 +383,18 @@ class _SourceCardState extends State<_SourceCard> {
                           leadingIcon: const Icon(Icons.edit_outlined,
                               size: IconSizes.md),
                           onPressed: widget.onEdit,
-                          child: const Text('Düzenle'),
+                          child: Text(l.edit),
                         ),
                         MenuItemButton(
                           leadingIcon: Icon(Icons.delete_outline,
                               size: IconSizes.md, color: c.danger),
                           onPressed: widget.onDelete,
                           child:
-                              Text('Sil', style: TextStyle(color: c.danger)),
+                              Text(l.delete, style: TextStyle(color: c.danger)),
                         ),
                       ],
                       builder: (context, controller, _) => IconButton(
-                        tooltip: 'Seçenekler',
+                        tooltip: l.options,
                         icon: const Icon(Icons.more_vert),
                         onPressed: () => controller.isOpen
                             ? controller.close()
@@ -411,13 +414,13 @@ class _SourceCardState extends State<_SourceCard> {
                           if (source.channelCount case final count?)
                             _Tag(
                                 icon: Icons.live_tv_outlined,
-                                text: '${formatCount(count)} kanal'),
+                                text: l.channelCount(count)),
                           if (expiresAt != null)
                             _Tag(
                               icon: Icons.event_outlined,
                               text: expired
-                                  ? 'Süresi doldu'
-                                  : 'Bitiş ${formatDate(expiresAt)}',
+                                  ? l.expired
+                                  : l.expiresOn(l.date(expiresAt)),
                               color: expired
                                   ? c.danger
                                   : expiringSoon
@@ -425,9 +428,9 @@ class _SourceCardState extends State<_SourceCard> {
                                       : null,
                             ),
                           if (source.channelCount == null)
-                            const _Tag(
+                            _Tag(
                                 icon: Icons.play_circle_outline,
-                                text: 'Henüz açılmadı'),
+                                text: l.notOpenedYet),
                         ],
                       ),
                     ),
@@ -435,7 +438,7 @@ class _SourceCardState extends State<_SourceCard> {
                       duration: motion.fast,
                       opacity: _hovered ? 1 : 0,
                       child: Padding(
-                        padding: const EdgeInsets.only(right: Space.xs),
+                        padding: const EdgeInsetsDirectional.only(end: Space.xs),
                         child: Icon(Icons.arrow_forward_rounded,
                             color: c.accent),
                       ),
@@ -486,6 +489,3 @@ class _Tag extends StatelessWidget {
     );
   }
 }
-
-String formatDate(DateTime d) => '${d.day.toString().padLeft(2, '0')}.'
-    '${d.month.toString().padLeft(2, '0')}.${d.year}';

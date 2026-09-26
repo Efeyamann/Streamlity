@@ -5,6 +5,7 @@ import '../models/saved_source.dart';
 import '../services/favorites_store.dart';
 import '../services/playlist_loader.dart';
 import '../services/xtream_client.dart';
+import '../l10n/l10n.dart';
 import '../ui/tokens.dart';
 
 /// Liste ekleme ya da düzenleme penceresi. Kaydedilen listeyi döndürür;
@@ -110,8 +111,8 @@ class _SourceDialogState extends State<_SourceDialog>
     final source = _source();
     if (source == null) {
       setState(() => _error = _tabs.index == 0
-          ? 'Sunucu adresi ve kullanıcı adı gerekli.'
-          : 'Liste adresi ya da dosya yolu gerekli.');
+          ? context.l10n.errServerAndUserRequired
+          : context.l10n.errLocationRequired);
       return;
     }
     // Aynı sunucu + kullanıcı adı (ya da aynı M3U adresi) aynı listedir.
@@ -122,7 +123,7 @@ class _SourceDialogState extends State<_SourceDialog>
             FavoritesStore.sourceKey(s.source) == key)
         .firstOrNull;
     if (duplicate != null) {
-      setState(() => _error = 'Bu liste zaten ekli: "${duplicate.name}".');
+      setState(() => _error = context.l10n.errDuplicateList(duplicate.name));
       return;
     }
     setState(() {
@@ -137,7 +138,7 @@ class _SourceDialogState extends State<_SourceDialog>
       if (mounted) {
         setState(() {
           _checking = false;
-          _error = e.message;
+          _error = context.l10n.error(e);
         });
       }
       return;
@@ -162,8 +163,9 @@ class _SourceDialogState extends State<_SourceDialog>
   @override
   Widget build(BuildContext context) {
     final enabled = !_checking;
+    final l = context.l10n;
     return AlertDialog(
-      title: Text(widget.initial == null ? 'Liste ekle' : 'Listeyi düzenle'),
+      title: Text(widget.initial == null ? l.addList : l.editList),
       content: SizedBox(
         width: 480,
         child: Column(
@@ -178,10 +180,10 @@ class _SourceDialogState extends State<_SourceDialog>
             TextField(
               controller: _name,
               enabled: enabled,
-              decoration: const InputDecoration(
-                labelText: 'Liste adı (isteğe bağlı)',
-                prefixIcon: Icon(Icons.label_outline),
-                hintText: 'Örn. Ev, Spor paketi',
+              decoration: InputDecoration(
+                labelText: l.listNameOptional,
+                prefixIcon: const Icon(Icons.label_outline),
+                hintText: l.listNameHint,
               ),
             ),
             const SizedBox(height: 12),
@@ -224,7 +226,7 @@ class _SourceDialogState extends State<_SourceDialog>
       actions: [
         TextButton(
           onPressed: enabled ? () => Navigator.of(context).pop() : null,
-          child: const Text('Vazgeç'),
+          child: Text(l.cancel),
         ),
         FilledButton(
           onPressed: enabled ? _submit : null,
@@ -233,22 +235,23 @@ class _SourceDialogState extends State<_SourceDialog>
                   dimension: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(widget.initial == null ? 'Ekle' : 'Kaydet'),
+              : Text(widget.initial == null ? l.add : l.save),
         ),
       ],
     );
   }
 
   Widget _xtreamFields(bool enabled) {
+    final l = context.l10n;
     return Column(
       children: [
         TextField(
           controller: _server,
           enabled: enabled,
-          decoration: const InputDecoration(
-            labelText: 'Sunucu adresi',
-            prefixIcon: Icon(Icons.dns_outlined),
-            hintText: 'http://sunucu:8080 veya sağlayıcının M3U linki',
+          decoration: InputDecoration(
+            labelText: l.serverAddress,
+            prefixIcon: const Icon(Icons.dns_outlined),
+            hintText: l.serverAddressHint,
           ),
           onChanged: _onServerChanged,
         ),
@@ -256,9 +259,9 @@ class _SourceDialogState extends State<_SourceDialog>
         TextField(
           controller: _username,
           enabled: enabled,
-          decoration: const InputDecoration(
-            labelText: 'Kullanıcı adı',
-            prefixIcon: Icon(Icons.person_outline),
+          decoration: InputDecoration(
+            labelText: l.username,
+            prefixIcon: const Icon(Icons.person_outline),
           ),
         ),
         const SizedBox(height: 12),
@@ -267,10 +270,10 @@ class _SourceDialogState extends State<_SourceDialog>
           enabled: enabled,
           obscureText: !_showPassword,
           decoration: InputDecoration(
-            labelText: 'Şifre',
+            labelText: l.password,
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              tooltip: _showPassword ? 'Şifreyi gizle' : 'Şifreyi göster',
+              tooltip: _showPassword ? l.hidePassword : l.showPassword,
               icon: Icon(
                   _showPassword ? Icons.visibility_off : Icons.visibility),
               onPressed: () => setState(() => _showPassword = !_showPassword),
@@ -286,9 +289,9 @@ class _SourceDialogState extends State<_SourceDialog>
     return TextField(
       controller: _m3u,
       enabled: enabled,
-      decoration: const InputDecoration(
-        labelText: 'M3U listesi (URL veya dosya yolu)',
-        prefixIcon: Icon(Icons.link),
+      decoration: InputDecoration(
+        labelText: context.l10n.m3uLocation,
+        prefixIcon: const Icon(Icons.link),
       ),
       onSubmitted: (_) => _submit(),
     );

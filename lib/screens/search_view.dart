@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/epg.dart';
 import '../models/playlist.dart';
 import '../models/vod.dart';
@@ -103,11 +104,11 @@ class _SearchViewState extends State<SearchView> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: SearchField(
                 hint: widget.catalog == null
-                    ? 'Kanal ara'
-                    : 'Kanal, film ya da dizi ara',
+                    ? context.l10n.searchChannels
+                    : context.l10n.searchHintAll,
                 autofocus: true,
                 onChanged: _onChanged,
               ),
@@ -118,11 +119,10 @@ class _SearchViewState extends State<SearchView> {
           child: query.length < 2
               ? EmptyState(
                   icon: Icons.search,
-                  title: 'Ne izlemek istersin?',
+                  title: context.l10n.searchPromptTitle,
                   message: widget.catalog == null
-                      ? 'En az iki harf yaz; kanallarda aranır.'
-                      : 'En az iki harf yaz; kanallarda, filmlerde ve '
-                          'dizilerde aynı anda aranır.',
+                      ? context.l10n.searchPromptChannels
+                      : context.l10n.searchPromptAll,
                 )
               : _results(query),
         ),
@@ -131,16 +131,17 @@ class _SearchViewState extends State<SearchView> {
   }
 
   Widget _results(String query) {
+    final l = context.l10n;
     final channels = _channels(query);
     final movies = _movies, series = _series;
     return ListView(
       padding: const EdgeInsets.only(bottom: Space.xxl),
       children: [
         if (widget.playlist == null)
-          _loadingShelf('Kanallar', ChannelCard.width, ChannelCard.height)
+          _loadingShelf(l.channels, ChannelCard.width, ChannelCard.height)
         else if (channels.isNotEmpty)
           Shelf(
-            title: 'Kanallar',
+            title: l.channels,
             count: channels.length,
             itemCount: channels.length.clamp(0, _maxResults),
             itemWidth: ChannelCard.width,
@@ -153,13 +154,13 @@ class _SearchViewState extends State<SearchView> {
                 logo: channel.logo,
                 programme: programme?.title,
                 progress: programme?.progress(widget.now),
-                caption: channel.group,
+                caption: channel.group == null ? null : l.group(channel.group!),
                 onTap: () => widget.onPlayChannel(channel),
               );
             },
           ),
-        if (movies != null) _vodShelf('Filmler', movies, query),
-        if (series != null) _vodShelf('Diziler', series, query),
+        if (movies != null) _vodShelf(l.sectionMovies, movies, query),
+        if (series != null) _vodShelf(l.sectionSeries, series, query),
         _NoResults(
           query: query,
           channels: channels.length,
@@ -174,7 +175,7 @@ class _SearchViewState extends State<SearchView> {
   Widget _loadingShelf(String title, double width, double height) => Padding(
         padding: const EdgeInsets.only(bottom: Space.xl),
         child: Shelf(
-          title: '$title yükleniyor…',
+          title: context.l10n.loadingSection(title),
           itemCount: 6,
           itemWidth: width,
           height: height,
@@ -255,12 +256,12 @@ class _NoResults extends StatelessWidget {
         if (catalogs == null) return const SizedBox.shrink();
         final any = catalogs.any((c) => c != null && itemsOf(c, query).isNotEmpty);
         if (any) return const SizedBox.shrink();
-        return const Padding(
-          padding: EdgeInsets.only(top: Space.xxl),
+        return Padding(
+          padding: const EdgeInsets.only(top: Space.xxl),
           child: EmptyState(
             icon: Icons.search_off,
-            title: 'Sonuç bulunamadı',
-            message: 'Farklı bir yazımla dene; Türkçe harfler fark etmez.',
+            title: context.l10n.noResultsTitle,
+            message: context.l10n.noResultsMessage,
           ),
         );
       },

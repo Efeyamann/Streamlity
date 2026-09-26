@@ -32,7 +32,7 @@ Future<Playlist> loadXtream(XtreamSource source) async {
     null,
   );
   if (playlist.channels.isEmpty) {
-    throw const PlaylistException('Hesapta canlı kanal bulunamadı.');
+    throw const PlaylistException(PlaylistError.noLiveChannels);
   }
   return playlist;
 }
@@ -50,11 +50,11 @@ Future<(Map<String, dynamic>, Map<String, dynamic>?)> _account(
       ? info['user_info'] as Map<String, dynamic>?
       : null;
   if (user == null || '${user['auth']}' != '1') {
-    throw const PlaylistException('Kullanıcı adı veya şifre hatalı.');
+    throw const PlaylistException(PlaylistError.badLogin);
   }
   final status = '${user['status'] ?? ''}';
   if (status.isNotEmpty && status != 'Active') {
-    throw PlaylistException('Hesap kullanılamıyor (durum: $status).');
+    throw PlaylistException(PlaylistError.accountUnavailable, status);
   }
   final server = (info as Map<String, dynamic>)['server_info'];
   return (user, server is Map<String, dynamic> ? server : null);
@@ -152,14 +152,15 @@ Future<dynamic> xtreamApi(
         .get(uri, headers: const {'User-Agent': userAgent})
         .timeout(const Duration(seconds: 30));
   } on Exception catch (e) {
-    throw PlaylistException('Sunucuya bağlanılamadı: $e');
+    throw PlaylistException(PlaylistError.connectFailed, '$e');
   }
   if (response.statusCode != 200) {
     // Paneller yanlış girişte 200 + auth=0 yerine bu kodları da döndürüyor.
     if (_authFailureCodes.contains(response.statusCode)) {
-      throw const PlaylistException('Kullanıcı adı veya şifre hatalı.');
+      throw const PlaylistException(PlaylistError.badLogin);
     }
-    throw PlaylistException('Sunucu ${response.statusCode} döndürdü.');
+    throw PlaylistException(
+        PlaylistError.httpStatus, '${response.statusCode}');
   }
   try {
     // Kanal listesi on binlerce kayıt olabilir; arayüzü kilitlememek için
@@ -169,7 +170,6 @@ Future<dynamic> xtreamApi(
       utf8.decode(response.bodyBytes, allowMalformed: true),
     );
   } on FormatException {
-    throw const PlaylistException(
-        'Sunucu geçerli bir Xtream Codes yanıtı vermedi.');
+    throw const PlaylistException(PlaylistError.invalidResponse);
   }
 }
