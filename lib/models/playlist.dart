@@ -76,6 +76,17 @@ class Playlist {
   late final List<String> groups = {
     for (final c in channels) c.group ?? ungrouped,
   }.toList();
+
+  /// Grup başına kanal sayısı (ayraçlar hariç).
+  late final Map<String, int> groupCounts = () {
+    final counts = <String, int>{};
+    for (final c in channels) {
+      if (c.isSeparator) continue;
+      final g = c.group ?? ungrouped;
+      counts[g] = (counts[g] ?? 0) + 1;
+    }
+    return counts;
+  }();
 }
 
 /// Arama için karşılaştırma anahtarı. Türkçe İ/I/ı ve i aynı sayılır;

@@ -18,8 +18,11 @@ import '../services/stall_watchdog.dart';
 import '../services/stream_slot.dart';
 import '../services/watch_progress_store.dart';
 import '../services/xtream_vod.dart';
+import '../ui/player_controls.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets/app_rail.dart';
+import '../ui/widgets/channel_tile.dart';
+import '../ui/widgets/common.dart';
 import 'schedule_dialog.dart';
 import 'track_menu.dart';
 import 'vod_browser.dart';
@@ -531,7 +534,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     final focus = _focus;
     if (focus != null) {
       return ColoredBox(
-        color: Colors.black,
+        color: AppColors.of(context).bg,
         child: Column(
           children: [
             Expanded(child: cell(focus)),
@@ -555,7 +558,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         _slots.sublist(i, (i + 2).clamp(0, _slots.length)),
     ];
     return ColoredBox(
-      color: Colors.black,
+      color: AppColors.of(context).bg,
       child: Column(
         children: [
           for (final row in rows)
@@ -576,7 +579,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
   Widget _slotView(StreamSlot slot, {required bool single}) {
     final active = identical(slot, _active);
-    final scheme = Theme.of(context).colorScheme;
+    final c = AppColors.of(context);
     return KeyedSubtree(
       key: GlobalObjectKey(slot),
       child: GestureDetector(
@@ -588,7 +591,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             border: single
                 ? null
                 : Border.all(
-                    color: active ? scheme.primary : Colors.transparent,
+                    color: active ? c.accent : Colors.transparent,
                     width: 2,
                   ),
           ),
@@ -596,8 +599,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             fit: StackFit.expand,
             children: [
               MaterialDesktopVideoControlsTheme(
-                normal: _liveControls,
-                fullscreen: _liveControls,
+                normal: liveControls,
+                fullscreen: liveControls,
                 child: Video(
                   key: slot.videoKey,
                   controller: slot.controller,
@@ -636,18 +639,9 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       // Katalog kanal listesinden bağımsız; liste yüklenirken de açılabilir.
       body = _vodBody(_source as XtreamSource);
     } else if (playlist == null) {
-      body = Center(
-        child: _loading || _error == null
-            ? const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: Space.md),
-                  Text('Kanal listesi yükleniyor…'),
-                ],
-              )
-            : _LoadError(message: _error!, onRetry: _load),
-      );
+      body = _loading || _error == null
+          ? const _LiveSkeleton()
+          : _LoadError(message: _error!, onRetry: _load);
     } else {
       body = _liveBody(playlist, _visibleChannels(playlist),
           _epg?.current(_current?.tvgId, _now));
@@ -795,13 +789,15 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     return Row(
       children: [
         SizedBox(
-          width: 220,
+          width: 248,
           child: _GroupList(
             groups: playlist.groups,
+            counts: playlist.groupCounts,
             selected: _group,
             specials: [
-              (null, 'Tümü (${playlist.channelCount})', null),
-              (_recentsGroup, 'Son izlenenler', Icons.history),
+              (null, 'Tüm kanallar', Icons.apps, playlist.channelCount),
+              (_recentsGroup, 'Son izlenenler', Icons.history,
+                  _recents.length),
             ],
             favoriteGroups: _favoriteGroups,
             onToggleFavorite: _toggleFavoriteGroup,
@@ -814,61 +810,67 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(8),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search),
-                    hintText: 'Kanal ara',
-                    isDense: true,
-                    border: OutlineInputBorder(),
-                  ),
+                padding: const EdgeInsets.fromLTRB(
+                    Space.sm, Space.sm, Space.sm, Space.xxs),
+                child: SearchField(
+                  hint: 'Kanal ara',
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
               Expanded(
-                child: ListView.builder(
-                  itemCount: channels.length,
-                  itemExtentBuilder: (i, _) =>
-                      i < channels.length && channels[i].isSeparator ? 40 : 64,
-                  itemBuilder: (context, i) {
-                    final channel = channels[i];
-                    if (channel.isSeparator) {
-                      return _SeparatorTile(label: channel.separatorLabel!);
-                    }
-                    final programme = _epg?.current(channel.tvgId, _now);
-                    final tile = ListTile(
-                      leading: _ChannelLogo(url: channel.logo),
-                      title: Text(
-                        channel.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                child: channels.isEmpty
+                    ? EmptyState(
+                        icon: _group == _recentsGroup
+                            ? Icons.history
+                            : Icons.search_off,
+                        title: _group == _recentsGroup && _query.isEmpty
+                            ? 'Henüz kanal izlemedin'
+                            : 'Kanal bulunamadı',
+                        message: _group == _recentsGroup && _query.isEmpty
+                            ? 'İzlediğin kanallar burada görünür.'
+                            : 'Aramayı ya da kategoriyi değiştir.',
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: Space.md),
+                        itemCount: channels.length,
+                        itemExtentBuilder: (i, _) =>
+                            i < channels.length && channels[i].isSeparator
+                                ? 40
+                                : ChannelTile.height + 4,
+                        itemBuilder: (context, i) {
+                          final channel = channels[i];
+                          if (channel.isSeparator) {
+                            return SectionHeader(channel.separatorLabel!,
+                                padding: const EdgeInsets.fromLTRB(
+                                    Space.md, Space.md, Space.md, 4));
+                          }
+                          final programme =
+                              _epg?.current(channel.tvgId, _now);
+                          return ChannelTile(
+                            name: channel.name,
+                            logo: channel.logo,
+                            programme: programme?.title,
+                            progress: programme?.progress(_now),
+                            playing: _isPlaying(channel),
+                            selected: identical(channel, _current),
+                            onTap: () => _play(channel),
+                            onSecondaryTapUp: (d) =>
+                                _showChannelMenu(channel, d.globalPosition),
+                            action: _slots.isNotEmpty && !_isPlaying(channel)
+                                ? IconButton(
+                                    tooltip: _slots.length < _maxSlots
+                                        ? 'Yan yana izle'
+                                        : 'En fazla $_maxSlots kanal',
+                                    icon: const Icon(Icons.add_to_queue,
+                                        size: IconSizes.md),
+                                    onPressed: _slots.length < _maxSlots
+                                        ? () => _addSlot(channel)
+                                        : null,
+                                  )
+                                : null,
+                          );
+                        },
                       ),
-                      subtitle: programme == null
-                          ? null
-                          : Text(
-                              programme.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                      trailing: _slots.isNotEmpty && !_isPlaying(channel)
-                          ? IconButton(
-                              tooltip: 'Yan yana izle',
-                              icon: const Icon(Icons.add_to_queue),
-                              onPressed: _slots.length < _maxSlots
-                                  ? () => _addSlot(channel)
-                                  : null,
-                            )
-                          : null,
-                      selected: identical(channel, _current),
-                      onTap: () => _play(channel),
-                    );
-                    return GestureDetector(
-                      onSecondaryTapUp: (d) =>
-                          _showChannelMenu(channel, d.globalPosition),
-                      child: tile,
-                    );
-                  },
-                ),
               ),
             ],
           ),
@@ -876,7 +878,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         const VerticalDivider(width: 1),
         Expanded(
           child: _slots.isEmpty
-              ? const Center(child: Text('Oynatmak için bir kanal seç'))
+              ? const _NoChannel()
               : Column(
                   children: [
                     Expanded(child: _players()),
@@ -895,25 +897,15 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   }
 }
 
-/// Canlı yayında sarma anlamsız: ilerleme çubuğu ve süre gösterilmez.
-const _liveControls = MaterialDesktopVideoControlsThemeData(
-  displaySeekBar: false,
-  bottomButtonBar: [
-    MaterialDesktopPlayOrPauseButton(),
-    MaterialDesktopVolumeButton(),
-    Spacer(),
-    MaterialDesktopFullscreenButton(),
-  ],
-);
-
-/// Grup listesinin başındaki sabit girdiler: (anahtar, etiket, ikon).
-typedef _Special = (String? key, String label, IconData? icon);
+/// Grup listesinin başındaki sabit girdiler: (anahtar, etiket, ikon, sayı).
+typedef _Special = (String? key, String label, IconData? icon, int? count);
 
 /// Grup listesindeki satır: sabit girdi, başlık ya da kategori.
 typedef _GroupRow = ({
   String? key,
   String label,
   IconData? icon,
+  int? count,
   bool header,
   bool group,
 });
@@ -921,6 +913,7 @@ typedef _GroupRow = ({
 class _GroupList extends StatefulWidget {
   const _GroupList({
     required this.groups,
+    required this.counts,
     required this.selected,
     required this.specials,
     required this.favoriteGroups,
@@ -929,6 +922,7 @@ class _GroupList extends StatefulWidget {
   });
 
   final List<String> groups;
+  final Map<String, int> counts;
   final String? selected;
   final List<_Special> specials;
   final List<String> favoriteGroups;
@@ -944,6 +938,7 @@ class _GroupListState extends State<_GroupList> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final query = searchKey(_query.trim());
     final groups = query.isEmpty
         ? widget.groups
@@ -956,104 +951,74 @@ class _GroupListState extends State<_GroupList> {
     // Aramada sabit girdiler ve başlıklar gizlenir.
     final rows = <_GroupRow>[
       if (query.isEmpty)
-        for (final (key, label, icon) in widget.specials)
-          (key: key, label: label, icon: icon, header: false, group: false),
+        for (final (key, label, icon, count) in widget.specials)
+          (key: key, label: label, icon: icon, count: count, header: false,
+              group: false),
       if (pinned.isNotEmpty) ...[
-        (key: null, label: 'Favori paketler', icon: null, header: true,
-            group: false),
+        (key: null, label: 'Favori paketler', icon: null, count: null,
+            header: true, group: false),
         for (final g in pinned)
-          (key: g, label: g, icon: null, header: false, group: true),
-        (key: null, label: 'Tüm kategoriler', icon: null, header: true,
-            group: false),
+          (key: g, label: g, icon: null, count: widget.counts[g],
+              header: false, group: true),
       ],
+      if (query.isEmpty)
+        (key: null, label: 'Tüm kategoriler', icon: null, count: null,
+            header: true, group: false),
       for (final g in groups)
-        (key: g, label: g, icon: null, header: false, group: true),
+        (key: g, label: g, icon: null, count: widget.counts[g],
+            header: false, group: true),
     ];
-    final theme = Theme.of(context);
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(8),
-          child: TextField(
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'Kategori ara',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
+          padding: const EdgeInsets.fromLTRB(
+              Space.sm, Space.sm, Space.sm, Space.xxs),
+          child: SearchField(
+            hint: 'Kategori ara',
             onChanged: (v) => setState(() => _query = v),
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: rows.length,
-            itemBuilder: (context, i) {
-              final row = rows[i];
-              if (row.header) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-                  child: Text(
-                    row.label.toUpperCase(),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                );
-              }
-              final key = row.key;
-              final favorite = key != null && favorites.contains(key);
-              return ListTile(
-                dense: true,
-                leading: row.icon == null ? null : Icon(row.icon, size: 18),
-                minLeadingWidth: 0,
-                contentPadding: const EdgeInsets.only(left: 16, right: 4),
-                title: Text(
-                  row.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          child: rows.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(Space.lg),
+                  child: Text('Eşleşen kategori yok',
+                      style: Theme.of(context).textTheme.bodySmall),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: Space.md),
+                  itemCount: rows.length,
+                  itemBuilder: (context, i) {
+                    final row = rows[i];
+                    if (row.header) return SectionHeader(row.label);
+                    final key = row.key;
+                    final favorite = key != null && favorites.contains(key);
+                    return NavRow(
+                      label: row.label,
+                      leading: row.icon,
+                      count: row.count,
+                      selected: key == widget.selected,
+                      onTap: () => widget.onSelected(key),
+                      showTrailing: favorite,
+                      trailing: row.group
+                          ? IconButton(
+                              tooltip: favorite
+                                  ? 'Favori paketlerden çıkar'
+                                  : 'Favori paketlere ekle',
+                              iconSize: IconSizes.md,
+                              visualDensity: VisualDensity.compact,
+                              icon: Icon(favorite
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded),
+                              color: favorite ? c.accent : c.fgMuted,
+                              onPressed: () => widget.onToggleFavorite(key!),
+                            )
+                          : null,
+                    );
+                  },
                 ),
-                trailing: row.group
-                    ? IconButton(
-                        tooltip: favorite
-                            ? 'Favori paketlerden çıkar'
-                            : 'Favori paketlere ekle',
-                        iconSize: 18,
-                        visualDensity: VisualDensity.compact,
-                        icon: Icon(favorite ? Icons.star : Icons.star_border),
-                        color: favorite ? theme.colorScheme.primary : null,
-                        onPressed: () => widget.onToggleFavorite(key!),
-                      )
-                    : null,
-                selected: key == widget.selected,
-                onTap: () => widget.onSelected(key),
-              );
-            },
-          ),
         ),
       ],
-    );
-  }
-}
-
-class _ChannelLogo extends StatelessWidget {
-  const _ChannelLogo({required this.url});
-
-  final String? url;
-
-  @override
-  Widget build(BuildContext context) {
-    const fallback = Icon(Icons.live_tv);
-    final url = this.url;
-    return SizedBox.square(
-      dimension: 36,
-      child: url == null
-          ? fallback
-          : Image.network(
-              url,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => fallback,
-            ),
     );
   }
 }
@@ -1080,20 +1045,27 @@ class _NowNext extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
-    final muted = theme.textTheme.bodySmall
-        ?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final next = this.next;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+    final remaining = current.stop.difference(now).inMinutes;
+    const tabular = [FontFeature.tabularFigures()];
+    final time = theme.textTheme.labelMedium
+        ?.copyWith(color: c.fgMuted, fontFeatures: tabular);
+    return Container(
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
+      padding:
+          const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.md, Space.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text('${_time(current.start)}–${_time(current.stop)}',
-                  style: muted),
-              const SizedBox(width: 12),
+              const LiveBadge(label: 'ŞİMDİ'),
+              const SizedBox(width: Space.sm),
               Expanded(
                 child: Text(
                   current.title,
@@ -1102,39 +1074,107 @@ class _NowNext extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(value: current.progress(now)),
-          if (current.description != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              current.description!,
-              style: theme.textTheme.bodyMedium,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: next == null
-                    ? const SizedBox()
-                    : Text(
-                        'Sonra ${_time(next.start)}  ${next.title}',
-                        style: muted,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-              ),
-              TextButton.icon(
+              const SizedBox(width: Space.sm),
+              OutlinedButton.icon(
                 onPressed: onSchedule,
-                icon: const Icon(Icons.calendar_view_day, size: 18),
+                icon: const Icon(Icons.calendar_view_day, size: IconSizes.sm),
                 label: const Text('Yayın akışı'),
               ),
             ],
           ),
+          const SizedBox(height: Space.sm),
+          Row(
+            children: [
+              Text(_time(current.start), style: time),
+              const SizedBox(width: Space.sm),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: Radii.smAll,
+                  child: LinearProgressIndicator(
+                    value: current.progress(now),
+                    minHeight: 4,
+                    backgroundColor: c.border,
+                  ),
+                ),
+              ),
+              const SizedBox(width: Space.sm),
+              Text(_time(current.stop), style: time),
+              if (remaining > 0) ...[
+                const SizedBox(width: Space.sm),
+                Text('$remaining dk kaldı', style: time),
+              ],
+            ],
+          ),
+          if (current.description case final desc?) ...[
+            const SizedBox(height: Space.sm),
+            Text(
+              desc,
+              style: theme.textTheme.bodyMedium?.copyWith(color: c.fgMuted),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          if (next != null) ...[
+            const SizedBox(height: Space.sm),
+            Text.rich(
+              TextSpan(children: [
+                TextSpan(
+                    text: 'SONRA  ',
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: c.fgMuted)),
+                TextSpan(text: '${_time(next.start)}  ', style: time),
+                TextSpan(
+                    text: next.title,
+                    style: theme.textTheme.bodySmall?.copyWith(color: c.fg)),
+              ]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Oynatıcı boşken: ne yapılacağı ve kısayollar.
+class _NoChannel extends StatelessWidget {
+  const _NoChannel();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final label =
+        Theme.of(context).textTheme.bodySmall?.copyWith(color: c.fgMuted);
+    Widget hint(List<String> keys, String text) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 140,
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 4,
+                  children: [for (final k in keys) Kbd(k)],
+                ),
+              ),
+              const SizedBox(width: Space.sm),
+              SizedBox(width: 140, child: Text(text, style: label)),
+            ],
+          ),
+        );
+    return EmptyState(
+      icon: Icons.live_tv_outlined,
+      title: 'Bir kanal seç',
+      message: 'Listeden bir kanala tıkla. Sağ tıkla daha fazla seçenek, '
+          'kanal satırındaki + ile yan yana izleme.',
+      footer: Column(
+        children: [
+          hint(['PgUp', 'PgDn'], 'Kanal değiştir'),
+          hint(['Backspace'], 'Önceki kanal'),
+          hint(['M'], 'Sesi kapat / aç'),
+          hint(['F'], 'Tam ekran'),
         ],
       ),
     );
@@ -1162,76 +1202,52 @@ class _SlotBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const white = Colors.white;
+    final c = AppColors.of(context);
+    final audible = active && !muted;
     return Align(
       alignment: Alignment.topCenter,
       child: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.black87, Colors.transparent],
+            colors: [c.scrim, Colors.transparent],
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 4, 4, 12),
+          padding: const EdgeInsets.fromLTRB(Space.sm, 6, Space.xxs, Space.md),
           child: Row(
             children: [
-              Icon(active && !muted ? Icons.volume_up : Icons.volume_off,
-                  size: 16, color: active ? white : Colors.white54),
+              Tooltip(
+                message: audible ? 'Ses bu karede' : 'Sessiz',
+                child: Icon(audible ? Icons.volume_up : Icons.volume_off,
+                    size: IconSizes.sm, color: audible ? c.accent : c.fgMuted),
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   channel.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: white, fontSize: 13),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: active ? c.fg : c.fgMuted),
                 ),
               ),
               IconButton(
                 tooltip: focused ? 'Izgaraya dön' : 'Büyüt',
-                iconSize: 18,
+                iconSize: IconSizes.md,
                 visualDensity: VisualDensity.compact,
-                color: white,
                 icon: Icon(focused ? Icons.grid_view : Icons.open_in_full),
                 onPressed: onFocus,
               ),
               IconButton(
-                tooltip: 'Kapat',
-                iconSize: 18,
+                tooltip: 'Kareyi kapat',
+                iconSize: IconSizes.md,
                 visualDensity: VisualDensity.compact,
-                color: white,
                 icon: const Icon(Icons.close),
                 onPressed: onClose,
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Sağlayıcının `#### NEWS ####` gibi başlık satırları.
-class _SeparatorTile extends StatelessWidget {
-  const _SeparatorTile({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Align(
-        alignment: Alignment.bottomLeft,
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.primary,
-            letterSpacing: 0.8,
           ),
         ),
       ),
@@ -1248,7 +1264,7 @@ class _StallOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = AppColors.of(context);
     switch (watchdog.status) {
       case StallStatus.ok:
         return const SizedBox.shrink();
@@ -1257,15 +1273,16 @@ class _StallOverlay extends StatelessWidget {
           child: Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Space.md),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.black87,
-                  borderRadius: BorderRadius.circular(20),
+                  color: c.surfaceRaised.withValues(alpha: 0.92),
+                  borderRadius: const BorderRadius.all(Radius.circular(999)),
+                  border: Border.all(color: c.border),
                 ),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: Space.md, vertical: Space.xs),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1277,7 +1294,7 @@ class _StallOverlay extends StatelessWidget {
                       Text(
                         'Yayın gelmiyor, yeniden bağlanılıyor '
                         '(${watchdog.attempt}/${watchdog.maxRetries})',
-                        style: const TextStyle(color: Colors.white),
+                        style: Theme.of(context).textTheme.labelLarge,
                       ),
                     ],
                   ),
@@ -1288,31 +1305,19 @@ class _StallOverlay extends StatelessWidget {
         );
       case StallStatus.failed:
         return ColoredBox(
-          color: Colors.black87,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.signal_wifi_bad,
-                    size: 40, color: theme.colorScheme.error),
-                const SizedBox(height: 12),
-                const Text(
-                  'Kanal açılamadı',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Sağlayıcı yayın göndermiyor ya da bağlantı sınırı dolu.',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Yeniden dene'),
-                ),
-              ],
-            ),
+          color: c.scrim,
+          child: EmptyState(
+            icon: Icons.signal_wifi_bad,
+            tone: c.danger,
+            title: 'Kanal açılamadı',
+            message: 'Sağlayıcı yayın göndermiyor ya da bağlantı sınırı dolu.',
+            actions: [
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Yeniden dene'),
+              ),
+            ],
           ),
         );
     }
@@ -1327,34 +1332,101 @@ class _LoadError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 420),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-          const SizedBox(height: 12),
-          Text('Liste açılamadı', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 6),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                child: const Text('Listelere dön'),
-              ),
-              const SizedBox(width: 12),
-              FilledButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Tekrar dene'),
-              ),
-            ],
+    return EmptyState(
+      icon: Icons.cloud_off_outlined,
+      tone: AppColors.of(context).danger,
+      title: 'Liste açılamadı',
+      message: message,
+      actions: [
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).maybePop(),
+          child: const Text('Listelere dön'),
+        ),
+        FilledButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Tekrar dene'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Kanal listesi yüklenirken ekranın iskeleti.
+class _LiveSkeleton extends StatelessWidget {
+  const _LiveSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    Widget column(double width, Widget Function(int) row, int count) =>
+        SizedBox(
+          width: width,
+          child: Padding(
+            padding: const EdgeInsets.all(Space.sm),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Skeleton(height: 40, radius: Radii.mdAll),
+                const SizedBox(height: Space.md),
+                for (var i = 0; i < count; i++) row(i),
+              ],
+            ),
           ),
-        ],
+        );
+    return Semantics(
+      label: 'Kanal listesi yükleniyor',
+      child: ClipRect(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            column(
+              260,
+              (i) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Skeleton(height: 14, width: 120.0 + (i * 37) % 90),
+              ),
+              14,
+            ),
+            VerticalDivider(width: 1, color: c.border),
+            column(
+              360,
+              (i) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    const Skeleton(width: 44, height: 44, radius: Radii.mdAll),
+                    const SizedBox(width: Space.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Skeleton(height: 12, width: 140.0 + (i * 53) % 80),
+                          const SizedBox(height: 8),
+                          const Skeleton(height: 10, width: 110),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              9,
+            ),
+            VerticalDivider(width: 1, color: c.border),
+            const Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: Space.md),
+                    Text('Kanal listesi yükleniyor…'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

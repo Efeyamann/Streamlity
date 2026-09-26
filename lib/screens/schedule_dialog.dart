@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/epg.dart';
+import '../ui/tokens.dart';
+import '../ui/widgets/common.dart';
 
 /// Bir kanalın günlere ayrılmış yayın akışı. Şu anki program vurgulanır ve
 /// açılışta ona kaydırılır.
@@ -70,6 +72,7 @@ class _ScheduleDialog extends StatelessWidget {
     final local = now.toLocal();
     final today = DateTime(local.year, local.month, local.day);
     final todayIndex = days.keys.toList().indexOf(today);
+    final c = AppColors.of(context);
     return Dialog(
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
@@ -82,24 +85,46 @@ class _ScheduleDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 8, 0),
+                padding: const EdgeInsets.fromLTRB(
+                    Space.lg, Space.md, Space.xs, Space.xs),
                 child: Row(
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Yayın akışı',
-                              style: Theme.of(context).textTheme.titleLarge),
                           Text(
-                            archiveDays > 0
-                                ? '$channelName · geçmiş $archiveDays gün '
-                                    'izlenebilir, programa tıkla'
-                                : channelName,
+                            channelName.toUpperCase(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(color: c.fgMuted),
                           ),
+                          const SizedBox(height: 2),
+                          Text('Yayın akışı',
+                              style: Theme.of(context).textTheme.titleLarge),
+                          if (archiveDays > 0) ...[
+                            const SizedBox(height: Space.xs),
+                            Row(
+                              children: [
+                                Icon(Icons.history,
+                                    size: IconSizes.sm, color: c.accent),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Geçmiş $archiveDays gün izlenebilir, '
+                                    'programa tıkla',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -112,9 +137,12 @@ class _ScheduleDialog extends StatelessWidget {
                 ),
               ),
               if (days.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: Text('Bu kanal için program yok')),
+                const SizedBox(
+                  height: 260,
+                  child: EmptyState(
+                    icon: Icons.event_busy,
+                    title: 'Bu kanal için program yok',
+                  ),
                 )
               else ...[
                 TabBar(
@@ -188,8 +216,9 @@ class _DayListState extends State<_DayList> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final c = AppColors.of(context);
     final now = widget.now;
+    const tabular = [FontFeature.tabularFigures()];
     return ListView.builder(
       controller: _scroll,
       itemExtent: _rowHeight,
@@ -198,14 +227,19 @@ class _DayListState extends State<_DayList> {
         final p = widget.programmes[i];
         final onAir = !p.start.isAfter(now) && p.stop.isAfter(now);
         final past = !p.stop.isAfter(now);
-        final playable =
-            canWatchFromArchive(p, now, widget.archiveDays);
-        final muted = past && !playable
-            ? scheme.onSurface.withValues(alpha: 0.45)
-            : null;
+        final playable = canWatchFromArchive(p, now, widget.archiveDays);
+        final dim = past && !playable;
         final row = Container(
-          color: onAir ? scheme.primaryContainer.withValues(alpha: 0.35) : null,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          decoration: BoxDecoration(
+            color: onAir ? c.accent.withValues(alpha: 0.10) : null,
+            border: Border(
+              left: BorderSide(
+                  color: onAir ? c.accent : Colors.transparent, width: 3),
+              bottom: BorderSide(color: c.border),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(
+              Space.lg - 3, Space.sm, Space.lg, Space.sm),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -214,8 +248,12 @@ class _DayListState extends State<_DayList> {
                 child: Text(
                   _time(p.start),
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: muted ?? (onAir ? scheme.primary : null),
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: dim
+                        ? c.fgSubtle
+                        : onAir
+                            ? c.accent
+                            : c.fgMuted,
+                    fontFeatures: tabular,
                   ),
                 ),
               ),
@@ -231,45 +269,52 @@ class _DayListState extends State<_DayList> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.titleSmall
-                                ?.copyWith(color: muted),
+                                ?.copyWith(color: dim ? c.fgSubtle : c.fg),
                           ),
                         ),
                         if (onAir) ...[
-                          const SizedBox(width: 8),
-                          Text('ŞİMDİ',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                  color: scheme.primary,
-                                  fontWeight: FontWeight.w700)),
-                        ],
-                        if (playable) ...[
-                          const SizedBox(width: 8),
-                          Tooltip(
-                            message: onAir ? 'Baştan izle' : 'Geçmişten izle',
-                            child: Icon(
-                                onAir ? Icons.restart_alt : Icons.history,
-                                size: 16,
-                                color: scheme.primary),
-                          ),
+                          const SizedBox(width: Space.xs),
+                          const LiveBadge(label: 'ŞİMDİ', compact: true),
                         ],
                       ],
                     ),
                     if (onAir)
                       Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: LinearProgressIndicator(
-                            value: p.progress(now), minHeight: 3),
+                        padding: const EdgeInsets.only(top: Space.xs),
+                        child: ClipRRect(
+                          borderRadius: Radii.smAll,
+                          child: LinearProgressIndicator(
+                            value: p.progress(now),
+                            minHeight: 3,
+                            backgroundColor: c.border,
+                          ),
+                        ),
                       )
                     else if (p.description case final desc?)
-                      Text(
-                        desc,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: muted ?? scheme.onSurfaceVariant),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          desc,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: dim ? c.fgSubtle : c.fgMuted),
+                        ),
                       ),
                   ],
                 ),
               ),
+              if (playable)
+                Padding(
+                  padding: const EdgeInsets.only(left: Space.xs),
+                  child: Tooltip(
+                    message: onAir ? 'Baştan izle' : 'Geçmişten izle',
+                    child: Icon(
+                        onAir ? Icons.restart_alt : Icons.play_circle_outline,
+                        size: IconSizes.md,
+                        color: c.accent),
+                  ),
+                ),
             ],
           ),
         );

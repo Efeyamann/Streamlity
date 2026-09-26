@@ -23,6 +23,9 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.scrim,
   });
 
+  /// Vurgu rengi; const bağlamlar (ör. oynatıcı denetim teması) için ayrıca.
+  static const accentColor = Color(0xFFE11D48);
+
   /// Sinema karanlığı ve oynat kırmızısı (UI/UX Pro Max, Video Streaming/OTT).
   static const cinema = AppColors(
     bg: Color(0xFF000000),
@@ -33,9 +36,9 @@ class AppColors extends ThemeExtension<AppColors> {
     fg: Color(0xFFF8FAFC),
     fgMuted: Color(0xFF94A3B8),
     fgSubtle: Color(0xFF64748B),
-    accent: Color(0xFFE11D48),
+    accent: accentColor,
     onAccent: Color(0xFFFFFFFF),
-    live: Color(0xFFE11D48),
+    live: accentColor,
     success: Color(0xFF22C55E),
     warning: Color(0xFFF59E0B),
     danger: Color(0xFFEF4444),
