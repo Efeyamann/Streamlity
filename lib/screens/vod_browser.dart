@@ -546,9 +546,9 @@ class _MovieDialogState extends State<_MovieDialog> {
                         decoration: BoxDecoration(
                           borderRadius: Radii.mdAll,
                           border: Border.all(color: c.border),
-                          boxShadow: const [
+                          boxShadow: [
                             BoxShadow(
-                                color: Color(0xAA000000),
+                                color: c.scrim,
                                 blurRadius: 30,
                                 offset: Offset(0, 12)),
                           ],
@@ -883,9 +883,9 @@ class _SeriesScreenState extends State<_SeriesScreen> {
                     decoration: BoxDecoration(
                       borderRadius: Radii.mdAll,
                       border: Border.all(color: c.border),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(
-                            color: Color(0xAA000000),
+                            color: c.scrim,
                             blurRadius: 24,
                             offset: Offset(0, 10)),
                       ],
@@ -1126,7 +1126,7 @@ class _EpisodeRowState extends State<_EpisodeRow> {
                                 value: finished ? 1 : p.fraction,
                                 minHeight: 3,
                                 color: finished ? c.fgMuted : c.accent,
-                                backgroundColor: const Color(0x66000000),
+                                backgroundColor: c.scrim.withValues(alpha: 0.5),
                               ),
                             ),
                         ],

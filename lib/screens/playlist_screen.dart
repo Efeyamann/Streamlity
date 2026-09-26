@@ -818,11 +818,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             ],
           ),
           Expanded(
-            child: Column(
-              children: [
-                _topBar(context, playlist),
-                Expanded(child: body),
-              ],
+            child: FocusTraversalGroup(
+              child: Column(
+                children: [
+                  _topBar(context, playlist),
+                  Expanded(child: body),
+                ],
+              ),
             ),
           ),
         ],

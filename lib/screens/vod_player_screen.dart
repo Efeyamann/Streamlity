@@ -9,6 +9,9 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../models/playlist_source.dart';
 import '../services/app_mute.dart';
 import '../services/watch_progress_store.dart';
+import '../ui/player_controls.dart';
+import '../ui/tokens.dart';
+import '../ui/widgets/common.dart';
 import 'track_menu.dart';
 
 /// Film, dizi bölümü ya da geçmiş yayın oynatıcısı: ileri/geri sarılabilir,
@@ -128,55 +131,85 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
     );
   }
 
-  Widget _scaffold(BuildContext context, String? subtitle) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Column(
+  /// Denetimlerle birlikte görünüp kaybolan üst şerit: geri, başlık,
+  /// parça menüleri ve ses.
+  List<Widget> _topBar(BuildContext context, String? subtitle,
+      {required bool back}) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    return [
+      if (back)
+        IconButton(
+          tooltip: 'Geri',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      const SizedBox(width: Space.xs),
+      Expanded(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-            if (subtitle != null)
-              Text(
-                subtitle,
+            Text(widget.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+                style: theme.textTheme.titleMedium?.copyWith(color: c.fg)),
+            if (subtitle != null)
+              Text(subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: c.fg.withValues(alpha: 0.75))),
           ],
         ),
-        actions: [
-          TrackMenus(player: _player),
-          IconButton(
-            tooltip: appMuted.value ? 'Sesi aç (M)' : 'Sessiz (M)',
-            icon: Icon(appMuted.value ? Icons.volume_off : Icons.volume_up),
-            onPressed: () => appMuted.value = !appMuted.value,
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
+      TrackMenus(player: _player),
+      ValueListenableBuilder(
+        valueListenable: appMuted,
+        builder: (context, muted, _) => IconButton(
+          tooltip: muted ? 'Sesi aç (M)' : 'Sessiz (M)',
+          icon: Icon(muted ? Icons.volume_off : Icons.volume_up),
+          onPressed: () => appMuted.value = !muted,
+        ),
+      ),
+    ];
+  }
+
+  Widget _scaffold(BuildContext context, String? subtitle) {
+    final c = AppColors.of(context);
+    return Scaffold(
+      backgroundColor: c.bg,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Video(controller: _controller),
+          MaterialDesktopVideoControlsTheme(
+            normal: vodControls.copyWith(
+              visibleOnMount: true,
+              hideMouseOnControlsRemoval: true,
+              topButtonBar: _topBar(context, subtitle, back: true),
+            ),
+            // Tam ekranda geri yerine denetimlerdeki çıkış düğmesi kullanılır.
+            fullscreen: vodControls.copyWith(
+              hideMouseOnControlsRemoval: true,
+              topButtonBar: _topBar(context, subtitle, back: false),
+            ),
+            child: Video(controller: _controller),
+          ),
           if (_error case final error?)
             ColoredBox(
-              color: Colors.black87,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline,
-                        size: 40, color: Theme.of(context).colorScheme.error),
-                    const SizedBox(height: 12),
-                    const Text('Oynatılamadı',
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
-                    const SizedBox(height: 4),
-                    Text(error,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70)),
-                  ],
-                ),
+              color: c.scrim,
+              child: EmptyState(
+                icon: Icons.error_outline,
+                tone: c.danger,
+                title: 'Oynatılamadı',
+                message: error,
+                actions: [
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Geri dön'),
+                  ),
+                ],
               ),
             ),
         ],

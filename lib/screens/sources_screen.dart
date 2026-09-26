@@ -464,7 +464,7 @@ class _Tag extends StatelessWidget {
     final color = this.color ?? c.fgMuted;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0x0FFFFFFF),
+        color: c.muted,
         borderRadius: Radii.smAll,
         border: Border.all(color: c.border),
       ),

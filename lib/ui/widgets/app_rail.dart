@@ -44,30 +44,33 @@ class AppRail<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return Container(
-      width: width,
-      decoration: BoxDecoration(
-        color: c.surface,
-        border: Border(right: BorderSide(color: c.border)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: Space.md),
-          const LogoMark(size: 36),
-          const SizedBox(height: Space.lg),
-          for (final item in items)
-            RailButton(
-              icon: item.icon,
-              selectedIcon: item.selectedIcon,
-              label: item.label,
-              tooltip: item.tooltip,
-              selected: item.value == selected,
-              onTap: () => onSelected(item.value),
-            ),
-          const Spacer(),
-          ...footer,
-          const SizedBox(height: Space.sm),
-        ],
+    // Tab önce menüyü baştan sona gezsin, sonra içeriğe geçsin.
+    return FocusTraversalGroup(
+      child: Container(
+        width: width,
+        decoration: BoxDecoration(
+          color: c.surface,
+          border: Border(right: BorderSide(color: c.border)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: Space.md),
+            const LogoMark(size: 36),
+            const SizedBox(height: Space.lg),
+            for (final item in items)
+              RailButton(
+                icon: item.icon,
+                selectedIcon: item.selectedIcon,
+                label: item.label,
+                tooltip: item.tooltip,
+                selected: item.value == selected,
+                onTap: () => onSelected(item.value),
+              ),
+            const Spacer(),
+            ...footer,
+            const SizedBox(height: Space.sm),
+          ],
+        ),
       ),
     );
   }
