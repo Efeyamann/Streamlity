@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:streamlity/models/playlist_source.dart';
 import 'package:streamlity/models/saved_source.dart';
-import 'package:streamlity/screens/sources_screen.dart' show formatCount;
 import 'package:streamlity/services/source_store.dart';
+import 'package:streamlity/ui/widgets/common.dart' show formatCount;
 
 void main() {
   final xtream =

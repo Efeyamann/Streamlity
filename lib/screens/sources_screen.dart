@@ -4,6 +4,9 @@ import '../models/playlist_source.dart';
 import '../models/saved_source.dart';
 import '../services/favorites_store.dart';
 import '../services/source_store.dart';
+import '../ui/tokens.dart';
+import '../ui/widgets/common.dart';
+import '../ui/widgets/logo_mark.dart';
 import 'playlist_screen.dart';
 import 'source_dialog.dart';
 
@@ -68,8 +71,8 @@ class _SourcesScreenState extends State<SourcesScreen> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
+              backgroundColor: AppColors.of(context).danger,
+              foregroundColor: AppColors.of(context).onAccent,
             ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Sil'),
@@ -118,67 +121,71 @@ class _SourcesScreenState extends State<SourcesScreen> {
   @override
   Widget build(BuildContext context) {
     final sources = _sources;
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
     return Scaffold(
-      body: SafeArea(
-        child: sources == null
-            ? const Center(child: CircularProgressIndicator())
-            : sources.isEmpty
-                ? _Welcome(onAdd: _add)
-                : Padding(
-                    padding: const EdgeInsets.fromLTRB(32, 28, 32, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Streamlity',
-                                      style: theme.textTheme.headlineMedium),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Listelerin',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            FilledButton.icon(
-                              onPressed: _add,
-                              icon: const Icon(Icons.add),
-                              label: const Text('Liste ekle'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Expanded(
-                          child: GridView.builder(
-                            padding: const EdgeInsets.only(bottom: 32),
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 360,
-                              mainAxisExtent: 128,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
-                            itemCount: sources.length,
-                            itemBuilder: (context, i) => _SourceCard(
-                              source: sources[i],
-                              onOpen: () => _open(sources[i]),
-                              onEdit: () => _edit(sources[i]),
-                              onDelete: () => _delete(sources[i]),
+      body: sources == null
+          ? const Center(child: CircularProgressIndicator())
+          : sources.isEmpty
+              ? _Welcome(onAdd: _add)
+              : Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      Space.xl, Space.xl, Space.xl, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const LogoMark(size: 44),
+                          const SizedBox(width: Space.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Streamlity',
+                                    style: theme.textTheme.headlineSmall),
+                                Text(
+                                  sources.length == 1
+                                      ? 'Listen'
+                                      : '${sources.length} liste',
+                                  style: theme.textTheme.bodyMedium
+                                      ?.copyWith(color: c.fgMuted),
+                                ),
+                              ],
                             ),
                           ),
+                          FilledButton.icon(
+                            onPressed: _add,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Liste ekle'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: Space.xl),
+                      const SectionHeader('Listelerin',
+                          padding: EdgeInsets.only(bottom: Space.sm)),
+                      Expanded(
+                        child: GridView.builder(
+                          padding: const EdgeInsets.only(bottom: Space.xl),
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 380,
+                            mainAxisExtent: 150,
+                            crossAxisSpacing: Space.md,
+                            mainAxisSpacing: Space.md,
+                          ),
+                          itemCount: sources.length,
+                          itemBuilder: (context, i) => _SourceCard(
+                            source: sources[i],
+                            onOpen: () => _open(sources[i]),
+                            onEdit: () => _edit(sources[i]),
+                            onDelete: () => _delete(sources[i]),
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-      ),
+                ),
     );
   }
 }
@@ -190,40 +197,75 @@ class _Welcome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
+    Widget kind(IconData icon, String title, String text) => Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(Space.md),
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: Radii.lgAll,
+              border: Border.all(color: c.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, color: c.accent),
+                const SizedBox(height: Space.xs),
+                Text(title, style: theme.textTheme.titleSmall),
+                const SizedBox(height: 2),
+                Text(text, style: theme.textTheme.bodySmall),
+              ],
+            ),
+          ),
+        );
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.live_tv_rounded,
-                size: 72, color: theme.colorScheme.primary),
-            const SizedBox(height: 20),
-            Text('Streamlity\'ye hoş geldin',
-                style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Text(
-              'Başlamak için Xtream Codes hesabını ya da M3U listeni ekle. '
-              'İstediğin kadar liste ekleyip aralarında geçiş yapabilirsin.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add),
-              label: const Text('Liste ekle'),
-            ),
-          ],
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(Space.xl),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const LogoMark(size: 72),
+              const SizedBox(height: Space.lg),
+              Text("Streamlity'ye hoş geldin",
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall),
+              const SizedBox(height: Space.xs),
+              Text(
+                'Başlamak için bir liste ekle. İstediğin kadar liste ekleyip '
+                'aralarında geçiş yapabilirsin.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(color: c.fgMuted),
+              ),
+              const SizedBox(height: Space.lg),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  kind(Icons.dns_rounded, 'Xtream Codes',
+                      'Sunucu, kullanıcı adı ve şifre. Canlı TV, film, dizi.'),
+                  const SizedBox(width: Space.sm),
+                  kind(Icons.playlist_play_rounded, 'M3U',
+                      'Bir liste adresi ya da bilgisayardaki dosya.'),
+                ],
+              ),
+              const SizedBox(height: Space.lg),
+              FilledButton.icon(
+                autofocus: true,
+                onPressed: onAdd,
+                icon: const Icon(Icons.add),
+                label: const Text('Liste ekle'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _SourceCard extends StatelessWidget {
+class _SourceCard extends StatefulWidget {
   const _SourceCard({
     required this.source,
     required this.onOpen,
@@ -236,19 +278,34 @@ class _SourceCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  static String _host(String location) {
+    final uri = Uri.tryParse(location);
+    if (uri != null && uri.hasScheme && uri.host.isNotEmpty) return uri.host;
+    return location.split(RegExp(r'[\\/]')).last;
+  }
+
+  @override
+  State<_SourceCard> createState() => _SourceCardState();
+}
+
+class _SourceCardState extends State<_SourceCard> {
+  bool _hovered = false;
+
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final motion = Motion.of(context);
+    final source = widget.source;
     // Ad zaten sunucu adıysa alt satırda tekrarlama.
     String host(String location) {
-      final h = _host(location);
+      final h = _SourceCard._host(location);
       return h == source.name ? '' : h;
     }
 
     final (icon, parts) = switch (source.source) {
-      XtreamSource(:final server, :final username) =>
-        (Icons.dns_rounded, ['Xtream', host(server), username]),
+      XtreamSource(:final server) =>
+        (Icons.dns_rounded, ['Xtream', host(server)]),
       M3uSource(:final location) =>
         (Icons.playlist_play_rounded, ['M3U', host(location)]),
     };
@@ -260,104 +317,137 @@ class _SourceCard extends StatelessWidget {
         !expired &&
         expiresAt.difference(now) < const Duration(days: 7);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 8, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: scheme.primaryContainer,
-                    foregroundColor: scheme.onPrimaryContainer,
-                    child: Icon(icon),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          source.name,
-                          style: theme.textTheme.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: widget.onOpen,
+          borderRadius: Radii.lgAll,
+          hoverColor: Colors.transparent,
+          child: AnimatedContainer(
+            duration: motion.fast,
+            padding: const EdgeInsets.fromLTRB(
+                Space.md, Space.md, Space.xs, Space.md),
+            decoration: BoxDecoration(
+              borderRadius: Radii.lgAll,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: _hovered
+                    ? [c.accent.withValues(alpha: 0.16), c.surfaceRaised]
+                    : [c.surfaceRaised, c.surface],
+              ),
+              border: Border.all(
+                  color: _hovered
+                      ? c.accent.withValues(alpha: 0.5)
+                      : c.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: c.accent.withValues(alpha: 0.14),
+                        borderRadius: Radii.mdAll,
+                      ),
+                      child: Icon(icon, color: c.accent),
+                    ),
+                    const SizedBox(width: Space.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(source.name,
+                              style: theme.textTheme.titleMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                          Text(subtitle,
+                              style: theme.textTheme.bodySmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                    MenuAnchor(
+                      menuChildren: [
+                        MenuItemButton(
+                          leadingIcon: const Icon(Icons.edit_outlined,
+                              size: IconSizes.md),
+                          onPressed: widget.onEdit,
+                          child: const Text('Düzenle'),
                         ),
-                        Text(
-                          subtitle,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        MenuItemButton(
+                          leadingIcon: Icon(Icons.delete_outline,
+                              size: IconSizes.md, color: c.danger),
+                          onPressed: widget.onDelete,
+                          child:
+                              Text('Sil', style: TextStyle(color: c.danger)),
                         ),
                       ],
-                    ),
-                  ),
-                  PopupMenuButton<VoidCallback>(
-                    tooltip: 'Seçenekler',
-                    onSelected: (action) => action(),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: onEdit,
-                        child: const ListTile(
-                          leading: Icon(Icons.edit_outlined),
-                          title: Text('Düzenle'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                      builder: (context, controller, _) => IconButton(
+                        tooltip: 'Seçenekler',
+                        icon: const Icon(Icons.more_vert),
+                        onPressed: () => controller.isOpen
+                            ? controller.close()
+                            : controller.open(),
                       ),
-                      PopupMenuItem(
-                        value: onDelete,
-                        child: ListTile(
-                          leading:
-                              Icon(Icons.delete_outline, color: scheme.error),
-                          title: Text('Sil',
-                              style: TextStyle(color: scheme.error)),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  if (source.channelCount case final count?)
-                    _Tag(
-                        icon: Icons.tv_rounded,
-                        text: '${formatCount(count)} kanal'),
-                  if (expiresAt != null)
-                    _Tag(
-                      icon: Icons.event_rounded,
-                      text: expired
-                          ? 'Süresi doldu'
-                          : 'Bitiş ${formatDate(expiresAt)}',
-                      color: expired || expiringSoon ? scheme.error : null,
                     ),
-                  if (source.channelCount == null)
-                    const _Tag(
-                        icon: Icons.play_circle_outline, text: 'Henüz açılmadı'),
-                ],
-              ),
-            ],
+                  ],
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Wrap(
+                        spacing: Space.xs,
+                        runSpacing: 6,
+                        children: [
+                          if (source.channelCount case final count?)
+                            _Tag(
+                                icon: Icons.live_tv_outlined,
+                                text: '${formatCount(count)} kanal'),
+                          if (expiresAt != null)
+                            _Tag(
+                              icon: Icons.event_outlined,
+                              text: expired
+                                  ? 'Süresi doldu'
+                                  : 'Bitiş ${formatDate(expiresAt)}',
+                              color: expired
+                                  ? c.danger
+                                  : expiringSoon
+                                      ? c.warning
+                                      : null,
+                            ),
+                          if (source.channelCount == null)
+                            const _Tag(
+                                icon: Icons.play_circle_outline,
+                                text: 'Henüz açılmadı'),
+                        ],
+                      ),
+                    ),
+                    AnimatedOpacity(
+                      duration: motion.fast,
+                      opacity: _hovered ? 1 : 0,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: Space.xs),
+                        child: Icon(Icons.arrow_forward_rounded,
+                            color: c.accent),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
-  }
-
-  static String _host(String location) {
-    final uri = Uri.tryParse(location);
-    if (uri != null && uri.hasScheme && uri.host.isNotEmpty) return uri.host;
-    return location.split(RegExp(r'[\\/]')).last;
   }
 }
 
@@ -370,38 +460,31 @@ class _Tag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = this.color ?? theme.colorScheme.onSurfaceVariant;
+    final c = AppColors.of(context);
+    final color = this.color ?? c.fgMuted;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0x0FFFFFFF),
+        borderRadius: Radii.smAll,
+        border: Border.all(color: c.border),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: Space.xs, vertical: 4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 14, color: color),
             const SizedBox(width: 6),
             Text(text,
-                style: theme.textTheme.labelSmall?.copyWith(color: color)),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelMedium
+                    ?.copyWith(color: color)),
           ],
         ),
       ),
     );
   }
-}
-
-/// 56423 -> "56.423"
-String formatCount(int n) {
-  final s = '$n';
-  final out = StringBuffer();
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) out.write('.');
-    out.write(s[i]);
-  }
-  return out.toString();
 }
 
 String formatDate(DateTime d) => '${d.day.toString().padLeft(2, '0')}.'

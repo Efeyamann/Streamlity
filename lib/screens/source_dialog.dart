@@ -5,6 +5,7 @@ import '../models/saved_source.dart';
 import '../services/favorites_store.dart';
 import '../services/playlist_loader.dart';
 import '../services/xtream_client.dart';
+import '../ui/tokens.dart';
 
 /// Liste ekleme ya da düzenleme penceresi. Kaydedilen listeyi döndürür;
 /// vazgeçilirse null. [existing] içindeki bir listeyle aynı kaynak yeniden
@@ -173,14 +174,14 @@ class _SourceDialogState extends State<_SourceDialog>
               controller: _tabs,
               tabs: const [Tab(text: 'Xtream Codes'), Tab(text: 'M3U')],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: Space.lg),
             TextField(
               controller: _name,
               enabled: enabled,
               decoration: const InputDecoration(
                 labelText: 'Liste adı (isteğe bağlı)',
+                prefixIcon: Icon(Icons.label_outline),
                 hintText: 'Örn. Ev, Spor paketi',
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -190,11 +191,31 @@ class _SourceDialogState extends State<_SourceDialog>
                   ? _xtreamFields(enabled)
                   : _m3uFields(enabled),
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+            if (_error case final error?) ...[
+              const SizedBox(height: Space.sm),
+              Container(
+                padding: const EdgeInsets.all(Space.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.of(context).danger.withValues(alpha: 0.12),
+                  borderRadius: Radii.mdAll,
+                  border: Border.all(
+                      color:
+                          AppColors.of(context).danger.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.error_outline,
+                        size: IconSizes.md,
+                        color: AppColors.of(context).danger),
+                    const SizedBox(width: Space.xs),
+                    Expanded(
+                      child: Text(error,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.of(context).fg)),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -226,8 +247,8 @@ class _SourceDialogState extends State<_SourceDialog>
           enabled: enabled,
           decoration: const InputDecoration(
             labelText: 'Sunucu adresi',
+            prefixIcon: Icon(Icons.dns_outlined),
             hintText: 'http://sunucu:8080 veya sağlayıcının M3U linki',
-            border: OutlineInputBorder(),
           ),
           onChanged: _onServerChanged,
         ),
@@ -237,7 +258,7 @@ class _SourceDialogState extends State<_SourceDialog>
           enabled: enabled,
           decoration: const InputDecoration(
             labelText: 'Kullanıcı adı',
-            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.person_outline),
           ),
         ),
         const SizedBox(height: 12),
@@ -247,8 +268,9 @@ class _SourceDialogState extends State<_SourceDialog>
           obscureText: !_showPassword,
           decoration: InputDecoration(
             labelText: 'Şifre',
-            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
+              tooltip: _showPassword ? 'Şifreyi gizle' : 'Şifreyi göster',
               icon: Icon(
                   _showPassword ? Icons.visibility_off : Icons.visibility),
               onPressed: () => setState(() => _showPassword = !_showPassword),
@@ -266,7 +288,7 @@ class _SourceDialogState extends State<_SourceDialog>
       enabled: enabled,
       decoration: const InputDecoration(
         labelText: 'M3U listesi (URL veya dosya yolu)',
-        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.link),
       ),
       onSubmitted: (_) => _submit(),
     );

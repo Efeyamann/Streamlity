@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/playlist_source.dart';
 import '../models/vod.dart';
 import 'playlist_loader.dart';
+import 'watch_progress_store.dart';
 import 'xtream_client.dart';
 
 /// Film ya da dizi kataloğunu (kategoriler ve tüm öğeler) yükler.
@@ -45,6 +46,11 @@ String movieUrl(XtreamSource source, VodItem movie) =>
 String episodeUrl(XtreamSource source, Episode episode) =>
     '${source.server}/series/${_credentials(source)}/${episode.id}'
     '.${episode.extension}';
+
+/// "İzlemeye devam et" kaydından film ya da bölüm adresi.
+String watchUrl(XtreamSource source, WatchMeta meta) =>
+    '${source.server}/${meta.isEpisode ? 'series' : 'movie'}/'
+    '${_credentials(source)}/${meta.streamId}.${meta.extension}';
 
 /// Geçmiş yayın adresi. Başlangıç sunucu saatiyle `yyyy-MM-dd:HH-mm`
 /// biçiminde yazılır; fark bilinmiyorsa cihazın yerel saati kullanılır.

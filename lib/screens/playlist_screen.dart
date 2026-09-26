@@ -25,6 +25,8 @@ import '../ui/widgets/channel_tile.dart';
 import '../ui/widgets/common.dart';
 import 'schedule_dialog.dart';
 import 'track_menu.dart';
+import 'home_view.dart';
+import 'search_view.dart';
 import 'vod_browser.dart';
 import 'vod_player_screen.dart';
 import 'sources_screen.dart' show formatDate;
@@ -47,10 +49,13 @@ class PlaylistScreen extends StatefulWidget {
   State<PlaylistScreen> createState() => _PlaylistScreenState();
 }
 
-enum _Section { live, movies, series }
+enum _Section { home, live, movies, series, search }
 
 class _PlaylistScreenState extends State<PlaylistScreen> {
-  _Section _section = _Section.live;
+  _Section _section = _Section.home;
+
+  /// Ana sayfadaki "İzlemeye devam et" rafı; son izlenen başta.
+  List<WatchEntry> _continue = const [];
 
   /// Film ve dizi katalogları ekran açıkken bir kez yüklenir.
   final _catalogs = <VodKind, Future<VodCatalog>>{};
@@ -129,6 +134,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     HardwareKeyboard.instance.addHandler(_onKey);
     appMuted.addListener(_applyMute);
     _load();
+    _loadContinue();
   }
 
   @override
@@ -346,9 +352,114 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
   void _setSection(_Section section) {
     if (section == _section) return;
-    // Film/dizi izlerken canlı yayın bağlantı hakkını tutmasın.
+    // Başka bölümdeyken canlı yayın bağlantı hakkını tutmasın.
     if (section != _Section.live) _stopLive();
+    if (section == _Section.home) _loadContinue();
     setState(() => _section = section);
+  }
+
+  Future<VodCatalog> _catalog(VodKind kind) =>
+      _catalogs[kind] ??= loadVodCatalog(_source as XtreamSource, kind);
+
+  Future<void> _loadContinue() async {
+    final list = continueWatchingOf(await _progressStore.entries(_source));
+    if (mounted) setState(() => _continue = list);
+  }
+
+  Future<void> _resume(WatchEntry entry) async {
+    final meta = entry.meta!;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => VodPlayerScreen(
+        title: meta.title,
+        subtitle: meta.subtitle,
+        url: watchUrl(_source as XtreamSource, meta),
+        source: _source,
+        progressKey: entry.key,
+        progressMeta: meta,
+        progressStore: _progressStore,
+        start: entry.progress.position,
+      ),
+    ));
+    _loadContinue();
+  }
+
+  /// Ana sayfa ya da aramadan kanal açınca Canlı TV'ye geçer.
+  void _watchChannel(Channel channel) {
+    _setSection(_Section.live);
+    _play(channel);
+  }
+
+  void _openGroup(String group) {
+    setState(() {
+      _group = group;
+      _query = '';
+    });
+    _setSection(_Section.live);
+  }
+
+  Future<void> _openVod(VodItem item) async {
+    final progress = await _progressStore.read(_source);
+    if (!mounted) return;
+    await openVodItem(
+      context,
+      source: _source as XtreamSource,
+      item: item,
+      progressStore: _progressStore,
+      progress: progress[item.key],
+    );
+    _loadContinue();
+  }
+
+  Widget _homeBody(Playlist? playlist) {
+    final xtream = _source is XtreamSource;
+    final byKey = _byKey;
+    return HomeView(
+      listName: widget.saved.name,
+      now: _now,
+      channelsLoading: playlist == null && _loading,
+      continueWatching: xtream ? _continue : const [],
+      recentChannels: [
+        for (final k in _recents) ?byKey[k],
+      ],
+      favoriteGroups: playlist == null
+          ? const []
+          : _favoriteGroups.where(playlist.groups.contains).toList(),
+      groupCounts: playlist?.groupCounts ?? const {},
+      nowOn: (c) => _epg?.current(c.tvgId, _now),
+      onResume: _resume,
+      onPlayChannel: _watchChannel,
+      onOpenGroup: _openGroup,
+      shortcuts: [
+        (
+          icon: Icons.live_tv_rounded,
+          label: 'Canlı TV',
+          detail: playlist == null
+              ? null
+              : '${formatCount(playlist.channelCount)} kanal',
+          onTap: () => _setSection(_Section.live),
+        ),
+        if (xtream) ...[
+          (
+            icon: Icons.movie_rounded,
+            label: 'Filmler',
+            detail: null,
+            onTap: () => _setSection(_Section.movies),
+          ),
+          (
+            icon: Icons.video_library_rounded,
+            label: 'Diziler',
+            detail: null,
+            onTap: () => _setSection(_Section.series),
+          ),
+        ],
+        (
+          icon: Icons.search_rounded,
+          label: 'Ara',
+          detail: xtream ? 'Kanal, film, dizi' : 'Kanallarda',
+          onTap: () => _setSection(_Section.search),
+        ),
+      ],
+    );
   }
 
   Widget _vodBody(XtreamSource source) {
@@ -358,7 +469,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       key: ValueKey(kind),
       source: source,
       kind: kind,
-      catalog: _catalogs[kind] ??= loadVodCatalog(source, kind),
+      catalog: _catalog(kind),
       onRetry: () => setState(() => _catalogs.remove(kind)),
       progressStore: _progressStore,
     );
@@ -635,7 +746,18 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     final playlist = _playlist;
     final xtream = _source is XtreamSource;
     final Widget body;
-    if (_section != _Section.live) {
+    if (_section == _Section.home) {
+      body = _homeBody(playlist);
+    } else if (_section == _Section.search) {
+      body = SearchView(
+        playlist: playlist,
+        catalog: xtream ? _catalog : null,
+        nowOn: (c) => _epg?.current(c.tvgId, _now),
+        now: _now,
+        onPlayChannel: _watchChannel,
+        onOpenVod: _openVod,
+      );
+    } else if (_section != _Section.live) {
       // Katalog kanal listesinden bağımsız; liste yüklenirken de açılabilir.
       body = _vodBody(_source as XtreamSource);
     } else if (playlist == null) {
@@ -653,6 +775,12 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             selected: _section,
             onSelected: _setSection,
             items: [
+              const RailItem(
+                value: _Section.home,
+                icon: Icons.home_outlined,
+                selectedIcon: Icons.home_rounded,
+                label: 'Ana sayfa',
+              ),
               const RailItem(
                 value: _Section.live,
                 icon: Icons.live_tv_outlined,
@@ -673,6 +801,12 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   label: 'Diziler',
                 ),
               ],
+              const RailItem(
+                value: _Section.search,
+                icon: Icons.search,
+                selectedIcon: Icons.search,
+                label: 'Ara',
+              ),
             ],
             footer: [
               RailButton(
@@ -702,6 +836,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     final theme = Theme.of(context);
     final expiresAt = playlist?.expiresAt;
     final title = switch (_section) {
+      _Section.home => 'Ana sayfa',
+      _Section.search => 'Ara',
       _Section.live => _current?.name ?? 'Canlı TV',
       _Section.movies => 'Filmler',
       _Section.series => 'Diziler',

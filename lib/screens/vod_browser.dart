@@ -136,35 +136,13 @@ class _VodBrowserState extends State<VodBrowser> {
   }
 
   Future<void> _open(VodItem item) async {
-    if (_movies) {
-      final choice = await showDialog<_PlayChoice>(
-        context: context,
-        builder: (_) => _MovieDialog(
-          source: widget.source,
-          movie: item,
-          progress: _progress[item.key],
-        ),
-      );
-      if (choice == null || !mounted) return;
-      await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => VodPlayerScreen(
-          title: item.name,
-          url: movieUrl(widget.source, item),
-          source: widget.source,
-          progressKey: item.key,
-          progressStore: widget.progressStore,
-          start: choice.start,
-        ),
-      ));
-    } else {
-      await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => _SeriesScreen(
-          source: widget.source,
-          series: item,
-          progressStore: widget.progressStore,
-        ),
-      ));
-    }
+    await openVodItem(
+      context,
+      source: widget.source,
+      item: item,
+      progressStore: widget.progressStore,
+      progress: _progress[item.key],
+    );
     _loadProgress();
   }
 
@@ -456,6 +434,50 @@ class _VodSkeleton extends StatelessWidget {
   }
 }
 
+/// Filmde ayrıntı penceresini açar ve seçilirse oynatır; dizide dizi
+/// sayfasını açar. Ana sayfa ve arama da kullanır.
+Future<void> openVodItem(
+  BuildContext context, {
+  required XtreamSource source,
+  required VodItem item,
+  required WatchProgressStore progressStore,
+  WatchProgress? progress,
+}) async {
+  final navigator = Navigator.of(context);
+  if (item.kind == VodKind.series) {
+    await navigator.push(MaterialPageRoute<void>(
+      builder: (_) => _SeriesScreen(
+        source: source,
+        series: item,
+        progressStore: progressStore,
+      ),
+    ));
+    return;
+  }
+  final choice = await showDialog<_PlayChoice>(
+    context: context,
+    builder: (_) =>
+        _MovieDialog(source: source, movie: item, progress: progress),
+  );
+  if (choice == null) return;
+  await navigator.push(MaterialPageRoute<void>(
+    builder: (_) => VodPlayerScreen(
+      title: item.name,
+      url: movieUrl(source, item),
+      source: source,
+      progressKey: item.key,
+      progressMeta: WatchMeta(
+        title: item.name,
+        poster: item.poster,
+        streamId: item.id,
+        extension: item.extension ?? 'mp4',
+      ),
+      progressStore: progressStore,
+      start: choice.start,
+    ),
+  ));
+}
+
 String formatDuration(Duration d) {
   final h = d.inHours, m = d.inMinutes % 60;
   return h > 0 ? '$h sa $m dk' : '$m dk';
@@ -737,6 +759,14 @@ class _SeriesScreenState extends State<_SeriesScreen> {
         url: episodeUrl(widget.source, e),
         source: widget.source,
         progressKey: e.key,
+        progressMeta: WatchMeta(
+          title: widget.series.name,
+          subtitle: 'S${e.season} B${e.number} · ${e.title}',
+          poster: widget.series.poster,
+          streamId: e.id,
+          extension: e.extension,
+          seriesId: widget.series.id,
+        ),
         progressStore: widget.progressStore,
         start: progress != null && progress.resumable ? progress.position : null,
       ),

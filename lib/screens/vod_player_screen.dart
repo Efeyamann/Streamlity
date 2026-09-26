@@ -21,6 +21,7 @@ class VodPlayerScreen extends StatefulWidget {
     required this.source,
     this.subtitle,
     this.progressKey,
+    this.progressMeta,
     this.start,
     this.progressStore,
   });
@@ -30,6 +31,9 @@ class VodPlayerScreen extends StatefulWidget {
   final String url;
   final PlaylistSource source;
   final String? progressKey;
+
+  /// Kayıtla saklanan ad ve poster; ana sayfadaki raf için.
+  final WatchMeta? progressMeta;
   final Duration? start;
   final WatchProgressStore? progressStore;
 
@@ -91,6 +95,7 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
       widget.source,
       key,
       WatchProgress(position: position, duration: _player.state.duration),
+      meta: widget.progressMeta,
     );
   }
 
