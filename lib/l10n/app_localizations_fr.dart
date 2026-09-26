@@ -659,7 +659,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get editCategoriesHint =>
-      'Fais glisser pour réorganiser, utilise l\'œil pour masquer.';
+      'Fais glisser pour réorganiser, utilise l\'œil pour masquer et le cadenas pour exiger le code PIN.';
 
   @override
   String hiddenCount(int count) {
@@ -697,4 +697,117 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dragToReorder => 'Faire glisser pour réorganiser';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count verrouillées',
+      one: '1 verrouillée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'Verrouiller';
+
+  @override
+  String get unlockCategory => 'Retirer le verrou';
+
+  @override
+  String get lockedCategory => 'Catégorie verrouillée';
+
+  @override
+  String get confirm => 'OK';
+
+  @override
+  String get pinEnterTitle => 'Saisis le code PIN';
+
+  @override
+  String get pinWrong => 'Code PIN incorrect';
+
+  @override
+  String get pinUnlockMessage =>
+      'Cette catégorie est verrouillée. Une fois le code PIN saisi, toutes les catégories verrouillées restent ouvertes jusqu\'à la fermeture de l\'application.';
+
+  @override
+  String get pinEditorMessage =>
+      'Le code PIN est nécessaire pour modifier l\'organisation des catégories.';
+
+  @override
+  String get pinCurrentMessage => 'Saisis ton code PIN actuel pour continuer.';
+
+  @override
+  String get pinRemoveMessage =>
+      'Saisis ton code PIN actuel pour le supprimer.';
+
+  @override
+  String get pinNewTitle => 'Nouveau code PIN';
+
+  @override
+  String get pinNewMessage =>
+      'Choisis un code PIN à 4 chiffres pour ouvrir les catégories verrouillées.';
+
+  @override
+  String get pinConfirmTitle => 'Confirme le code PIN';
+
+  @override
+  String get pinConfirmMessage => 'Saisis le même code PIN une seconde fois.';
+
+  @override
+  String get pinMismatch => 'Les codes PIN ne correspondent pas';
+
+  @override
+  String get pinSaved => 'Code PIN enregistré';
+
+  @override
+  String get pinRemoved => 'Code PIN et verrous de catégories supprimés';
+
+  @override
+  String get locksClosed =>
+      'Les catégories verrouillées sont de nouveau verrouillées';
+
+  @override
+  String get parentalControl => 'Contrôle parental';
+
+  @override
+  String get parentalControlSubtitle =>
+      'Les catégories verrouillées ne s\'ouvrent pas sans le code PIN, et leurs chaînes n\'apparaissent ni dans la recherche ni sur l\'accueil.';
+
+  @override
+  String get setPin => 'Définir un code PIN';
+
+  @override
+  String get setPinDetail =>
+      'Verrouille ensuite des catégories avec le cadenas de l\'éditeur de catégories.';
+
+  @override
+  String get lockNow => 'Reverrouiller maintenant';
+
+  @override
+  String get lockNowDetail =>
+      'Les catégories verrouillées ouvertes pendant cette session redemanderont le code PIN.';
+
+  @override
+  String get changePin => 'Modifier le code PIN';
+
+  @override
+  String get removePin => 'Supprimer le code PIN';
+
+  @override
+  String get removePinDetail =>
+      'Tous les verrous de catégories sont aussi supprimés.';
+
+  @override
+  String get searchFilterAll => 'Tout';
+
+  @override
+  String get seeAll => 'Tout voir';
+
+  @override
+  String get fullscreenGrid => 'Plein écran (F)';
+
+  @override
+  String get exitFullscreenGrid => 'Quitter le plein écran (Échap)';
 }

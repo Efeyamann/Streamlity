@@ -7,12 +7,16 @@ import '../models/epg.dart';
 import '../models/playlist.dart';
 import '../models/vod.dart';
 import '../ui/tokens.dart';
+import '../ui/widgets/channel_tile.dart';
 import '../ui/widgets/common.dart';
 import '../ui/widgets/poster.dart';
 import '../ui/widgets/shelf.dart';
 
 /// Bir raftaki en fazla sonuç; tamamı sayı olarak gösterilir.
 const _maxResults = 40;
+
+/// Sonuç türü: Tümü raflarla, diğerleri dikey kaydırılan tam listeyle.
+enum _Filter { all, channels, movies, series }
 
 /// Kanal, film ve dizilerde tek kutudan arama.
 class SearchView extends StatefulWidget {
@@ -54,6 +58,7 @@ final _itemKeys = Expando<List<String>>();
 
 class _SearchViewState extends State<SearchView> {
   String _query = '';
+  _Filter _filter = _Filter.all;
   Timer? _debounce;
   Future<VodCatalog>? _movies;
   Future<VodCatalog>? _series;
@@ -127,6 +132,7 @@ class _SearchViewState extends State<SearchView> {
             ),
           ),
         ),
+        if (query.length >= 2) _filters(query),
         Expanded(
           child: query.length < 2
               ? EmptyState(
@@ -136,11 +142,180 @@ class _SearchViewState extends State<SearchView> {
                       ? context.l10n.searchPromptChannels
                       : context.l10n.searchPromptAll,
                 )
-              : _results(query),
+              : switch (_filter) {
+                  _Filter.all => _results(query),
+                  _Filter.channels => _channelList(query),
+                  _Filter.movies => _vodGrid(VodKind.movie, query),
+                  _Filter.series => _vodGrid(VodKind.series, query),
+                },
         ),
       ],
     );
   }
+
+  Future<VodCatalog>? _catalogOf(VodKind kind) =>
+      kind == VodKind.movie ? _movies : _series;
+
+  /// Katalogdaki eşleşmeler; gizli (ve kilitli) kategoriler hariç.
+  List<VodItem> _vodResults(VodCatalog catalog, VodKind kind, String query) {
+    final hidden = widget.hiddenVod[kind] ?? const <String>{};
+    return [
+      for (final i in _items(catalog, query))
+        if (!hidden.contains(i.categoryId)) i,
+    ];
+  }
+
+  /// Tümü · Kanallar · Filmler · Diziler; türlerde sonuç sayısı.
+  Widget _filters(String query) {
+    final c = AppColors.of(context);
+    final l = context.l10n;
+    Widget chip(_Filter filter, String label,
+        {int? count, bool loading = false}) {
+      final selected = _filter == filter;
+      final color = selected ? c.onAccent : c.fg;
+      return Padding(
+        padding: const EdgeInsetsDirectional.only(end: Space.xs),
+        child: ChoiceChip(
+          showCheckmark: false,
+          selected: selected,
+          onSelected: (_) => setState(() => _filter = filter),
+          label: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label, style: TextStyle(color: color)),
+              if (count != null) ...[
+                const SizedBox(width: 6),
+                Text(l.count(count),
+                    style: TextStyle(
+                        color: selected ? c.onAccent : c.fgMuted,
+                        fontFeatures: const [FontFeature.tabularFigures()])),
+              ],
+              if (loading) ...[
+                const SizedBox(width: 6),
+                SizedBox.square(
+                  dimension: 10,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 1.5, color: c.fgMuted),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget vodChip(_Filter filter, String label, VodKind kind) =>
+        FutureBuilder<VodCatalog>(
+          future: _catalogOf(kind),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) return const SizedBox.shrink();
+            final data = snapshot.data;
+            return chip(filter, label,
+                count: data == null ? null : _vodResults(data, kind, query).length,
+                loading: data == null);
+          },
+        );
+
+    final playlist = widget.playlist;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Space.xl, 0, Space.xl, Space.md),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Wrap(
+          runSpacing: Space.xs,
+          children: [
+            chip(_Filter.all, l.searchFilterAll),
+            chip(_Filter.channels, l.channels,
+                count: playlist == null ? null : _channels(query).length,
+                loading: playlist == null),
+            if (_movies != null)
+              vodChip(_Filter.movies, l.sectionMovies, VodKind.movie),
+            if (_series != null)
+              vodChip(_Filter.series, l.sectionSeries, VodKind.series),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Rafın başlığındaki "Tümünü gör": o türün tam listesine geçer.
+  Widget _seeAll(_Filter filter) => TextButton(
+        onPressed: () => setState(() => _filter = filter),
+        child: Text(context.l10n.seeAll),
+      );
+
+  static Widget _loading() => const Center(
+        child: SizedBox.square(
+          dimension: 28,
+          child: CircularProgressIndicator(strokeWidth: 2.5),
+        ),
+      );
+
+  Widget _noResults() => EmptyState(
+        icon: Icons.search_off,
+        title: context.l10n.noResultsTitle,
+        message: context.l10n.noResultsMessage,
+      );
+
+  /// Tüm eşleşen kanallar, fare tekerleğiyle kaydırılan ızgarada.
+  Widget _channelList(String query) {
+    final l = context.l10n;
+    if (widget.playlist == null) return _loading();
+    final channels = _channels(query);
+    if (channels.isEmpty) return _noResults();
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(
+          Space.xl - Space.xs, 0, Space.xl - Space.xs, Space.xxl),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 380,
+        mainAxisExtent: ChannelTile.height + 4,
+      ),
+      itemCount: channels.length,
+      itemBuilder: (context, i) {
+        final channel = channels[i];
+        final programme = widget.nowOn(channel);
+        return ChannelTile(
+          name: channel.name,
+          logo: channel.logo,
+          // Program yoksa kanalın kategorisi.
+          programme: programme?.title ??
+              (channel.group == null ? null : l.group(channel.group!)),
+          progress: programme?.progress(widget.now),
+          onTap: () => widget.onPlayChannel(channel),
+        );
+      },
+    );
+  }
+
+  /// Tüm eşleşen filmler ya da diziler, poster ızgarasında.
+  Widget _vodGrid(VodKind kind, String query) => FutureBuilder<VodCatalog>(
+        future: _catalogOf(kind),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) return _noResults();
+          final data = snapshot.data;
+          if (data == null) return _loading();
+          final items = _vodResults(data, kind, query);
+          if (items.isEmpty) return _noResults();
+          return GridView.builder(
+            padding: const EdgeInsets.fromLTRB(
+                Space.xl, Space.xs, Space.xl, Space.xxl),
+            gridDelegate: posterGridDelegate,
+            itemCount: items.length,
+            itemBuilder: (context, i) => _poster(items[i]),
+          );
+        },
+      );
+
+  Widget _poster(VodItem item) => PosterCard(
+        title: item.name,
+        poster: item.poster,
+        rating: item.rating,
+        subtitle: item.year?.toString(),
+        fallbackIcon: item.kind == VodKind.movie
+            ? Icons.movie_outlined
+            : Icons.video_library_outlined,
+        onTap: () => widget.onOpenVod(item),
+      );
 
   Widget _results(String query) {
     final l = context.l10n;
@@ -155,6 +330,7 @@ class _SearchViewState extends State<SearchView> {
           Shelf(
             title: l.channels,
             count: channels.length,
+            action: _seeAll(_Filter.channels),
             itemCount: channels.length.clamp(0, _maxResults),
             itemWidth: ChannelCard.width,
             height: ChannelCard.height,
@@ -171,8 +347,10 @@ class _SearchViewState extends State<SearchView> {
               );
             },
           ),
-        if (movies != null) _vodShelf(l.sectionMovies, movies, query),
-        if (series != null) _vodShelf(l.sectionSeries, series, query),
+        if (movies != null)
+          _vodShelf(l.sectionMovies, VodKind.movie, movies, query),
+        if (series != null)
+          _vodShelf(l.sectionSeries, VodKind.series, series, query),
         _NoResults(
           query: query,
           channels: channels.length,
@@ -195,42 +373,27 @@ class _SearchViewState extends State<SearchView> {
         ),
       );
 
-  Widget _vodShelf(String title, Future<VodCatalog> catalog, String query) {
+  Widget _vodShelf(String title, VodKind kind, Future<VodCatalog> catalog,
+      String query) {
     return FutureBuilder<VodCatalog>(
       future: catalog,
       builder: (context, snapshot) {
         final data = snapshot.data;
         if (snapshot.hasError) return const SizedBox.shrink();
         if (data == null) return _loadingShelf(title, 150, 280);
-        final hidden = widget.hiddenVod[
-                identical(catalog, _movies) ? VodKind.movie : VodKind.series] ??
-            const <String>{};
-        final items = [
-          for (final i in _items(data, query))
-            if (!hidden.contains(i.categoryId)) i,
-        ];
+        final items = _vodResults(data, kind, query);
         if (items.isEmpty) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.only(top: Space.xl),
           child: Shelf(
             title: title,
             count: items.length,
+            action: _seeAll(
+                kind == VodKind.movie ? _Filter.movies : _Filter.series),
             itemCount: items.length.clamp(0, _maxResults),
             itemWidth: 150,
             height: 280,
-            itemBuilder: (context, i) {
-              final item = items[i];
-              return PosterCard(
-                title: item.name,
-                poster: item.poster,
-                rating: item.rating,
-                subtitle: item.year?.toString(),
-                fallbackIcon: item.kind == VodKind.movie
-                    ? Icons.movie_outlined
-                    : Icons.video_library_outlined,
-                onTap: () => widget.onOpenVod(item),
-              );
-            },
+            itemBuilder: (context, i) => _poster(items[i]),
           ),
         );
       },

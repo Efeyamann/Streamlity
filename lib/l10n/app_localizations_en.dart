@@ -653,7 +653,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editCategories => 'Edit categories';
 
   @override
-  String get editCategoriesHint => 'Drag to reorder, use the eye icon to hide.';
+  String get editCategoriesHint =>
+      'Drag to reorder, use the eye icon to hide and the lock icon to require the PIN.';
 
   @override
   String hiddenCount(int count) {
@@ -690,4 +691,113 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dragToReorder => 'Drag to reorder';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count locked',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'Lock';
+
+  @override
+  String get unlockCategory => 'Remove lock';
+
+  @override
+  String get lockedCategory => 'Locked category';
+
+  @override
+  String get confirm => 'OK';
+
+  @override
+  String get pinEnterTitle => 'Enter PIN';
+
+  @override
+  String get pinWrong => 'Wrong PIN';
+
+  @override
+  String get pinUnlockMessage =>
+      'This category is locked. Once you enter the PIN, all locked categories stay open until the app closes.';
+
+  @override
+  String get pinEditorMessage =>
+      'The PIN is required to change the category layout.';
+
+  @override
+  String get pinCurrentMessage => 'Enter your current PIN to continue.';
+
+  @override
+  String get pinRemoveMessage => 'Enter your current PIN to remove it.';
+
+  @override
+  String get pinNewTitle => 'New PIN';
+
+  @override
+  String get pinNewMessage =>
+      'Choose a 4-digit PIN for opening locked categories.';
+
+  @override
+  String get pinConfirmTitle => 'Confirm PIN';
+
+  @override
+  String get pinConfirmMessage => 'Enter the same PIN once more.';
+
+  @override
+  String get pinMismatch => 'The PINs didn\'t match';
+
+  @override
+  String get pinSaved => 'PIN saved';
+
+  @override
+  String get pinRemoved => 'PIN and all category locks removed';
+
+  @override
+  String get locksClosed => 'Locked categories are locked again';
+
+  @override
+  String get parentalControl => 'Parental control';
+
+  @override
+  String get parentalControlSubtitle =>
+      'Locked categories don\'t open without the PIN, and their channels don\'t appear in search or on the home page.';
+
+  @override
+  String get setPin => 'Set PIN';
+
+  @override
+  String get setPinDetail =>
+      'Then lock categories with the lock icon in the category editor.';
+
+  @override
+  String get lockNow => 'Lock again now';
+
+  @override
+  String get lockNowDetail =>
+      'Locked categories opened in this session will ask for the PIN again.';
+
+  @override
+  String get changePin => 'Change PIN';
+
+  @override
+  String get removePin => 'Remove PIN';
+
+  @override
+  String get removePinDetail => 'All category locks are removed too.';
+
+  @override
+  String get searchFilterAll => 'All';
+
+  @override
+  String get seeAll => 'See all';
+
+  @override
+  String get fullscreenGrid => 'Fullscreen (F)';
+
+  @override
+  String get exitFullscreenGrid => 'Exit fullscreen (Esc)';
 }

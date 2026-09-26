@@ -1,7 +1,12 @@
-/// Kullanıcının kategori düzeni: kendi sırası ve gizledikleri. Anahtar
-/// canlı TV'de grup adı, film/dizide `m:<id>` / `s:<id>`.
+/// Kullanıcının kategori düzeni: kendi sırası, gizledikleri ve PIN'le
+/// kilitledikleri. Anahtar canlı TV'de grup adı, film/dizide kategori
+/// kimliği.
 class CategoryLayout {
-  const CategoryLayout({this.order = const [], this.hidden = const {}});
+  const CategoryLayout({
+    this.order = const [],
+    this.hidden = const {},
+    this.locked = const {},
+  });
 
   static const empty = CategoryLayout();
 
@@ -10,9 +15,23 @@ class CategoryLayout {
   final List<String> order;
   final Set<String> hidden;
 
-  bool get isEmpty => order.isEmpty && hidden.isEmpty;
+  /// Açmak için PIN istenen kategoriler. Listede kilit simgesiyle görünür;
+  /// kilit açık değilken kanalları "Tümü"nde, aramada ve ana sayfada çıkmaz.
+  final Set<String> locked;
+
+  bool get isEmpty => order.isEmpty && hidden.isEmpty && locked.isEmpty;
 
   bool isHidden(String key) => hidden.contains(key);
+
+  bool isLocked(String key) => locked.contains(key);
+
+  /// Toplu görünümlerde (tümü, arama, ana sayfa) öğeleri gösterilmeyen
+  /// kategoriler: gizliler ve kilitler kapalıysa kilitliler.
+  Set<String> excluded({required bool locksActive}) =>
+      locksActive && locked.isNotEmpty ? {...hidden, ...locked} : hidden;
+
+  CategoryLayout withoutLocks() =>
+      CategoryLayout(order: order, hidden: hidden);
 
   /// [items]'ı kullanıcının sırasına dizer. Gizliler dahil; süzmek için
   /// [visible].

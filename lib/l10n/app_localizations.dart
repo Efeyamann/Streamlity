@@ -1171,7 +1171,7 @@ abstract class AppLocalizations {
   /// No description provided for @editCategoriesHint.
   ///
   /// In tr, this message translates to:
-  /// **'Sürükleyerek sırala, göz simgesiyle gizle.'**
+  /// **'Sürükleyerek sırala; göz simgesiyle gizle, kilit simgesiyle PIN\'e bağla.'**
   String get editCategoriesHint;
 
   /// No description provided for @hiddenCount.
@@ -1221,6 +1221,198 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Sıralamak için sürükle'**
   String get dragToReorder;
+
+  /// No description provided for @lockedCount.
+  ///
+  /// In tr, this message translates to:
+  /// **'{count, plural, other{{count} kilitli}}'**
+  String lockedCount(int count);
+
+  /// No description provided for @lockCategory.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilitle'**
+  String get lockCategory;
+
+  /// No description provided for @unlockCategory.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilidi kaldır'**
+  String get unlockCategory;
+
+  /// No description provided for @lockedCategory.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilitli kategori'**
+  String get lockedCategory;
+
+  /// No description provided for @confirm.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamam'**
+  String get confirm;
+
+  /// No description provided for @pinEnterTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN\'i gir'**
+  String get pinEnterTitle;
+
+  /// No description provided for @pinWrong.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN yanlış'**
+  String get pinWrong;
+
+  /// No description provided for @pinUnlockMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kategori kilitli. PIN\'i girersen uygulama kapanana kadar tüm kilitli kategoriler açık kalır.'**
+  String get pinUnlockMessage;
+
+  /// No description provided for @pinEditorMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori düzenini değiştirmek için PIN gerekli.'**
+  String get pinEditorMessage;
+
+  /// No description provided for @pinCurrentMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam etmek için şu anki PIN\'i gir.'**
+  String get pinCurrentMessage;
+
+  /// No description provided for @pinRemoveMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN\'i kaldırmak için şu anki PIN\'i gir.'**
+  String get pinRemoveMessage;
+
+  /// No description provided for @pinNewTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni PIN'**
+  String get pinNewTitle;
+
+  /// No description provided for @pinNewMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilitli kategorileri açmak için 4 haneli bir PIN seç.'**
+  String get pinNewMessage;
+
+  /// No description provided for @pinConfirmTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN\'i onayla'**
+  String get pinConfirmTitle;
+
+  /// No description provided for @pinConfirmMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aynı PIN\'i bir kez daha gir.'**
+  String get pinConfirmMessage;
+
+  /// No description provided for @pinMismatch.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN\'ler eşleşmedi'**
+  String get pinMismatch;
+
+  /// No description provided for @pinSaved.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN kaydedildi'**
+  String get pinSaved;
+
+  /// No description provided for @pinRemoved.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN ve tüm kategori kilitleri kaldırıldı'**
+  String get pinRemoved;
+
+  /// No description provided for @locksClosed.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilitli kategoriler yeniden kilitlendi'**
+  String get locksClosed;
+
+  /// No description provided for @parentalControl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ebeveyn denetimi'**
+  String get parentalControl;
+
+  /// No description provided for @parentalControlSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilitli kategoriler PIN girilmeden açılmaz; kanalları aramada ve ana sayfada çıkmaz.'**
+  String get parentalControlSubtitle;
+
+  /// No description provided for @setPin.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN belirle'**
+  String get setPin;
+
+  /// No description provided for @setPinDetail.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonra kategori düzenleyicideki kilit simgesiyle kategorileri kilitle.'**
+  String get setPinDetail;
+
+  /// No description provided for @lockNow.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilitleri şimdi kapat'**
+  String get lockNow;
+
+  /// No description provided for @lockNowDetail.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu oturumda açılan kilitli kategoriler yeniden PIN ister.'**
+  String get lockNowDetail;
+
+  /// No description provided for @changePin.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN\'i değiştir'**
+  String get changePin;
+
+  /// No description provided for @removePin.
+  ///
+  /// In tr, this message translates to:
+  /// **'PIN\'i kaldır'**
+  String get removePin;
+
+  /// No description provided for @removePinDetail.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm kategori kilitleri de kaldırılır.'**
+  String get removePinDetail;
+
+  /// No description provided for @searchFilterAll.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get searchFilterAll;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü gör'**
+  String get seeAll;
+
+  /// No description provided for @fullscreenGrid.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tam ekran (F)'**
+  String get fullscreenGrid;
+
+  /// No description provided for @exitFullscreenGrid.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tam ekrandan çık (Esc)'**
+  String get exitFullscreenGrid;
 }
 
 class _AppLocalizationsDelegate

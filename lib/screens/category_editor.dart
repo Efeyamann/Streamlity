@@ -3,23 +3,32 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 import '../models/category_layout.dart';
 import '../models/playlist.dart' show searchKey;
+import '../services/parental_lock.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets/common.dart';
+import 'pin_dialog.dart';
 
 /// Düzenleyicideki kategori: kayıt anahtarı, görünen ad, öğe sayısı.
 typedef CategoryEntry = ({String key, String label, int? count});
 
-/// Kategorileri sıralama ve gizleme penceresi. Kaydedilirse yeni düzen,
-/// vazgeçilirse null döner.
+/// Kategorileri sıralama, gizleme ve kilitleme penceresi. Kaydedilirse
+/// yeni düzen, vazgeçilirse null döner. PIN varken ve kilitler kapalıyken
+/// önce PIN sorulur; kilitler bu yüzden açılmaz.
 Future<CategoryLayout?> showCategoryEditor(
   BuildContext context, {
   required List<CategoryEntry> entries,
   required CategoryLayout layout,
-}) =>
-    showDialog<CategoryLayout>(
-      context: context,
-      builder: (_) => _CategoryEditor(entries: entries, layout: layout),
-    );
+}) async {
+  if (parentalLock.active &&
+      !await askPin(context, message: context.l10n.pinEditorMessage)) {
+    return null;
+  }
+  if (!context.mounted) return null;
+  return showDialog<CategoryLayout>(
+    context: context,
+    builder: (_) => _CategoryEditor(entries: entries, layout: layout),
+  );
+}
 
 class _CategoryEditor extends StatefulWidget {
   const _CategoryEditor({required this.entries, required this.layout});
@@ -41,6 +50,10 @@ class _CategoryEditorState extends State<_CategoryEditor> {
     for (final k in widget.layout.hidden)
       if (_byKey.containsKey(k)) k,
   };
+  late Set<String> _locked = {
+    for (final k in widget.layout.locked)
+      if (_byKey.containsKey(k)) k,
+  };
   String _query = '';
 
   List<String> get _providerOrder => [for (final e in widget.entries) e.key];
@@ -58,6 +71,20 @@ class _CategoryEditorState extends State<_CategoryEditor> {
         _hidden = {..._hidden};
         if (!_hidden.remove(key)) _hidden.add(key);
       });
+
+  /// PIN yoksa ilk kilitte belirletir.
+  Future<void> _toggleLock(String key) async {
+    if (!_locked.contains(key) &&
+        !parentalLock.hasPin &&
+        !await setupPin(context)) {
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _locked = {..._locked};
+      if (!_locked.remove(key)) _locked.add(key);
+    });
+  }
 
   void _moveToTop(String key) => setState(() {
         _order = [key, for (final k in _order) if (k != key) k];
@@ -81,6 +108,7 @@ class _CategoryEditorState extends State<_CategoryEditor> {
     Navigator.of(context).pop(CategoryLayout(
       order: same ? const [] : _order,
       hidden: _hidden,
+      locked: _locked,
     ));
   }
 
@@ -137,7 +165,11 @@ class _CategoryEditorState extends State<_CategoryEditor> {
               padding: const EdgeInsets.symmetric(horizontal: Space.lg),
               child: Row(
                 children: [
-                  Text(l.hiddenCount(_hidden.length),
+                  Text(
+                      [
+                        l.hiddenCount(_hidden.length),
+                        if (_locked.isNotEmpty) l.lockedCount(_locked.length),
+                      ].join(' · '),
                       style: theme.textTheme.labelMedium
                           ?.copyWith(color: c.fgMuted)),
                   const Spacer(),
@@ -213,6 +245,7 @@ class _CategoryEditorState extends State<_CategoryEditor> {
     final l = context.l10n;
     final entry = _byKey[key]!;
     final hidden = _hidden.contains(key);
+    final locked = _locked.contains(key);
     return Material(
       key: ValueKey(key),
       type: MaterialType.transparency,
@@ -265,6 +298,14 @@ class _CategoryEditorState extends State<_CategoryEditor> {
                 iconSize: IconSizes.md,
                 icon: const Icon(Icons.vertical_align_top),
                 onPressed: _order.first == key ? null : () => _moveToTop(key),
+              ),
+              IconButton(
+                tooltip: locked ? l.unlockCategory : l.lockCategory,
+                visualDensity: VisualDensity.compact,
+                iconSize: IconSizes.md,
+                color: locked ? c.accent : c.fgSubtle,
+                icon: Icon(locked ? Icons.lock : Icons.lock_open_outlined),
+                onPressed: () => _toggleLock(key),
               ),
               IconButton(
                 tooltip: hidden ? l.showCategory : l.hideCategory,

@@ -657,7 +657,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get editCategoriesHint =>
-      'Arrastra para ordenar; usa el ojo para ocultar.';
+      'Arrastra para ordenar; usa el ojo para ocultar y el candado para pedir el PIN.';
 
   @override
   String hiddenCount(int count) {
@@ -695,4 +695,116 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dragToReorder => 'Arrastra para ordenar';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bloqueadas',
+      one: '1 bloqueada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'Bloquear';
+
+  @override
+  String get unlockCategory => 'Quitar bloqueo';
+
+  @override
+  String get lockedCategory => 'Categoría bloqueada';
+
+  @override
+  String get confirm => 'Aceptar';
+
+  @override
+  String get pinEnterTitle => 'Introduce el PIN';
+
+  @override
+  String get pinWrong => 'PIN incorrecto';
+
+  @override
+  String get pinUnlockMessage =>
+      'Esta categoría está bloqueada. Al introducir el PIN, todas las categorías bloqueadas quedan abiertas hasta que cierres la aplicación.';
+
+  @override
+  String get pinEditorMessage =>
+      'Se necesita el PIN para cambiar la disposición de las categorías.';
+
+  @override
+  String get pinCurrentMessage => 'Introduce tu PIN actual para continuar.';
+
+  @override
+  String get pinRemoveMessage => 'Introduce tu PIN actual para quitarlo.';
+
+  @override
+  String get pinNewTitle => 'Nuevo PIN';
+
+  @override
+  String get pinNewMessage =>
+      'Elige un PIN de 4 dígitos para abrir las categorías bloqueadas.';
+
+  @override
+  String get pinConfirmTitle => 'Confirma el PIN';
+
+  @override
+  String get pinConfirmMessage => 'Introduce el mismo PIN otra vez.';
+
+  @override
+  String get pinMismatch => 'Los PIN no coinciden';
+
+  @override
+  String get pinSaved => 'PIN guardado';
+
+  @override
+  String get pinRemoved =>
+      'Se quitaron el PIN y todos los bloqueos de categorías';
+
+  @override
+  String get locksClosed => 'Las categorías bloqueadas se volvieron a bloquear';
+
+  @override
+  String get parentalControl => 'Control parental';
+
+  @override
+  String get parentalControlSubtitle =>
+      'Las categorías bloqueadas no se abren sin el PIN y sus canales no aparecen en la búsqueda ni en la página de inicio.';
+
+  @override
+  String get setPin => 'Establecer PIN';
+
+  @override
+  String get setPinDetail =>
+      'Después bloquea categorías con el candado del editor de categorías.';
+
+  @override
+  String get lockNow => 'Volver a bloquear ahora';
+
+  @override
+  String get lockNowDetail =>
+      'Las categorías bloqueadas abiertas en esta sesión volverán a pedir el PIN.';
+
+  @override
+  String get changePin => 'Cambiar PIN';
+
+  @override
+  String get removePin => 'Quitar PIN';
+
+  @override
+  String get removePinDetail =>
+      'También se quitan todos los bloqueos de categorías.';
+
+  @override
+  String get searchFilterAll => 'Todo';
+
+  @override
+  String get seeAll => 'Ver todo';
+
+  @override
+  String get fullscreenGrid => 'Pantalla completa (F)';
+
+  @override
+  String get exitFullscreenGrid => 'Salir de pantalla completa (Esc)';
 }

@@ -649,7 +649,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get editCategoriesHint =>
-      'Seret untuk mengurutkan, gunakan ikon mata untuk menyembunyikan.';
+      'Seret untuk mengurutkan, gunakan ikon mata untuk menyembunyikan dan ikon gembok untuk meminta PIN.';
 
   @override
   String hiddenCount(int count) {
@@ -686,4 +686,113 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get dragToReorder => 'Seret untuk mengurutkan';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count terkunci',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'Kunci';
+
+  @override
+  String get unlockCategory => 'Hapus kunci';
+
+  @override
+  String get lockedCategory => 'Kategori terkunci';
+
+  @override
+  String get confirm => 'OK';
+
+  @override
+  String get pinEnterTitle => 'Masukkan PIN';
+
+  @override
+  String get pinWrong => 'PIN salah';
+
+  @override
+  String get pinUnlockMessage =>
+      'Kategori ini terkunci. Setelah PIN dimasukkan, semua kategori terkunci tetap terbuka sampai aplikasi ditutup.';
+
+  @override
+  String get pinEditorMessage =>
+      'PIN diperlukan untuk mengubah susunan kategori.';
+
+  @override
+  String get pinCurrentMessage => 'Masukkan PIN saat ini untuk melanjutkan.';
+
+  @override
+  String get pinRemoveMessage => 'Masukkan PIN saat ini untuk menghapusnya.';
+
+  @override
+  String get pinNewTitle => 'PIN baru';
+
+  @override
+  String get pinNewMessage =>
+      'Pilih PIN 4 digit untuk membuka kategori terkunci.';
+
+  @override
+  String get pinConfirmTitle => 'Konfirmasi PIN';
+
+  @override
+  String get pinConfirmMessage => 'Masukkan PIN yang sama sekali lagi.';
+
+  @override
+  String get pinMismatch => 'PIN tidak cocok';
+
+  @override
+  String get pinSaved => 'PIN disimpan';
+
+  @override
+  String get pinRemoved => 'PIN dan semua kunci kategori dihapus';
+
+  @override
+  String get locksClosed => 'Kategori terkunci dikunci kembali';
+
+  @override
+  String get parentalControl => 'Kontrol orang tua';
+
+  @override
+  String get parentalControlSubtitle =>
+      'Kategori terkunci tidak bisa dibuka tanpa PIN, dan salurannya tidak muncul di pencarian maupun beranda.';
+
+  @override
+  String get setPin => 'Atur PIN';
+
+  @override
+  String get setPinDetail =>
+      'Lalu kunci kategori dengan ikon gembok di editor kategori.';
+
+  @override
+  String get lockNow => 'Kunci lagi sekarang';
+
+  @override
+  String get lockNowDetail =>
+      'Kategori terkunci yang dibuka di sesi ini akan meminta PIN lagi.';
+
+  @override
+  String get changePin => 'Ubah PIN';
+
+  @override
+  String get removePin => 'Hapus PIN';
+
+  @override
+  String get removePinDetail => 'Semua kunci kategori juga dihapus.';
+
+  @override
+  String get searchFilterAll => 'Semua';
+
+  @override
+  String get seeAll => 'Lihat semua';
+
+  @override
+  String get fullscreenGrid => 'Layar penuh (F)';
+
+  @override
+  String get exitFullscreenGrid => 'Keluar dari layar penuh (Esc)';
 }

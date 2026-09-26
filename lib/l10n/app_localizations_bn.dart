@@ -655,7 +655,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get editCategoriesHint =>
-      'ক্রম বদলাতে টেনে আনুন, লুকাতে চোখের আইকন ব্যবহার করুন।';
+      'ক্রম বদলাতে টেনে আনুন, লুকাতে চোখের আইকন আর PIN চাইতে তালার আইকন ব্যবহার করুন।';
 
   @override
   String hiddenCount(int count) {
@@ -692,4 +692,110 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get dragToReorder => 'ক্রম বদলাতে টেনে আনুন';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি লক করা',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'লক করুন';
+
+  @override
+  String get unlockCategory => 'লক সরান';
+
+  @override
+  String get lockedCategory => 'লক করা বিভাগ';
+
+  @override
+  String get confirm => 'ঠিক আছে';
+
+  @override
+  String get pinEnterTitle => 'PIN দিন';
+
+  @override
+  String get pinWrong => 'ভুল PIN';
+
+  @override
+  String get pinUnlockMessage =>
+      'এই বিভাগটি লক করা। PIN দিলে অ্যাপ বন্ধ না হওয়া পর্যন্ত সব লক করা বিভাগ খোলা থাকবে।';
+
+  @override
+  String get pinEditorMessage => 'বিভাগের বিন্যাস বদলাতে PIN লাগবে।';
+
+  @override
+  String get pinCurrentMessage => 'চালিয়ে যেতে বর্তমান PIN দিন।';
+
+  @override
+  String get pinRemoveMessage => 'PIN সরাতে বর্তমান PIN দিন।';
+
+  @override
+  String get pinNewTitle => 'নতুন PIN';
+
+  @override
+  String get pinNewMessage => 'লক করা বিভাগ খুলতে ৪ অঙ্কের একটি PIN বেছে নিন।';
+
+  @override
+  String get pinConfirmTitle => 'PIN নিশ্চিত করুন';
+
+  @override
+  String get pinConfirmMessage => 'একই PIN আরেকবার দিন।';
+
+  @override
+  String get pinMismatch => 'PIN দুটি মেলেনি';
+
+  @override
+  String get pinSaved => 'PIN সংরক্ষিত হয়েছে';
+
+  @override
+  String get pinRemoved => 'PIN ও সব বিভাগের লক সরানো হয়েছে';
+
+  @override
+  String get locksClosed => 'লক করা বিভাগগুলো আবার লক হয়েছে';
+
+  @override
+  String get parentalControl => 'অভিভাবক নিয়ন্ত্রণ';
+
+  @override
+  String get parentalControlSubtitle =>
+      'লক করা বিভাগ PIN ছাড়া খোলে না, আর সেগুলোর চ্যানেল খোঁজে বা হোম পেজে দেখা যায় না।';
+
+  @override
+  String get setPin => 'PIN সেট করুন';
+
+  @override
+  String get setPinDetail =>
+      'তারপর বিভাগ সম্পাদকের তালার আইকন দিয়ে বিভাগ লক করুন।';
+
+  @override
+  String get lockNow => 'এখনই আবার লক করুন';
+
+  @override
+  String get lockNowDetail => 'এই সেশনে খোলা লক করা বিভাগগুলো আবার PIN চাইবে।';
+
+  @override
+  String get changePin => 'PIN বদলান';
+
+  @override
+  String get removePin => 'PIN সরান';
+
+  @override
+  String get removePinDetail => 'সব বিভাগের লকও সরানো হবে।';
+
+  @override
+  String get searchFilterAll => 'সব';
+
+  @override
+  String get seeAll => 'সব দেখুন';
+
+  @override
+  String get fullscreenGrid => 'পূর্ণ স্ক্রিন (F)';
+
+  @override
+  String get exitFullscreenGrid => 'পূর্ণ স্ক্রিন থেকে বের হন (Esc)';
 }

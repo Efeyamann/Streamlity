@@ -652,7 +652,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editCategories => 'Kategorileri düzenle';
 
   @override
-  String get editCategoriesHint => 'Sürükleyerek sırala, göz simgesiyle gizle.';
+  String get editCategoriesHint =>
+      'Sürükleyerek sırala; göz simgesiyle gizle, kilit simgesiyle PIN\'e bağla.';
 
   @override
   String hiddenCount(int count) {
@@ -689,4 +690,113 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dragToReorder => 'Sıralamak için sürükle';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count kilitli',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'Kilitle';
+
+  @override
+  String get unlockCategory => 'Kilidi kaldır';
+
+  @override
+  String get lockedCategory => 'Kilitli kategori';
+
+  @override
+  String get confirm => 'Tamam';
+
+  @override
+  String get pinEnterTitle => 'PIN\'i gir';
+
+  @override
+  String get pinWrong => 'PIN yanlış';
+
+  @override
+  String get pinUnlockMessage =>
+      'Bu kategori kilitli. PIN\'i girersen uygulama kapanana kadar tüm kilitli kategoriler açık kalır.';
+
+  @override
+  String get pinEditorMessage =>
+      'Kategori düzenini değiştirmek için PIN gerekli.';
+
+  @override
+  String get pinCurrentMessage => 'Devam etmek için şu anki PIN\'i gir.';
+
+  @override
+  String get pinRemoveMessage => 'PIN\'i kaldırmak için şu anki PIN\'i gir.';
+
+  @override
+  String get pinNewTitle => 'Yeni PIN';
+
+  @override
+  String get pinNewMessage =>
+      'Kilitli kategorileri açmak için 4 haneli bir PIN seç.';
+
+  @override
+  String get pinConfirmTitle => 'PIN\'i onayla';
+
+  @override
+  String get pinConfirmMessage => 'Aynı PIN\'i bir kez daha gir.';
+
+  @override
+  String get pinMismatch => 'PIN\'ler eşleşmedi';
+
+  @override
+  String get pinSaved => 'PIN kaydedildi';
+
+  @override
+  String get pinRemoved => 'PIN ve tüm kategori kilitleri kaldırıldı';
+
+  @override
+  String get locksClosed => 'Kilitli kategoriler yeniden kilitlendi';
+
+  @override
+  String get parentalControl => 'Ebeveyn denetimi';
+
+  @override
+  String get parentalControlSubtitle =>
+      'Kilitli kategoriler PIN girilmeden açılmaz; kanalları aramada ve ana sayfada çıkmaz.';
+
+  @override
+  String get setPin => 'PIN belirle';
+
+  @override
+  String get setPinDetail =>
+      'Sonra kategori düzenleyicideki kilit simgesiyle kategorileri kilitle.';
+
+  @override
+  String get lockNow => 'Kilitleri şimdi kapat';
+
+  @override
+  String get lockNowDetail =>
+      'Bu oturumda açılan kilitli kategoriler yeniden PIN ister.';
+
+  @override
+  String get changePin => 'PIN\'i değiştir';
+
+  @override
+  String get removePin => 'PIN\'i kaldır';
+
+  @override
+  String get removePinDetail => 'Tüm kategori kilitleri de kaldırılır.';
+
+  @override
+  String get searchFilterAll => 'Tümü';
+
+  @override
+  String get seeAll => 'Tümünü gör';
+
+  @override
+  String get fullscreenGrid => 'Tam ekran (F)';
+
+  @override
+  String get exitFullscreenGrid => 'Tam ekrandan çık (Esc)';
 }

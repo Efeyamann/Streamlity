@@ -319,10 +319,12 @@ class NavRow extends StatefulWidget {
     this.trailing,
     this.showTrailing = false,
     this.height = 40,
+    this.tooltip,
   });
 
   final String label;
   final VoidCallback onTap;
+  final String? tooltip;
   final bool selected;
   final IconData? leading;
   final int? count;
@@ -373,9 +375,17 @@ class _NavRowState extends State<NavRow> {
               child: Row(
                 children: [
                   if (widget.leading case final icon?) ...[
-                    Icon(icon,
-                        size: IconSizes.md,
-                        color: selected ? c.fg : c.fgMuted),
+                    if (widget.tooltip case final tooltip?)
+                      Tooltip(
+                        message: tooltip,
+                        child: Icon(icon,
+                            size: IconSizes.md,
+                            color: selected ? c.fg : c.fgMuted),
+                      )
+                    else
+                      Icon(icon,
+                          size: IconSizes.md,
+                          color: selected ? c.fg : c.fgMuted),
                     const SizedBox(width: Space.sm),
                   ],
                   Expanded(
@@ -456,4 +466,18 @@ class EditCategoriesButton extends StatelessWidget {
       ],
     );
   }
+}
+
+/// [start] konumunda [extent] yüksekliğindeki satırı görünür yapmak için
+/// kaydırma konumu; satır zaten tamamen görünüyorsa null. Satır görünür
+/// alanın ortasına getirilir.
+double? revealOffset({
+  required double start,
+  required double extent,
+  required double viewport,
+  required double offset,
+  required double max,
+}) {
+  if (start >= offset && start + extent <= offset + viewport) return null;
+  return (start - (viewport - extent) / 2).clamp(0, max).toDouble();
 }

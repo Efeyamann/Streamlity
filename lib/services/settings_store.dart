@@ -8,7 +8,11 @@ import 'package:path_provider/path_provider.dart';
 /// yeniden çizilir ve seçim [SettingsStore] ile saklanır.
 final appLanguage = ValueNotifier<String?>(null);
 
-/// Uygulama ayarları (`settings.json`). Şimdilik yalnız dil.
+/// PIN'in saklanan hali: rastgele tuz ve sha256(tuz + PIN), ikisi de
+/// onaltılık.
+typedef PinHash = ({String salt, String hash});
+
+/// Uygulama ayarları (`settings.json`): dil ve ebeveyn denetimi PIN'i.
 class SettingsStore {
   SettingsStore({Future<Directory> Function()? directory})
       : _directory = directory ?? getApplicationSupportDirectory;
@@ -32,14 +36,33 @@ class SettingsStore {
     return code is String && code.isNotEmpty ? code : null;
   }
 
-  Future<void> writeLanguage(String? code) async {
+  Future<void> writeLanguage(String? code) => _update((all) {
+        if (code == null) {
+          all.remove('language');
+        } else {
+          all['language'] = code;
+        }
+      });
+
+  Future<PinHash?> readPin() async {
+    final pin = (await _read())['pin'];
+    if (pin is! Map) return null;
+    final salt = pin['salt'], hash = pin['hash'];
+    return salt is String && hash is String ? (salt: salt, hash: hash) : null;
+  }
+
+  Future<void> writePin(PinHash? pin) => _update((all) {
+        if (pin == null) {
+          all.remove('pin');
+        } else {
+          all['pin'] = {'salt': pin.salt, 'hash': pin.hash};
+        }
+      });
+
+  Future<void> _update(void Function(Map<String, dynamic> all) change) async {
     try {
       final all = await _read();
-      if (code == null) {
-        all.remove('language');
-      } else {
-        all['language'] = code;
-      }
+      change(all);
       final file = await _file();
       await file.parent.create(recursive: true);
       await file.writeAsString(jsonEncode(all), flush: true);

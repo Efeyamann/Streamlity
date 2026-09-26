@@ -14,15 +14,17 @@ enum CategoryKind {
   final String prefix;
 }
 
-/// Kategori sırası ve gizlilerini kaynak ve tür başına saklar. Dosyada
+/// Kategori sırası, gizlileri ve kilitlileri kaynak ve tür başına saklar. Dosyada
 /// anahtarlar öneklidir (`l:TR| SPOR`, `m:12`); dışarıya öneksiz verilir.
 class CategoryLayoutStore {
   CategoryLayoutStore({Future<Directory> Function()? directory})
       : _order = FavoritesStore.categoryOrder(directory: directory),
-        _hidden = FavoritesStore.hiddenCategories(directory: directory);
+        _hidden = FavoritesStore.hiddenCategories(directory: directory),
+        _locked = FavoritesStore.lockedCategories(directory: directory);
 
   final FavoritesStore _order;
   final FavoritesStore _hidden;
+  final FavoritesStore _locked;
 
   static List<String> _own(List<String> keys, CategoryKind kind) => [
         for (final k in keys)
@@ -32,9 +34,11 @@ class CategoryLayoutStore {
   Future<CategoryLayout> read(PlaylistSource source, CategoryKind kind) async {
     final order = await _order.readList(source);
     final hidden = await _hidden.readList(source);
+    final locked = await _locked.readList(source);
     return CategoryLayout(
       order: _own(order, kind),
       hidden: _own(hidden, kind).toSet(),
+      locked: _own(locked, kind).toSet(),
     );
   }
 
@@ -49,5 +53,7 @@ class CategoryLayoutStore {
         source, merge(await _order.readList(source), layout.order));
     await _hidden.writeList(
         source, merge(await _hidden.readList(source), layout.hidden));
+    await _locked.writeList(
+        source, merge(await _locked.readList(source), layout.locked));
   }
 }

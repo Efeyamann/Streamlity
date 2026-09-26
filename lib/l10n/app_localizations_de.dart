@@ -657,7 +657,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get editCategoriesHint =>
-      'Ziehen zum Sortieren, Augensymbol zum Ausblenden.';
+      'Ziehen zum Sortieren, Augensymbol zum Ausblenden, Schlosssymbol für PIN-Schutz.';
 
   @override
   String hiddenCount(int count) {
@@ -694,4 +694,116 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get dragToReorder => 'Zum Sortieren ziehen';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count gesperrt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'Sperren';
+
+  @override
+  String get unlockCategory => 'Sperre aufheben';
+
+  @override
+  String get lockedCategory => 'Gesperrte Kategorie';
+
+  @override
+  String get confirm => 'OK';
+
+  @override
+  String get pinEnterTitle => 'PIN eingeben';
+
+  @override
+  String get pinWrong => 'Falsche PIN';
+
+  @override
+  String get pinUnlockMessage =>
+      'Diese Kategorie ist gesperrt. Nach Eingabe der PIN bleiben alle gesperrten Kategorien geöffnet, bis die App geschlossen wird.';
+
+  @override
+  String get pinEditorMessage =>
+      'Zum Ändern der Kategorien wird die PIN benötigt.';
+
+  @override
+  String get pinCurrentMessage =>
+      'Gib deine aktuelle PIN ein, um fortzufahren.';
+
+  @override
+  String get pinRemoveMessage =>
+      'Gib deine aktuelle PIN ein, um sie zu entfernen.';
+
+  @override
+  String get pinNewTitle => 'Neue PIN';
+
+  @override
+  String get pinNewMessage =>
+      'Wähle eine 4-stellige PIN zum Öffnen gesperrter Kategorien.';
+
+  @override
+  String get pinConfirmTitle => 'PIN bestätigen';
+
+  @override
+  String get pinConfirmMessage => 'Gib dieselbe PIN noch einmal ein.';
+
+  @override
+  String get pinMismatch => 'Die PINs stimmen nicht überein';
+
+  @override
+  String get pinSaved => 'PIN gespeichert';
+
+  @override
+  String get pinRemoved => 'PIN und alle Kategoriesperren entfernt';
+
+  @override
+  String get locksClosed => 'Gesperrte Kategorien sind wieder gesperrt';
+
+  @override
+  String get parentalControl => 'Jugendschutz';
+
+  @override
+  String get parentalControlSubtitle =>
+      'Gesperrte Kategorien öffnen sich nicht ohne PIN, und ihre Sender erscheinen weder in der Suche noch auf der Startseite.';
+
+  @override
+  String get setPin => 'PIN festlegen';
+
+  @override
+  String get setPinDetail =>
+      'Sperre dann Kategorien mit dem Schlosssymbol im Kategorie-Editor.';
+
+  @override
+  String get lockNow => 'Jetzt wieder sperren';
+
+  @override
+  String get lockNowDetail =>
+      'In dieser Sitzung geöffnete gesperrte Kategorien fragen wieder nach der PIN.';
+
+  @override
+  String get changePin => 'PIN ändern';
+
+  @override
+  String get removePin => 'PIN entfernen';
+
+  @override
+  String get removePinDetail =>
+      'Alle Kategoriesperren werden ebenfalls entfernt.';
+
+  @override
+  String get searchFilterAll => 'Alle';
+
+  @override
+  String get seeAll => 'Alle anzeigen';
+
+  @override
+  String get fullscreenGrid => 'Vollbild (F)';
+
+  @override
+  String get exitFullscreenGrid => 'Vollbild beenden (Esc)';
 }

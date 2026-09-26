@@ -84,7 +84,7 @@ class ChannelTile extends StatefulWidget {
     this.onSecondaryTapUp,
   });
 
-  static const double height = 68;
+  static const double height = 58;
 
   final String name;
   final String? logo;
@@ -141,7 +141,8 @@ class _ChannelTileState extends State<ChannelTile> {
                 ),
                 child: Row(
                   children: [
-                    ChannelLogo(url: widget.logo, name: widget.name),
+                    ChannelLogo(
+                        url: widget.logo, name: widget.name, size: 38),
                     const SizedBox(width: Space.sm),
                     Expanded(
                       child: Column(

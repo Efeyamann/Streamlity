@@ -15,6 +15,7 @@ import '../services/app_mute.dart';
 import '../services/category_layout_store.dart';
 import '../services/epg_loader.dart';
 import '../services/favorites_store.dart';
+import '../services/parental_lock.dart';
 import '../services/playlist_loader.dart';
 import '../services/stall_watchdog.dart';
 import '../services/stream_slot.dart';
@@ -29,6 +30,7 @@ import '../ui/widgets/common.dart';
 import 'schedule_dialog.dart';
 import 'track_menu.dart';
 import 'category_editor.dart';
+import 'pin_dialog.dart';
 import 'home_view.dart';
 import 'search_view.dart';
 import 'vod_browser.dart';
@@ -119,6 +121,16 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
   late final AppLifecycleListener _lifecycle;
 
+  /// Kanal listesi; dışarıdan açılan kanalı görünür yapmak için.
+  final _channelScroll = ScrollController();
+
+  /// Çoklu izlemede tüm karelerin tam ekranı; yalnız oynatıcılar görünür.
+  bool _gridFullscreen = false;
+
+  /// media_kit'in kendi tam ekranında kullandığı pencere kanalı.
+  static const _nativeWindow =
+      MethodChannel('com.alexmercerind/media_kit_video');
+
   @override
   void initState() {
     super.initState();
@@ -142,6 +154,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     });
     HardwareKeyboard.instance.addHandler(_onKey);
     appMuted.addListener(_applyMute);
+    parentalLock.addListener(_onLockChanged);
     _load();
     _loadContinue();
     _loadVodLayouts();
@@ -151,8 +164,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onKey);
     appMuted.removeListener(_applyMute);
+    parentalLock.removeListener(_onLockChanged);
     _lifecycle.dispose();
     _clock.cancel();
+    _channelScroll.dispose();
+    if (_gridFullscreen) _setNativeFullscreen(false);
     _disposeSlots();
     super.dispose();
   }
@@ -279,6 +295,56 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     }
   }
 
+  /// Kilitler kapandıysa açık kalan kilitli kategori ve kanallar kapanır;
+  /// PIN kaldırıldıysa kilitler (dosyadan zaten silindi) bellekten de
+  /// düşer.
+  void _onLockChanged() {
+    if (!parentalLock.hasPin) {
+      setState(() {
+        _groupLayout = _groupLayout.withoutLocks();
+        _vodLayouts.updateAll((_, layout) => layout.withoutLocks());
+      });
+      return;
+    }
+    setState(() {});
+    if (!parentalLock.active) return;
+    if (_group case final g? when _groupLayout.isLocked(g)) {
+      setState(() => _group = null);
+    }
+    _closeLockedSlots();
+  }
+
+  void _closeLockedSlots() {
+    for (final slot in [..._slots]) {
+      if (_channelLocked(slot.channel)) _closeSlot(slot);
+    }
+  }
+
+  /// Toplu görünümlerde gösterilmeyen canlı TV kategorileri.
+  Set<String> get _excludedGroups =>
+      _groupLayout.excluded(locksActive: parentalLock.active);
+
+  /// Kanal, kilitleri kapalı bir kategoride mi.
+  bool _channelLocked(Channel channel) =>
+      parentalLock.active &&
+      _groupLayout.isLocked(channel.group ?? Playlist.ungrouped);
+
+  /// Son izlenenlerden hâlâ listede olan ve kilitli olmayanlar.
+  List<Channel> _recentChannels() => [
+        for (final k in _recents)
+          if (_byKey[k] case final c? when !_channelLocked(c)) c,
+      ];
+
+  /// Kilitli kategoriye geçerken PIN sorar.
+  Future<void> _selectGroup(String? group) async {
+    if (group != null &&
+        _groupLayout.isLocked(group) &&
+        !await unlockCategories(context)) {
+      return;
+    }
+    if (mounted) setState(() => _group = group);
+  }
+
   void _toggleFocus(StreamSlot slot) {
     setState(() => _focus = identical(_focus, slot) ? null : slot);
     _activate(slot);
@@ -289,6 +355,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       _slots.remove(slot);
       if (identical(_focus, slot)) _focus = null;
     });
+    _checkGridFullscreen();
     if (identical(_active, slot)) {
       final next = _slots.lastOrNull;
       if (next == null) {
@@ -355,11 +422,36 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       _slots.clear();
       _active = _focus = null;
     });
+    _checkGridFullscreen();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final s in slots) {
         s.dispose();
       }
     });
+  }
+
+  void _setGridFullscreen(bool on) {
+    if (on == _gridFullscreen) return;
+    setState(() => _gridFullscreen = on);
+    _setNativeFullscreen(on);
+    // Listeler yeniden kurulur; oynayan kanal görünür kalsın.
+    if (!on) _revealChannel();
+  }
+
+  /// Tek kare kalınca oynatıcının kendi tam ekranı geçerli; ızgara tam
+  /// ekranı kapanır.
+  void _checkGridFullscreen() {
+    if (_gridFullscreen && _slots.length < 2) _setGridFullscreen(false);
+  }
+
+  static Future<void> _setNativeFullscreen(bool on) async {
+    try {
+      await _nativeWindow.invokeMethod(on
+          ? 'Utils.EnterNativeFullscreen'
+          : 'Utils.ExitNativeFullscreen');
+    } on Exception catch (e) {
+      debugPrint('Tam ekran değiştirilemedi: $e');
+    }
   }
 
   void _setSection(_Section section) {
@@ -411,11 +503,47 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     _loadContinue();
   }
 
-  /// Ana sayfa ya da aramadan kanal açınca Canlı TV'ye geçer.
+  /// Ana sayfa ya da aramadan kanal açınca Canlı TV'ye geçer; kanalın
+  /// kategorisi seçilir ve kanal listede görünür olur. Kategori gizliyse
+  /// ya da kilitliyse "Tüm kanallar" seçili kalır.
   void _watchChannel(Channel channel) {
+    final group = channel.group ?? Playlist.ungrouped;
+    setState(() {
+      _group = _excludedGroups.contains(group) ? null : group;
+      _query = '';
+    });
     _setSection(_Section.live);
     _play(channel);
+    _revealChannel();
   }
+
+  /// Oynayan kanal listede görünmüyorsa listeyi ona kaydırır.
+  void _revealChannel() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final playlist = _playlist, current = _current;
+      if (!mounted || playlist == null || current == null) return;
+      if (!_channelScroll.hasClients) return;
+      final channels = _visibleChannels(playlist);
+      final index = channels.indexWhere((c) => identical(c, current));
+      if (index < 0) return;
+      var start = 0.0;
+      for (var i = 0; i < index; i++) {
+        start += _channelExtent(channels[i]);
+      }
+      final position = _channelScroll.position;
+      final target = revealOffset(
+        start: start,
+        extent: _channelExtent(current),
+        viewport: position.viewportDimension,
+        offset: position.pixels,
+        max: position.maxScrollExtent,
+      );
+      if (target != null) _channelScroll.jumpTo(target);
+    });
+  }
+
+  static double _channelExtent(Channel c) =>
+      c.isSeparator ? 40 : ChannelTile.height + 4;
 
   void _openGroup(String group) {
     setState(() {
@@ -441,20 +569,29 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   Widget _homeBody(Playlist? playlist) {
     final l = context.l10n;
     final xtream = _source is XtreamSource;
-    final byKey = _byKey;
+    final excluded = _excludedGroups;
+    final lockedVod = parentalLock.active
+        ? {
+            for (final MapEntry(:key, :value) in _vodLayouts.entries)
+              key: value.locked,
+          }
+        : const <VodKind, Set<String>>{};
     return HomeView(
       listName: widget.saved.name,
       now: _now,
       channelsLoading: playlist == null && _loading,
-      continueWatching: xtream ? _continue : const [],
-      recentChannels: [
-        for (final k in _recents) ?byKey[k],
-      ],
+      continueWatching: xtream
+          ? [
+              for (final e in _continue)
+                if (!_vodLocked(lockedVod, e.meta)) e,
+            ]
+          : const [],
+      recentChannels: _recentChannels(),
       favoriteGroups: playlist == null
           ? const []
           : [
               for (final g in _favoriteGroups)
-                if (playlist.groups.contains(g) && !_groupLayout.isHidden(g)) g,
+                if (playlist.groups.contains(g) && !excluded.contains(g)) g,
             ],
       groupCounts: playlist?.groupCounts ?? const {},
       nowOn: (c) => _epg?.current(c.tvgId, _now),
@@ -491,6 +628,15 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         ),
       ],
     );
+  }
+
+  /// Devam rafındaki kayıt kilitli bir film ya da dizi kategorisinden mi.
+  /// Kategorisi bilinmeyen eski kayıtlar gösterilir.
+  static bool _vodLocked(Map<VodKind, Set<String>> locked, WatchMeta? meta) {
+    final category = meta?.categoryId;
+    if (meta == null || category == null) return false;
+    final kind = meta.isEpisode ? VodKind.series : VodKind.movie;
+    return locked[kind]?.contains(category) ?? false;
   }
 
   Widget _vodBody(XtreamSource source) {
@@ -553,10 +699,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     action?.call();
   }
 
-  /// Gizlenen kategorilerin kanalları düşülmüş sayı.
+  /// Gizlenen ve kilitli kategorilerin kanalları düşülmüş sayı.
   int _visibleChannelCount(Playlist playlist) =>
       playlist.channelCount -
-      _groupLayout.hidden
+      _excludedGroups
           .fold(0, (sum, g) => sum + (playlist.groupCounts[g] ?? 0));
 
   Future<void> _editGroups(Playlist playlist) async {
@@ -572,8 +718,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     if (layout == null || !mounted) return;
     setState(() {
       _groupLayout = layout;
-      if (_group case final g? when layout.isHidden(g)) _group = null;
+      if (_group case final g?
+          when layout.isHidden(g) ||
+              parentalLock.active && layout.isLocked(g)) {
+        _group = null;
+      }
     });
+    _closeLockedSlots();
     await _layoutStore.write(_source, CategoryKind.live, layout);
   }
 
@@ -621,10 +772,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       return false;
     } else if (key == LogicalKeyboardKey.backspace && active != null) {
       final previous = active.previous;
-      if (previous == null) return false;
+      if (previous == null || _channelLocked(previous)) return false;
       _play(previous);
     } else if (key == LogicalKeyboardKey.keyM && active != null) {
       _toggleMute();
+    } else if (key == LogicalKeyboardKey.escape && _gridFullscreen) {
+      _setGridFullscreen(false);
+    } else if (key == LogicalKeyboardKey.keyF && _slots.length > 1) {
+      _setGridFullscreen(!_gridFullscreen);
     } else if (key == LogicalKeyboardKey.keyF &&
         active != null &&
         _slots.length == 1 &&
@@ -671,18 +826,18 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         ? channels.first
         : channels[(i + direction) % channels.length];
     _play(next);
+    _revealChannel();
   }
 
   List<Channel> _visibleChannels(Playlist playlist) {
     final query = searchKey(_query);
     if (_group == _recentsGroup) {
       return [
-        for (final k in _recents)
-          if (_byKey[k] case final c?)
-            if (query.isEmpty || searchKey(c.name).contains(query)) c,
+        for (final c in _recentChannels())
+          if (query.isEmpty || searchKey(c.name).contains(query)) c,
       ];
     }
-    final hidden = _groupLayout.hidden;
+    final hidden = _excludedGroups;
     return playlist.channels.where((c) {
       final group = c.group ?? Playlist.ungrouped;
       if (_group != null ? group != _group : hidden.contains(group)) {
@@ -694,18 +849,25 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     }).toList();
   }
 
-  /// Tek kare tam alan; birden fazlası ızgara ya da büyütülmüş kare ve
-  /// altta şerit (Discord'daki gibi).
-  Widget _players() {
+  /// Tek kare tam alan. İki kare üst üste, üç-dört kare 2x2 ızgara ya da
+  /// büyütülmüş kare ve altta şerit (Discord'daki gibi). Her kare alanına
+  /// sığan en büyük 16:9 boyutta ortalanır; çerçeve videonun kendisini sarar.
+  Widget _players({Color? background}) {
     if (_slots.length == 1) return _slotView(_slots.single, single: true);
-    Widget cell(StreamSlot slot) => Padding(
-          padding: const EdgeInsets.all(2),
-          child: _slotView(slot, single: false),
+    Widget cell(StreamSlot slot) => Center(
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: _slotView(slot, single: false),
+            ),
+          ),
         );
+    final color = background ?? AppColors.of(context).bg;
     final focus = _focus;
     if (focus != null) {
       return ColoredBox(
-        color: AppColors.of(context).bg,
+        color: color,
         child: Column(
           children: [
             Expanded(child: cell(focus)),
@@ -724,12 +886,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         ),
       );
     }
+    // İki kare üst üste; daha fazlası ikişerli satırlar.
+    final perRow = _slots.length == 2 ? 1 : 2;
     final rows = [
-      for (var i = 0; i < _slots.length; i += 2)
-        _slots.sublist(i, (i + 2).clamp(0, _slots.length)),
+      for (var i = 0; i < _slots.length; i += perRow)
+        _slots.sublist(i, (i + perRow).clamp(0, _slots.length)),
     ];
     return ColoredBox(
-      color: AppColors.of(context).bg,
+      color: color,
       child: Column(
         children: [
           for (final row in rows)
@@ -738,7 +902,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 children: [
                   for (final s in row) Expanded(child: cell(s)),
                   // Tek kalan kare yarım genişlikte kalsın.
-                  if (row.length == 1 && rows.length > 1)
+                  if (row.length < perRow)
                     const Expanded(child: SizedBox()),
                 ],
               ),
@@ -801,8 +965,34 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
+  /// Izgara tam ekranı: yalnız kareler, siyah zeminde; köşede çıkış.
+  Widget _gridFullscreenView() {
+    final l = context.l10n;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          _players(background: Colors.black),
+          PositionedDirectional(
+            end: Space.sm,
+            bottom: Space.sm,
+            child: IconButton(
+              tooltip: l.exitFullscreenGrid,
+              icon: const Icon(Icons.fullscreen_exit),
+              onPressed: () => _setGridFullscreen(false),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_gridFullscreen && _section == _Section.live && _slots.length > 1) {
+      return _gridFullscreenView();
+    }
     final playlist = _playlist;
     final xtream = _source is XtreamSource;
     final l = context.l10n;
@@ -812,10 +1002,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     } else if (_section == _Section.search) {
       body = SearchView(
         playlist: playlist,
-        hiddenGroups: _groupLayout.hidden,
+        hiddenGroups: _excludedGroups,
         hiddenVod: {
           for (final MapEntry(:key, :value) in _vodLayouts.entries)
-            key: value.hidden,
+            key: value.excluded(locksActive: parentalLock.active),
         },
         catalog: xtream ? _catalog : null,
         nowOn: (c) => _epg?.current(c.tvgId, _now),
@@ -949,6 +1139,12 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           if (_section == _Section.live) ...[
             if (_active case final active?)
               TrackMenus(key: ObjectKey(active), player: active.player),
+            if (_slots.length > 1)
+              IconButton(
+                tooltip: l.fullscreenGrid,
+                icon: const Icon(Icons.fullscreen),
+                onPressed: () => _setGridFullscreen(true),
+              ),
             if (appMuted.value && _slots.isNotEmpty)
               IconButton(
                 tooltip: l.unmuteShortcut,
@@ -1000,26 +1196,28 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     return Row(
       children: [
         SizedBox(
-          width: 248,
+          width: 208,
           child: _GroupList(
             groups: _groupLayout.visible(playlist.groups, (g) => g),
             hiddenCount: _groupLayout.hidden.length,
+            locked: _groupLayout.locked,
+            locksActive: parentalLock.active,
             onEdit: () => _editGroups(playlist),
             counts: playlist.groupCounts,
             selected: _group,
             specials: [
               (null, l.allChannels, Icons.apps, _visibleChannelCount(playlist)),
               (_recentsGroup, l.recentlyWatched, Icons.history,
-                  _recents.length),
+                  _recentChannels().length),
             ],
             favoriteGroups: _favoriteGroups,
             onToggleFavorite: _toggleFavoriteGroup,
-            onSelected: (g) => setState(() => _group = g),
+            onSelected: _selectGroup,
           ),
         ),
         const VerticalDivider(width: 1),
         SizedBox(
-          width: 340,
+          width: 292,
           child: Column(
             children: [
               Padding(
@@ -1044,12 +1242,12 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                             : l.changeSearchOrCategory,
                       )
                     : ListView.builder(
+                        controller: _channelScroll,
                         padding: const EdgeInsets.only(bottom: Space.md),
                         itemCount: channels.length,
-                        itemExtentBuilder: (i, _) =>
-                            i < channels.length && channels[i].isSeparator
-                                ? 40
-                                : ChannelTile.height + 4,
+                        itemExtentBuilder: (i, _) => i < channels.length
+                            ? _channelExtent(channels[i])
+                            : ChannelTile.height + 4,
                         itemBuilder: (context, i) {
                           final channel = channels[i];
                           if (channel.isSeparator) {
@@ -1127,6 +1325,8 @@ class _GroupList extends StatefulWidget {
   const _GroupList({
     required this.groups,
     required this.hiddenCount,
+    required this.locked,
+    required this.locksActive,
     required this.onEdit,
     required this.counts,
     required this.selected,
@@ -1138,6 +1338,10 @@ class _GroupList extends StatefulWidget {
 
   final List<String> groups;
   final int hiddenCount;
+
+  /// PIN'le kilitli kategoriler ve kilitlerin şu an kapalı olup olmadığı.
+  final Set<String> locked;
+  final bool locksActive;
   final VoidCallback onEdit;
   final Map<String, int> counts;
   final String? selected;
@@ -1153,23 +1357,68 @@ class _GroupList extends StatefulWidget {
 class _GroupListState extends State<_GroupList> {
   /// "Tüm kategoriler" başlığı; yanında düzenleme düğmesi durur.
   static const _allHeader = '\u0000all';
+
+  /// Satır yükseklikleri: kategori ([NavRow] ve boşluğu) ve başlık.
+  static const _rowExtent = 42.0;
+  static const _headerExtent = 40.0;
+
+  final _scroll = ScrollController();
   String _query = '';
 
   @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final l = context.l10n;
+  void initState() {
+    super.initState();
+    // Aramadan açılan kanalın kategorisi seçili gelir; görünür olsun.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
+  }
+
+  @override
+  void didUpdateWidget(_GroupList old) {
+    super.didUpdateWidget(old);
+    if (old.selected != widget.selected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Seçili satır ekranda değilse ona kaydırır.
+  void _reveal() {
+    if (!mounted || !_scroll.hasClients) return;
+    final rows = _rows(context.l10n);
+    final index =
+        rows.indexWhere((r) => !r.header && r.key == widget.selected);
+    if (index < 0) return;
+    var start = 0.0;
+    for (var i = 0; i < index; i++) {
+      start += rows[i].header ? _headerExtent : _rowExtent;
+    }
+    final position = _scroll.position;
+    final target = revealOffset(
+      start: start,
+      extent: _rowExtent,
+      viewport: position.viewportDimension,
+      offset: position.pixels,
+      max: position.maxScrollExtent,
+    );
+    if (target != null) _scroll.jumpTo(target);
+  }
+
+  List<_GroupRow> _rows(AppLocalizations l) {
     final query = searchKey(_query.trim());
     final groups = query.isEmpty
         ? widget.groups
         : widget.groups.where((g) => searchKey(g).contains(query)).toList();
-    final favorites = {...widget.favoriteGroups};
     // Listede artık olmayan favoriler gösterilmez.
     final pinned = query.isEmpty
         ? widget.favoriteGroups.where(widget.groups.contains).toList()
         : const <String>[];
     // Aramada sabit girdiler ve başlıklar gizlenir.
-    final rows = <_GroupRow>[
+    return <_GroupRow>[
       if (query.isEmpty)
         for (final (key, label, icon, count) in widget.specials)
           (key: key, label: label, icon: icon, count: count, header: false,
@@ -1188,6 +1437,14 @@ class _GroupListState extends State<_GroupList> {
         (key: g, label: l.group(g), icon: null, count: widget.counts[g],
             header: false, group: true),
     ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l = context.l10n;
+    final favorites = {...widget.favoriteGroups};
+    final rows = _rows(l);
     return Column(
       children: [
         Padding(
@@ -1206,8 +1463,12 @@ class _GroupListState extends State<_GroupList> {
                       style: Theme.of(context).textTheme.bodySmall),
                 )
               : ListView.builder(
+                  controller: _scroll,
                   padding: const EdgeInsets.only(bottom: Space.md),
                   itemCount: rows.length,
+                  itemExtentBuilder: (i, _) => i < rows.length && rows[i].header
+                      ? _headerExtent
+                      : _rowExtent,
                   itemBuilder: (context, i) {
                     final row = rows[i];
                     if (row.header) {
@@ -1224,9 +1485,15 @@ class _GroupListState extends State<_GroupList> {
                     }
                     final key = row.key;
                     final favorite = key != null && favorites.contains(key);
+                    final locked = row.group && widget.locked.contains(key);
                     return NavRow(
                       label: row.label,
-                      leading: row.icon,
+                      leading: locked
+                          ? widget.locksActive
+                              ? Icons.lock
+                              : Icons.lock_open
+                          : row.icon,
+                      tooltip: locked ? l.lockedCategory : null,
                       count: row.count,
                       selected: key == widget.selected,
                       onTap: () => widget.onSelected(key),

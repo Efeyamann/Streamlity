@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:streamlity/ui/tokens.dart';
 import 'package:streamlity/ui/widgets/channel_tile.dart';
+import 'package:streamlity/ui/widgets/common.dart';
 
 void main() {
   test('logosuz kanalda baş harfler ön eki atlar', () {
@@ -29,5 +30,20 @@ void main() {
     ));
     expect(off.base, Duration.zero);
     expect(on.base, const Duration(milliseconds: 200));
+  });
+
+  test('görünen satır için kaydırma yok, görünmeyen ortalanır', () {
+    double? reveal(double start, {double offset = 0}) => revealOffset(
+        start: start, extent: 50, viewport: 500, offset: offset, max: 5000);
+    // Ekranda: kaydırma yok.
+    expect(reveal(100), isNull);
+    expect(reveal(450), isNull);
+    // Altta kalan satır ortaya gelir.
+    expect(reveal(2000), 2000 - 225);
+    // Üstte kalan satır da ortaya gelir; baştaki satır 0'ın altına inmez.
+    expect(reveal(100, offset: 1000), 0);
+    expect(reveal(800, offset: 1000), 800 - 225);
+    // Sondaki satır en fazla kaydırma sınırına kadar.
+    expect(reveal(5400), 5000);
   });
 }

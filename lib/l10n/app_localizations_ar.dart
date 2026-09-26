@@ -669,7 +669,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get editCategoriesHint =>
-      'اسحب لإعادة الترتيب، واستخدم أيقونة العين للإخفاء.';
+      'اسحب لإعادة الترتيب، واستخدم أيقونة العين للإخفاء وأيقونة القفل لطلب رمز PIN.';
 
   @override
   String hiddenCount(int count) {
@@ -710,4 +710,115 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dragToReorder => 'اسحب لإعادة الترتيب';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count فئة مقفلة',
+      many: '$count فئة مقفلة',
+      few: '$count فئات مقفلة',
+      two: 'فئتان مقفلتان',
+      one: 'فئة مقفلة واحدة',
+      zero: 'لا توجد فئات مقفلة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'قفل';
+
+  @override
+  String get unlockCategory => 'إزالة القفل';
+
+  @override
+  String get lockedCategory => 'فئة مقفلة';
+
+  @override
+  String get confirm => 'موافق';
+
+  @override
+  String get pinEnterTitle => 'أدخل رمز PIN';
+
+  @override
+  String get pinWrong => 'رمز PIN غير صحيح';
+
+  @override
+  String get pinUnlockMessage =>
+      'هذه الفئة مقفلة. بعد إدخال رمز PIN تبقى كل الفئات المقفلة مفتوحة حتى يُغلق التطبيق.';
+
+  @override
+  String get pinEditorMessage => 'يلزم رمز PIN لتغيير ترتيب الفئات.';
+
+  @override
+  String get pinCurrentMessage => 'أدخل رمز PIN الحالي للمتابعة.';
+
+  @override
+  String get pinRemoveMessage => 'أدخل رمز PIN الحالي لإزالته.';
+
+  @override
+  String get pinNewTitle => 'رمز PIN جديد';
+
+  @override
+  String get pinNewMessage => 'اختر رمز PIN من 4 أرقام لفتح الفئات المقفلة.';
+
+  @override
+  String get pinConfirmTitle => 'تأكيد رمز PIN';
+
+  @override
+  String get pinConfirmMessage => 'أدخل رمز PIN نفسه مرة أخرى.';
+
+  @override
+  String get pinMismatch => 'رمزا PIN غير متطابقين';
+
+  @override
+  String get pinSaved => 'تم حفظ رمز PIN';
+
+  @override
+  String get pinRemoved => 'أُزيل رمز PIN وجميع أقفال الفئات';
+
+  @override
+  String get locksClosed => 'أُعيد قفل الفئات المقفلة';
+
+  @override
+  String get parentalControl => 'الرقابة الأبوية';
+
+  @override
+  String get parentalControlSubtitle =>
+      'لا تُفتح الفئات المقفلة دون رمز PIN، ولا تظهر قنواتها في البحث أو في الصفحة الرئيسية.';
+
+  @override
+  String get setPin => 'تعيين رمز PIN';
+
+  @override
+  String get setPinDetail => 'ثم اقفل الفئات بأيقونة القفل في محرر الفئات.';
+
+  @override
+  String get lockNow => 'أعد القفل الآن';
+
+  @override
+  String get lockNowDetail =>
+      'ستطلب الفئات المقفلة التي فُتحت في هذه الجلسة رمز PIN مجددًا.';
+
+  @override
+  String get changePin => 'تغيير رمز PIN';
+
+  @override
+  String get removePin => 'إزالة رمز PIN';
+
+  @override
+  String get removePinDetail => 'تُزال أيضًا جميع أقفال الفئات.';
+
+  @override
+  String get searchFilterAll => 'الكل';
+
+  @override
+  String get seeAll => 'عرض الكل';
+
+  @override
+  String get fullscreenGrid => 'ملء الشاشة (F)';
+
+  @override
+  String get exitFullscreenGrid => 'الخروج من ملء الشاشة (Esc)';
 }

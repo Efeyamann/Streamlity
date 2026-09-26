@@ -636,7 +636,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editCategories => '编辑分类';
 
   @override
-  String get editCategoriesHint => '拖动以排序，点击眼睛图标隐藏。';
+  String get editCategoriesHint => '拖动以排序，点击眼睛图标隐藏，点击锁形图标设置 PIN 保护。';
 
   @override
   String hiddenCount(int count) {
@@ -673,4 +673,107 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dragToReorder => '拖动以排序';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已锁定 $count 个',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => '锁定';
+
+  @override
+  String get unlockCategory => '取消锁定';
+
+  @override
+  String get lockedCategory => '已锁定的分类';
+
+  @override
+  String get confirm => '确定';
+
+  @override
+  String get pinEnterTitle => '输入 PIN';
+
+  @override
+  String get pinWrong => 'PIN 错误';
+
+  @override
+  String get pinUnlockMessage => '此分类已锁定。输入 PIN 后，所有锁定的分类在应用关闭前都保持打开。';
+
+  @override
+  String get pinEditorMessage => '更改分类布局需要输入 PIN。';
+
+  @override
+  String get pinCurrentMessage => '输入当前 PIN 以继续。';
+
+  @override
+  String get pinRemoveMessage => '输入当前 PIN 以将其移除。';
+
+  @override
+  String get pinNewTitle => '新 PIN';
+
+  @override
+  String get pinNewMessage => '设置一个 4 位数 PIN，用于打开锁定的分类。';
+
+  @override
+  String get pinConfirmTitle => '确认 PIN';
+
+  @override
+  String get pinConfirmMessage => '再次输入相同的 PIN。';
+
+  @override
+  String get pinMismatch => '两次输入的 PIN 不一致';
+
+  @override
+  String get pinSaved => 'PIN 已保存';
+
+  @override
+  String get pinRemoved => '已移除 PIN 和所有分类锁定';
+
+  @override
+  String get locksClosed => '锁定的分类已重新锁定';
+
+  @override
+  String get parentalControl => '家长控制';
+
+  @override
+  String get parentalControlSubtitle => '锁定的分类需要 PIN 才能打开，其中的频道不会出现在搜索和主页中。';
+
+  @override
+  String get setPin => '设置 PIN';
+
+  @override
+  String get setPinDetail => '然后在分类编辑器中用锁形图标锁定分类。';
+
+  @override
+  String get lockNow => '立即重新锁定';
+
+  @override
+  String get lockNowDetail => '本次打开过的锁定分类将再次要求输入 PIN。';
+
+  @override
+  String get changePin => '更改 PIN';
+
+  @override
+  String get removePin => '移除 PIN';
+
+  @override
+  String get removePinDetail => '所有分类锁定也会被移除。';
+
+  @override
+  String get searchFilterAll => '全部';
+
+  @override
+  String get seeAll => '查看全部';
+
+  @override
+  String get fullscreenGrid => '全屏 (F)';
+
+  @override
+  String get exitFullscreenGrid => '退出全屏 (Esc)';
 }

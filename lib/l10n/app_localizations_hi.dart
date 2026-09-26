@@ -653,7 +653,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get editCategoriesHint =>
-      'क्रम बदलने के लिए खींचें, छिपाने के लिए आँख वाला आइकन दबाएँ।';
+      'क्रम बदलने के लिए खींचें, छिपाने के लिए आँख वाला आइकन और PIN लगाने के लिए ताले वाला आइकन दबाएँ।';
 
   @override
   String hiddenCount(int count) {
@@ -690,4 +690,113 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get dragToReorder => 'क्रम बदलने के लिए खींचें';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count लॉक',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'लॉक करें';
+
+  @override
+  String get unlockCategory => 'लॉक हटाएँ';
+
+  @override
+  String get lockedCategory => 'लॉक की गई श्रेणी';
+
+  @override
+  String get confirm => 'ठीक है';
+
+  @override
+  String get pinEnterTitle => 'PIN डालें';
+
+  @override
+  String get pinWrong => 'गलत PIN';
+
+  @override
+  String get pinUnlockMessage =>
+      'यह श्रेणी लॉक है। PIN डालने के बाद ऐप बंद होने तक सभी लॉक श्रेणियाँ खुली रहेंगी।';
+
+  @override
+  String get pinEditorMessage =>
+      'श्रेणियों का क्रम बदलने के लिए PIN ज़रूरी है।';
+
+  @override
+  String get pinCurrentMessage => 'आगे बढ़ने के लिए मौजूदा PIN डालें।';
+
+  @override
+  String get pinRemoveMessage => 'PIN हटाने के लिए मौजूदा PIN डालें।';
+
+  @override
+  String get pinNewTitle => 'नया PIN';
+
+  @override
+  String get pinNewMessage =>
+      'लॉक श्रेणियाँ खोलने के लिए 4 अंकों का PIN चुनें।';
+
+  @override
+  String get pinConfirmTitle => 'PIN की पुष्टि करें';
+
+  @override
+  String get pinConfirmMessage => 'वही PIN एक बार फिर डालें।';
+
+  @override
+  String get pinMismatch => 'दोनों PIN मेल नहीं खाते';
+
+  @override
+  String get pinSaved => 'PIN सहेजा गया';
+
+  @override
+  String get pinRemoved => 'PIN और सभी श्रेणी लॉक हटा दिए गए';
+
+  @override
+  String get locksClosed => 'लॉक श्रेणियाँ फिर से लॉक हो गईं';
+
+  @override
+  String get parentalControl => 'पैरेंटल कंट्रोल';
+
+  @override
+  String get parentalControlSubtitle =>
+      'लॉक श्रेणियाँ PIN के बिना नहीं खुलतीं, और उनके चैनल खोज या होम पेज पर नहीं दिखते।';
+
+  @override
+  String get setPin => 'PIN सेट करें';
+
+  @override
+  String get setPinDetail =>
+      'फिर श्रेणी संपादक में ताले वाले आइकन से श्रेणियाँ लॉक करें।';
+
+  @override
+  String get lockNow => 'अभी फिर से लॉक करें';
+
+  @override
+  String get lockNowDetail =>
+      'इस सत्र में खोली गई लॉक श्रेणियाँ फिर से PIN माँगेंगी।';
+
+  @override
+  String get changePin => 'PIN बदलें';
+
+  @override
+  String get removePin => 'PIN हटाएँ';
+
+  @override
+  String get removePinDetail => 'सभी श्रेणी लॉक भी हट जाएँगे।';
+
+  @override
+  String get searchFilterAll => 'सभी';
+
+  @override
+  String get seeAll => 'सभी देखें';
+
+  @override
+  String get fullscreenGrid => 'फ़ुल स्क्रीन (F)';
+
+  @override
+  String get exitFullscreenGrid => 'फ़ुल स्क्रीन से बाहर निकलें (Esc)';
 }

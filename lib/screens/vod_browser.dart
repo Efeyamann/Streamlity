@@ -6,12 +6,14 @@ import '../models/playlist.dart' show searchKey;
 import '../models/playlist_source.dart';
 import '../models/vod.dart';
 import '../services/favorites_store.dart';
+import '../services/parental_lock.dart';
 import '../services/watch_progress_store.dart';
 import '../services/xtream_vod.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets/common.dart';
 import '../ui/widgets/poster.dart';
 import 'category_editor.dart';
+import 'pin_dialog.dart';
 import 'vod_player_screen.dart';
 
 enum _Sort {
@@ -28,13 +30,6 @@ enum _Sort {
       };
 }
 
-/// Poster ızgarasının ölçüleri; iskelet de aynısını kullanır.
-const _gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
-  maxCrossAxisExtent: 176,
-  mainAxisExtent: 318,
-  crossAxisSpacing: Space.md,
-  mainAxisSpacing: Space.lg,
-);
 
 /// Film ya da dizi kataloğu: solda kategoriler, ortada poster ızgarası.
 class VodBrowser extends StatefulWidget {
@@ -95,6 +90,34 @@ class _VodBrowserState extends State<VodBrowser> {
     _groupsStore.readList(widget.source).then((groups) {
       if (mounted) setState(() => _favoriteGroups = groups);
     });
+    parentalLock.addListener(_onLockChanged);
+  }
+
+  @override
+  void dispose() {
+    parentalLock.removeListener(_onLockChanged);
+    super.dispose();
+  }
+
+  /// Kilitler kapanınca açık kalan kilitli kategoriden çık.
+  void _onLockChanged() => setState(() {
+        if (_category case final c? when _categoryLocked(c)) _category = null;
+      });
+
+  /// Kategori, kilitleri kapalı ve PIN'le kilitli mi.
+  bool _categoryLocked(String? categoryId) =>
+      parentalLock.active &&
+      categoryId != null &&
+      widget.layout.isLocked(categoryId);
+
+  /// Kilitli kategoriye geçerken PIN sorar.
+  Future<void> _selectCategory(String? key) async {
+    if (key != null &&
+        widget.layout.isLocked(key) &&
+        !await unlockCategories(context)) {
+      return;
+    }
+    if (mounted) setState(() => _category = key);
   }
 
   void _toggleFavoriteGroup(String categoryId) {
@@ -130,10 +153,13 @@ class _VodBrowserState extends State<VodBrowser> {
 
   List<VodItem> _visible(VodCatalog catalog) {
     final query = searchKey(_query.trim());
-    final hidden = widget.layout.hidden;
+    final hidden = widget.layout.excluded(locksActive: parentalLock.active);
     final items = catalog.items.where((i) {
       if (_category == _continueKey) {
-        if (!(_progress[i.key]?.resumable ?? false)) return false;
+        if (!(_progress[i.key]?.resumable ?? false) ||
+            _categoryLocked(i.categoryId)) {
+          return false;
+        }
       } else if (_category != null
           ? i.categoryId != _category
           : hidden.contains(i.categoryId)) {
@@ -190,7 +216,7 @@ class _VodBrowserState extends State<VodBrowser> {
         if (catalog == null) return _VodSkeleton(movies: _movies);
         return Row(
           children: [
-            SizedBox(width: 248, child: _categories(catalog)),
+            SizedBox(width: 208, child: _categories(catalog)),
             const VerticalDivider(width: 1),
             Expanded(child: _grid(catalog)),
           ],
@@ -210,7 +236,9 @@ class _VodBrowserState extends State<VodBrowser> {
       layout: widget.layout,
     );
     if (layout == null || !mounted) return;
-    if (_category case final c? when layout.isHidden(c)) {
+    if (_category case final c?
+        when layout.isHidden(c) ||
+            parentalLock.active && layout.isLocked(c)) {
       setState(() => _category = null);
     }
     widget.onLayoutChanged(layout);
@@ -226,11 +254,16 @@ class _VodBrowserState extends State<VodBrowser> {
     final cats = query.isEmpty
         ? arranged
         : arranged.where((c) => searchKey(c.name).contains(query)).toList();
-    final visibleCount = layout.hidden.isEmpty
+    final excluded = layout.excluded(locksActive: parentalLock.active);
+    final visibleCount = excluded.isEmpty
         ? catalog.items.length
-        : catalog.items.where((i) => !layout.isHidden(i.categoryId ?? '')).length;
+        : catalog.items.where((i) => !excluded.contains(i.categoryId)).length;
     final resumable = _movies
-        ? catalog.items.where((i) => _progress[i.key]?.resumable ?? false).length
+        ? catalog.items
+            .where((i) =>
+                (_progress[i.key]?.resumable ?? false) &&
+                !_categoryLocked(i.categoryId))
+            .length
         : 0;
     final favorites = {..._favoriteGroups};
     final byId = {for (final c in catalog.categories) c.id: c};
@@ -291,12 +324,18 @@ class _VodBrowserState extends State<VodBrowser> {
               }
               final favorite =
                   category && favorites.contains(_groupKey(key!));
+              final locked = category && layout.isLocked(key!);
               return NavRow(
                 label: label,
-                leading: icon,
+                leading: locked
+                    ? parentalLock.active
+                        ? Icons.lock
+                        : Icons.lock_open
+                    : icon,
+                tooltip: locked ? l.lockedCategory : null,
                 count: count,
                 selected: key == _category,
-                onTap: () => setState(() => _category = key),
+                onTap: () => _selectCategory(key),
                 showTrailing: favorite,
                 trailing: category
                     ? IconButton(
@@ -380,7 +419,7 @@ class _VodBrowserState extends State<VodBrowser> {
               : GridView.builder(
                   padding: const EdgeInsets.fromLTRB(
                       Space.lg, Space.sm, Space.lg, Space.lg),
-                  gridDelegate: _gridDelegate,
+                  gridDelegate: posterGridDelegate,
                   itemCount: items.length,
                   itemBuilder: (context, i) {
                     final item = items[i];
@@ -419,7 +458,7 @@ class _VodSkeleton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 248,
+            width: 208,
             child: Padding(
               padding: const EdgeInsets.all(Space.sm),
               child: ClipRect(
@@ -468,7 +507,7 @@ class _VodSkeleton extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(
                         Space.lg, Space.sm, Space.lg, Space.lg),
-                    gridDelegate: _gridDelegate,
+                    gridDelegate: posterGridDelegate,
                     itemCount: 24,
                     itemBuilder: (_, i) => Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,6 +568,7 @@ Future<void> openVodItem(
         poster: item.poster,
         streamId: item.id,
         extension: item.extension ?? 'mp4',
+        categoryId: item.categoryId,
       ),
       progressStore: progressStore,
       start: choice.start,
@@ -822,6 +862,7 @@ class _SeriesScreenState extends State<_SeriesScreen> {
           streamId: e.id,
           extension: e.extension,
           seriesId: widget.series.id,
+          categoryId: widget.series.categoryId,
         ),
         progressStore: widget.progressStore,
         start: progress != null && progress.resumable ? progress.position : null,

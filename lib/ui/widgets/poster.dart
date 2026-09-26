@@ -329,3 +329,12 @@ class Backdrop extends StatelessWidget {
     );
   }
 }
+
+/// Poster ızgarasının ölçüleri (Filmler, Diziler, arama); iskelet de
+/// aynısını kullanır.
+const posterGridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
+  maxCrossAxisExtent: 176,
+  mainAxisExtent: 318,
+  crossAxisSpacing: Space.md,
+  mainAxisSpacing: Space.lg,
+);

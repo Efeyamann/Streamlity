@@ -44,6 +44,7 @@ class WatchMeta {
     this.season,
     this.episode,
     this.episodeTitle,
+    this.categoryId,
   });
 
   /// Film adı ya da bölümse dizi adı.
@@ -66,6 +67,10 @@ class WatchMeta {
   final int? episode;
   final String? episodeTitle;
 
+  /// Filmin ya da dizinin kategorisi; kilitli kategorilerin kayıtları
+  /// devam rafında çıkmasın diye. Eski kayıtlarda yok.
+  final String? categoryId;
+
   bool get isEpisode => seriesId != null;
 
   Map<String, Object> toJson() => {
@@ -78,6 +83,7 @@ class WatchMeta {
         'season': ?season,
         'episode': ?episode,
         'episodeTitle': ?episodeTitle,
+        'category': ?categoryId,
       };
 
   static WatchMeta? fromJson(Object? json) {
@@ -96,6 +102,7 @@ class WatchMeta {
       season: number(json['season']),
       episode: number(json['episode']),
       episodeTitle: text(json['episodeTitle']),
+      categoryId: text(json['category']),
     );
   }
 }

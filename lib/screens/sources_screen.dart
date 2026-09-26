@@ -96,6 +96,7 @@ class _SourcesScreenState extends State<SourcesScreen> {
       await FavoritesStore.vodGroups().writeList(source.source, []);
       await FavoritesStore.categoryOrder().writeList(source.source, []);
       await FavoritesStore.hiddenCategories().writeList(source.source, []);
+      await FavoritesStore.lockedCategories().writeList(source.source, []);
     }
   }
 

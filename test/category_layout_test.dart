@@ -29,6 +29,16 @@ void main() {
     expect(layout.arrange(provider, id), ['C', 'A', 'B', 'D']);
   });
 
+  test('kilitliler yalnız kilitler kapalıyken toplu görünümden çıkar', () {
+    const layout = CategoryLayout(hidden: {'A'}, locked: {'B'});
+    expect(layout.excluded(locksActive: true), {'A', 'B'});
+    expect(layout.excluded(locksActive: false), {'A'});
+    // Kilitli kategori listede görünür (kilit simgesiyle).
+    expect(layout.visible(provider, id), ['B', 'C', 'D']);
+    expect(layout.withoutLocks().locked, isEmpty);
+    expect(layout.withoutLocks().hidden, {'A'});
+  });
+
   group('depo', () {
     late Directory dir;
     final source =
@@ -42,7 +52,7 @@ void main() {
       await store.write(source, CategoryKind.live,
           const CategoryLayout(order: ['TR| SPOR'], hidden: {'UK| NEWS'}));
       await store.write(source, CategoryKind.movies,
-          const CategoryLayout(order: ['12'], hidden: {'7'}));
+          const CategoryLayout(order: ['12'], hidden: {'7'}, locked: {'9'}));
 
       final fresh = CategoryLayoutStore(directory: () async => dir);
       final live = await fresh.read(source, CategoryKind.live);
@@ -52,12 +62,15 @@ void main() {
       expect(live.hidden, {'UK| NEWS'});
       expect(movies.order, ['12']);
       expect(movies.hidden, {'7'});
+      expect(movies.locked, {'9'});
+      expect(live.locked, isEmpty);
       expect(series.isEmpty, isTrue);
 
       // Bir türü yeniden yazmak diğerini silmez.
       await fresh.write(source, CategoryKind.live, CategoryLayout.empty);
       expect((await fresh.read(source, CategoryKind.live)).isEmpty, isTrue);
       expect((await fresh.read(source, CategoryKind.movies)).order, ['12']);
+      expect((await fresh.read(source, CategoryKind.movies)).locked, {'9'});
     });
   });
 }

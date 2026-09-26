@@ -664,7 +664,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get editCategoriesHint =>
-      'Перетаскивайте, чтобы изменить порядок; скрывайте значком глаза.';
+      'Перетаскивайте, чтобы изменить порядок; скрывайте значком глаза, защищайте PIN-кодом значком замка.';
 
   @override
   String hiddenCount(int count) {
@@ -704,4 +704,116 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dragToReorder => 'Перетащите, чтобы изменить порядок';
+
+  @override
+  String lockedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Заблокировано $count',
+      many: 'Заблокировано $count',
+      few: 'Заблокировано $count',
+      one: 'Заблокирована $count',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get lockCategory => 'Заблокировать';
+
+  @override
+  String get unlockCategory => 'Снять блокировку';
+
+  @override
+  String get lockedCategory => 'Заблокированная категория';
+
+  @override
+  String get confirm => 'ОК';
+
+  @override
+  String get pinEnterTitle => 'Введите PIN-код';
+
+  @override
+  String get pinWrong => 'Неверный PIN-код';
+
+  @override
+  String get pinUnlockMessage =>
+      'Эта категория заблокирована. После ввода PIN-кода все заблокированные категории останутся открытыми до закрытия приложения.';
+
+  @override
+  String get pinEditorMessage =>
+      'Чтобы изменить порядок категорий, нужен PIN-код.';
+
+  @override
+  String get pinCurrentMessage => 'Введите текущий PIN-код, чтобы продолжить.';
+
+  @override
+  String get pinRemoveMessage => 'Введите текущий PIN-код, чтобы удалить его.';
+
+  @override
+  String get pinNewTitle => 'Новый PIN-код';
+
+  @override
+  String get pinNewMessage =>
+      'Выберите 4-значный PIN-код для открытия заблокированных категорий.';
+
+  @override
+  String get pinConfirmTitle => 'Подтвердите PIN-код';
+
+  @override
+  String get pinConfirmMessage => 'Введите тот же PIN-код ещё раз.';
+
+  @override
+  String get pinMismatch => 'PIN-коды не совпадают';
+
+  @override
+  String get pinSaved => 'PIN-код сохранён';
+
+  @override
+  String get pinRemoved => 'PIN-код и все блокировки категорий удалены';
+
+  @override
+  String get locksClosed => 'Заблокированные категории снова закрыты';
+
+  @override
+  String get parentalControl => 'Родительский контроль';
+
+  @override
+  String get parentalControlSubtitle =>
+      'Заблокированные категории не открываются без PIN-кода, а их каналы не показываются в поиске и на главной.';
+
+  @override
+  String get setPin => 'Задать PIN-код';
+
+  @override
+  String get setPinDetail =>
+      'Затем блокируйте категории значком замка в редакторе категорий.';
+
+  @override
+  String get lockNow => 'Заблокировать снова';
+
+  @override
+  String get lockNowDetail =>
+      'Заблокированные категории, открытые в этом сеансе, снова запросят PIN-код.';
+
+  @override
+  String get changePin => 'Изменить PIN-код';
+
+  @override
+  String get removePin => 'Удалить PIN-код';
+
+  @override
+  String get removePinDetail => 'Все блокировки категорий тоже будут удалены.';
+
+  @override
+  String get searchFilterAll => 'Все';
+
+  @override
+  String get seeAll => 'Показать все';
+
+  @override
+  String get fullscreenGrid => 'Во весь экран (F)';
+
+  @override
+  String get exitFullscreenGrid => 'Выйти из полноэкранного режима (Esc)';
 }

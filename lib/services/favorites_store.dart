@@ -42,10 +42,21 @@ class FavoritesStore {
   FavoritesStore.hiddenCategories({Future<Directory> Function()? directory})
       : this(directory: directory, fileName: 'hidden_categories.json');
 
+  /// PIN'le kilitlenen kategoriler; anahtarlar
+  /// [FavoritesStore.categoryOrder] ile aynı.
+  FavoritesStore.lockedCategories({Future<Directory> Function()? directory})
+      : this(directory: directory, fileName: 'locked_categories.json');
+
   final Future<Directory> Function() _directory;
   final String fileName;
-  Map<String, List<String>>? _cache;
-  Future<void> _pending = Future.value();
+
+  /// Dosya yolu -> içerik. Aynı dosyayı kullanan örnekler ortak kullanır;
+  /// biri silince ötekinin eski kopyası silineni geri yazmasın.
+  static final _caches = <String, Map<String, List<String>>>{};
+
+  /// Tüm yazmalar tek sırada; iki örnek aynı geçici dosyaya aynı anda
+  /// yazmasın.
+  static Future<void> _pending = Future.value();
 
   static String sourceKey(PlaylistSource source) {
     final identity = switch (source) {
@@ -60,19 +71,20 @@ class FavoritesStore {
       File('${(await _directory()).path}${Platform.pathSeparator}$fileName');
 
   Future<Map<String, List<String>>> _readAll() async {
-    if (_cache != null) return _cache!;
+    final file = await _file();
+    if (_caches[file.path] case final cached?) return cached;
+    Map<String, List<String>> all;
     try {
-      final file = await _file();
       final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-      _cache = {
+      all = {
         for (final MapEntry(:key, :value) in json.entries)
           key: (value as List).cast<String>(),
       };
     } on Exception {
       // Dosya yok ya da bozuk: boş başla.
-      _cache = {};
+      all = {};
     }
-    return _cache!;
+    return _caches[file.path] ??= all;
   }
 
   Future<Set<String>> read(PlaylistSource source) async =>
@@ -86,14 +98,22 @@ class FavoritesStore {
       (await _readAll())[sourceKey(source)] ?? [];
 
   /// Yazmalar sıraya alınır; hızlı art arda değişikliklerde son hal kazanır.
-  Future<void> writeList(PlaylistSource source, List<String> keys) {
+  Future<void> writeList(PlaylistSource source, List<String> keys) =>
+      _update((all) {
+        if (keys.isEmpty) {
+          all.remove(sourceKey(source));
+        } else {
+          all[sourceKey(source)] = [...keys];
+        }
+      });
+
+  /// Tüm kaynakların kayıtlarını siler.
+  Future<void> clear() => _update((all) => all.clear());
+
+  Future<void> _update(void Function(Map<String, List<String>> all) change) {
     return _pending = _pending.then((_) async {
       final all = await _readAll();
-      if (keys.isEmpty) {
-        all.remove(sourceKey(source));
-      } else {
-        all[sourceKey(source)] = [...keys];
-      }
+      change(all);
       final file = await _file();
       await file.parent.create(recursive: true);
       // Yarım kalan yazma dosyayı bozmasın diye önce geçici dosyaya yaz.
