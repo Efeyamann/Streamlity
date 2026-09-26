@@ -6,9 +6,28 @@ import '../models/vod.dart';
 import '../services/favorites_store.dart';
 import '../services/watch_progress_store.dart';
 import '../services/xtream_vod.dart';
+import '../ui/tokens.dart';
+import '../ui/widgets/common.dart';
+import '../ui/widgets/poster.dart';
 import 'vod_player_screen.dart';
 
-enum _Sort { provider, name, rating, year }
+enum _Sort {
+  provider('Sağlayıcı sırası'),
+  name('Ada göre'),
+  rating('Puana göre'),
+  year('Yıla göre');
+
+  const _Sort(this.label);
+  final String label;
+}
+
+/// Poster ızgarasının ölçüleri; iskelet de aynısını kullanır.
+const _gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
+  maxCrossAxisExtent: 176,
+  mainAxisExtent: 318,
+  crossAxisSpacing: Space.md,
+  mainAxisSpacing: Space.lg,
+);
 
 /// Film ya da dizi kataloğu: solda kategoriler, ortada poster ızgarası.
 class VodBrowser extends StatefulWidget {
@@ -39,6 +58,10 @@ class _VodBrowserState extends State<VodBrowser> {
   String _query = '';
   _Sort _sort = _Sort.provider;
   Map<String, WatchProgress> _progress = {};
+
+  /// Kategori başına öğe sayısı; katalog değişmedikçe bir kez sayılır.
+  Map<String, int> _counts = const {};
+  VodCatalog? _countedCatalog;
 
   /// Favori kategoriler (film ve dizi ortak dosyada, türe göre önekli).
   final _groupsStore = FavoritesStore.vodGroups();
@@ -74,6 +97,19 @@ class _VodBrowserState extends State<VodBrowser> {
   Future<void> _loadProgress() async {
     final progress = await widget.progressStore.read(widget.source);
     if (mounted) setState(() => _progress = progress);
+  }
+
+  Map<String, int> _countsFor(VodCatalog catalog) {
+    if (!identical(catalog, _countedCatalog)) {
+      final counts = <String, int>{};
+      for (final i in catalog.items) {
+        final id = i.categoryId;
+        if (id != null) counts[id] = (counts[id] ?? 0) + 1;
+      }
+      _counts = counts;
+      _countedCatalog = catalog;
+    }
+    return _counts;
   }
 
   List<VodItem> _visible(VodCatalog catalog) {
@@ -138,40 +174,25 @@ class _VodBrowserState extends State<VodBrowser> {
       future: widget.catalog,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error_outline,
-                    size: 40, color: Theme.of(context).colorScheme.error),
-                const SizedBox(height: 12),
-                Text('${snapshot.error}', textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: widget.onRetry,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Tekrar dene'),
-                ),
-              ],
-            ),
+          return EmptyState(
+            icon: Icons.cloud_off_outlined,
+            tone: AppColors.of(context).danger,
+            title: _movies ? 'Filmler alınamadı' : 'Diziler alınamadı',
+            message: '${snapshot.error}',
+            actions: [
+              FilledButton.icon(
+                onPressed: widget.onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Tekrar dene'),
+              ),
+            ],
           );
         }
         final catalog = snapshot.data;
-        if (catalog == null) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(_movies ? 'Filmler yükleniyor…' : 'Diziler yükleniyor…'),
-              ],
-            ),
-          );
-        }
+        if (catalog == null) return _VodSkeleton(movies: _movies);
         return Row(
           children: [
-            SizedBox(width: 220, child: _categories(catalog)),
+            SizedBox(width: 248, child: _categories(catalog)),
             const VerticalDivider(width: 1),
             Expanded(child: _grid(catalog)),
           ],
@@ -181,6 +202,8 @@ class _VodBrowserState extends State<VodBrowser> {
   }
 
   Widget _categories(VodCatalog catalog) {
+    final c = AppColors.of(context);
+    final counts = _countsFor(catalog);
     final query = searchKey(_categoryQuery.trim());
     final cats = query.isEmpty
         ? catalog.categories
@@ -199,74 +222,63 @@ class _VodBrowserState extends State<VodBrowser> {
               if (k.startsWith(prefix)) ?byId[k.substring(prefix.length)],
           ]
         : const <VodCategory>[];
-    // (anahtar, etiket, ikon, başlık mı, yıldızlı kategori mi)
-    final rows = <(String?, String, IconData?, bool, bool)>[
+    // (anahtar, etiket, ikon, sayı, başlık mı, yıldızlı kategori mi)
+    final rows = <(String?, String, IconData?, int?, bool, bool)>[
       if (query.isEmpty)
-        (null, 'Tümü (${catalog.items.length})', null, false, false),
+        (null, _movies ? 'Tüm filmler' : 'Tüm diziler', Icons.apps,
+            catalog.items.length, false, false),
       if (query.isEmpty && resumable > 0)
-        (_continueKey, 'İzlemeye devam et ($resumable)', Icons.history, false,
+        (_continueKey, 'İzlemeye devam et', Icons.history, resumable, false,
             false),
       if (pinned.isNotEmpty) ...[
-        (null, 'Favori paketler', null, true, false),
-        for (final c in pinned) (c.id, c.name, null, false, true),
-        (null, 'Tüm kategoriler', null, true, false),
+        (null, 'Favori paketler', null, null, true, false),
+        for (final cat in pinned)
+          (cat.id, cat.name, null, counts[cat.id], false, true),
       ],
-      for (final c in cats) (c.id, c.name, null, false, true),
+      if (query.isEmpty) (null, 'Tüm kategoriler', null, null, true, false),
+      for (final cat in cats)
+        (cat.id, cat.name, null, counts[cat.id], false, true),
     ];
-    final theme = Theme.of(context);
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(8),
-          child: TextField(
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'Kategori ara',
-              isDense: true,
-              border: OutlineInputBorder(),
-            ),
+          padding: const EdgeInsets.fromLTRB(
+              Space.sm, Space.sm, Space.sm, Space.xxs),
+          child: SearchField(
+            hint: 'Kategori ara',
             onChanged: (v) => setState(() => _categoryQuery = v),
           ),
         ),
         Expanded(
           child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: Space.md),
             itemCount: rows.length,
             itemBuilder: (context, i) {
-              final (key, label, icon, header, category) = rows[i];
-              if (header) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-                  child: Text(
-                    label.toUpperCase(),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                );
-              }
+              final (key, label, icon, count, header, category) = rows[i];
+              if (header) return SectionHeader(label);
               final favorite =
                   category && favorites.contains(_groupKey(key!));
-              return ListTile(
-                dense: true,
-                leading: icon == null ? null : Icon(icon, size: 18),
-                minLeadingWidth: 0,
-                contentPadding: const EdgeInsets.only(left: 16, right: 4),
-                title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+              return NavRow(
+                label: label,
+                leading: icon,
+                count: count,
+                selected: key == _category,
+                onTap: () => setState(() => _category = key),
+                showTrailing: favorite,
                 trailing: category
                     ? IconButton(
                         tooltip: favorite
                             ? 'Favori paketlerden çıkar'
                             : 'Favori paketlere ekle',
-                        iconSize: 18,
+                        iconSize: IconSizes.md,
                         visualDensity: VisualDensity.compact,
-                        icon: Icon(favorite ? Icons.star : Icons.star_border),
-                        color: favorite ? theme.colorScheme.primary : null,
+                        icon: Icon(favorite
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded),
+                        color: favorite ? c.accent : c.fgMuted,
                         onPressed: () => _toggleFavoriteGroup(key!),
                       )
                     : null,
-                selected: key == _category,
-                onTap: () => setState(() => _category = key),
               );
             },
           ),
@@ -276,58 +288,79 @@ class _VodBrowserState extends State<VodBrowser> {
   }
 
   Widget _grid(VodCatalog catalog) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
     final items = _visible(catalog);
+    final noun = _movies ? 'film' : 'dizi';
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+          padding: const EdgeInsets.fromLTRB(
+              Space.lg, Space.sm, Space.lg, Space.sm),
           child: Row(
             children: [
               Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: _movies ? 'Film ara' : 'Dizi ara',
-                    isDense: true,
-                    border: const OutlineInputBorder(),
-                  ),
+                child: SearchField(
+                  hint: _movies ? 'Film ara' : 'Dizi ara',
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
-              const SizedBox(width: 8),
-              PopupMenuButton<_Sort>(
-                tooltip: 'Sırala',
-                icon: const Icon(Icons.sort),
-                initialValue: _sort,
-                onSelected: (s) => setState(() => _sort = s),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                      value: _Sort.provider, child: Text('Sağlayıcı sırası')),
-                  PopupMenuItem(value: _Sort.name, child: Text('Ada göre')),
-                  PopupMenuItem(value: _Sort.rating, child: Text('Puana göre')),
-                  PopupMenuItem(value: _Sort.year, child: Text('Yıla göre')),
+              const SizedBox(width: Space.md),
+              Text('${formatCount(items.length)} $noun',
+                  style: theme.textTheme.labelMedium
+                      ?.copyWith(color: c.fgMuted)),
+              const SizedBox(width: Space.sm),
+              MenuAnchor(
+                alignmentOffset: const Offset(0, 4),
+                menuChildren: [
+                  for (final s in _Sort.values)
+                    MenuItemButton(
+                      leadingIcon: Icon(
+                        s == _sort ? Icons.check : null,
+                        size: IconSizes.md,
+                      ),
+                      onPressed: () => setState(() => _sort = s),
+                      child: Text(s.label),
+                    ),
                 ],
+                builder: (context, controller, _) => OutlinedButton.icon(
+                  onPressed: () => controller.isOpen
+                      ? controller.close()
+                      : controller.open(),
+                  icon: const Icon(Icons.sort, size: IconSizes.md),
+                  label: Text(_sort.label),
+                ),
               ),
             ],
           ),
         ),
         Expanded(
           child: items.isEmpty
-              ? const Center(child: Text('Eşleşen içerik yok'))
+              ? EmptyState(
+                  icon: Icons.search_off,
+                  title: 'Eşleşen $noun yok',
+                  message: 'Aramayı ya da kategoriyi değiştir.',
+                )
               : GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 170,
-                    mainAxisExtent: 300,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(
+                      Space.lg, Space.sm, Space.lg, Space.lg),
+                  gridDelegate: _gridDelegate,
                   itemCount: items.length,
-                  itemBuilder: (context, i) => _PosterCard(
-                    item: items[i],
-                    progress: _progress[items[i].key],
-                    onTap: () => _open(items[i]),
-                  ),
+                  itemBuilder: (context, i) {
+                    final item = items[i];
+                    final p = _progress[item.key];
+                    return PosterCard(
+                      title: item.name,
+                      poster: item.poster,
+                      subtitle: item.year?.toString(),
+                      rating: item.rating,
+                      progress: p != null && p.resumable ? p.fraction : null,
+                      fallbackIcon: _movies
+                          ? Icons.movie_outlined
+                          : Icons.video_library_outlined,
+                      onTap: () => _open(item),
+                    );
+                  },
                 ),
         ),
       ],
@@ -335,83 +368,90 @@ class _VodBrowserState extends State<VodBrowser> {
   }
 }
 
-class _PosterCard extends StatelessWidget {
-  const _PosterCard({required this.item, required this.onTap, this.progress});
+/// Katalog yüklenirken ekranın iskeleti (15 saniyeyi bulabiliyor).
+class _VodSkeleton extends StatelessWidget {
+  const _VodSkeleton({required this.movies});
 
-  final VodItem item;
-  final WatchProgress? progress;
-  final VoidCallback onTap;
+  final bool movies;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final meta = [
-      if (item.year case final y?) '$y',
-      if (item.rating case final r?) '★ ${r.toStringAsFixed(1)}',
-    ].join('  ');
-    final progress = this.progress;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    final c = AppColors.of(context);
+    return Semantics(
+      label: movies ? 'Filmler yükleniyor' : 'Diziler yükleniyor',
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _Poster(url: item.poster),
-                  if (progress != null && progress.resumable)
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: LinearProgressIndicator(
-                          value: progress.fraction, minHeight: 4),
-                    ),
-                ],
+          SizedBox(
+            width: 248,
+            child: Padding(
+              padding: const EdgeInsets.all(Space.sm),
+              child: ClipRect(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Skeleton(height: 40, radius: Radii.mdAll),
+                    const SizedBox(height: Space.md),
+                    for (var i = 0; i < 14; i++)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        child: Skeleton(
+                            height: 14, width: 110.0 + (i * 41) % 100),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
-          Text(item.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium),
-          if (meta.isNotEmpty)
-            Text(meta,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          VerticalDivider(width: 1, color: c.border),
+          Expanded(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      Space.lg, Space.sm, Space.lg, Space.sm),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                          child: Skeleton(height: 40, radius: Radii.mdAll)),
+                      const SizedBox(width: Space.md),
+                      Text(
+                        movies
+                            ? 'Filmler yükleniyor…'
+                            : 'Diziler yükleniyor…',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium
+                            ?.copyWith(color: c.fgMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                        Space.lg, Space.sm, Space.lg, Space.lg),
+                    gridDelegate: _gridDelegate,
+                    itemCount: 24,
+                    itemBuilder: (_, i) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Expanded(
+                            child: Skeleton(radius: Radii.mdAll)),
+                        const SizedBox(height: Space.xs),
+                        Skeleton(height: 12, width: 90.0 + (i * 29) % 60),
+                        const SizedBox(height: 6),
+                        const Skeleton(height: 10, width: 40),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _Poster extends StatelessWidget {
-  const _Poster({required this.url});
-
-  final String? url;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = Theme.of(context).colorScheme.surfaceContainerHigh;
-    final fallback = ColoredBox(
-      color: background,
-      child: const Center(child: Icon(Icons.movie_outlined, size: 36)),
-    );
-    final url = this.url;
-    if (url == null) return fallback;
-    // Büyük katalogda bellek için küçük çöz.
-    return Image.network(
-      url,
-      fit: BoxFit.cover,
-      cacheWidth: 340,
-      // Yavaş ya da yanıt vermeyen sunucuda kart boş görünmesin.
-      frameBuilder: (_, child, frame, sync) => frame == null && !sync
-          ? ColoredBox(color: background)
-          : child,
-      errorBuilder: (_, _, _) => fallback,
     );
   }
 }
@@ -456,108 +496,202 @@ class _MovieDialogState extends State<_MovieDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
     final progress = widget.progress;
+    final resumable = progress != null && progress.resumable;
     return Dialog(
       clipBehavior: Clip.antiAlias,
+      backgroundColor: c.surface,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 520),
+        constraints: const BoxConstraints(maxWidth: 820, maxHeight: 540),
         child: FutureBuilder<VodDetails>(
           future: _details,
           builder: (context, snapshot) {
             final d = snapshot.data;
-            final facts = [
-              if (movie.year case final y?) '$y',
-              if (d?.duration case final t?) formatDuration(t),
-              if (movie.rating case final r?) '★ ${r.toStringAsFixed(1)}',
-              ?d?.genre,
-            ];
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            final loading = snapshot.connectionState != ConnectionState.done;
+            return Stack(
               children: [
-                SizedBox(width: 240, child: _Poster(url: movie.poster)),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(movie.name, style: theme.textTheme.headlineSmall),
-                        const SizedBox(height: 6),
-                        Text(facts.join('  ·  '),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant)),
-                        const SizedBox(height: 16),
-                        Expanded(
-                          child: snapshot.connectionState !=
-                                  ConnectionState.done
-                              ? const Align(
-                                  alignment: Alignment.topLeft,
-                                  child: SizedBox.square(
-                                    dimension: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  ),
-                                )
-                              : SingleChildScrollView(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(d?.plot ?? movie.plot ??
-                                          'Açıklama yok.'),
-                                      if (d?.director case final dir?) ...[
-                                        const SizedBox(height: 12),
-                                        Text('Yönetmen: $dir',
-                                            style: theme.textTheme.bodySmall),
+                Positioned.fill(
+                    child: Backdrop(url: d?.backdrop ?? movie.poster)),
+                Padding(
+                  padding: const EdgeInsets.all(Space.lg),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 220,
+                        decoration: BoxDecoration(
+                          borderRadius: Radii.mdAll,
+                          border: Border.all(color: c.border),
+                          boxShadow: const [
+                            BoxShadow(
+                                color: Color(0xAA000000),
+                                blurRadius: 30,
+                                offset: Offset(0, 12)),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: Radii.mdAll,
+                          child: AspectRatio(
+                            aspectRatio: 2 / 3,
+                            child: PosterImage(
+                                url: movie.poster, cacheWidth: 440),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: Space.lg),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(movie.name,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.headlineSmall),
+                            const SizedBox(height: Space.sm),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                if (movie.rating case final r? when r > 0)
+                                  MetaChip(r.toStringAsFixed(1),
+                                      icon: Icons.star_rounded,
+                                      iconColor: c.warning),
+                                if (movie.year case final y?) MetaChip('$y'),
+                                if (d?.duration case final t?)
+                                  MetaChip(formatDuration(t),
+                                      icon: Icons.schedule),
+                                if (d?.genre case final g?) MetaChip(g),
+                              ],
+                            ),
+                            const SizedBox(height: Space.md),
+                            Expanded(
+                              child: loading
+                                  ? const Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Skeleton(height: 12),
+                                        SizedBox(height: 8),
+                                        Skeleton(height: 12),
+                                        SizedBox(height: 8),
+                                        Skeleton(height: 12, width: 220),
                                       ],
-                                      if (d?.cast case final cast?) ...[
-                                        const SizedBox(height: 4),
-                                        Text('Oyuncular: $cast',
-                                            style: theme.textTheme.bodySmall),
-                                      ],
-                                    ],
+                                    )
+                                  : SingleChildScrollView(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            d?.plot ??
+                                                movie.plot ??
+                                                'Açıklama yok.',
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                    color: c.fg
+                                                        .withValues(
+                                                            alpha: 0.9)),
+                                          ),
+                                          if (d?.director case final dir?)
+                                            _Credit(
+                                                label: 'Yönetmen', value: dir),
+                                          if (d?.cast case final cast?)
+                                            _Credit(
+                                                label: 'Oyuncular',
+                                                value: cast),
+                                        ],
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: Space.md),
+                            if (resumable) ...[
+                              SizedBox(
+                                width: 260,
+                                child: ClipRRect(
+                                  borderRadius: Radii.smAll,
+                                  child: LinearProgressIndicator(
+                                    value: progress.fraction,
+                                    minHeight: 4,
+                                    backgroundColor: c.border,
                                   ),
                                 ),
-                        ),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 8,
-                          children: [
-                            if (progress != null && progress.resumable) ...[
-                              FilledButton.icon(
-                                onPressed: () =>
-                                    _play(context, start: progress.position),
-                                icon: const Icon(Icons.play_arrow),
-                                label: Text('Devam et '
-                                    '(${formatPosition(progress.position)})'),
                               ),
-                              OutlinedButton.icon(
-                                onPressed: () => _play(context),
-                                icon: const Icon(Icons.replay),
-                                label: const Text('Baştan başla'),
-                              ),
-                            ] else
-                              FilledButton.icon(
-                                onPressed: () => _play(context),
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Oynat'),
-                              ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('Kapat'),
+                              const SizedBox(height: Space.sm),
+                            ],
+                            Wrap(
+                              spacing: Space.sm,
+                              runSpacing: Space.xs,
+                              children: [
+                                if (resumable) ...[
+                                  FilledButton.icon(
+                                    autofocus: true,
+                                    onPressed: () => _play(context,
+                                        start: progress.position),
+                                    icon: const Icon(Icons.play_arrow_rounded),
+                                    label: Text('Devam et · '
+                                        '${formatPosition(progress.position)}'),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: () => _play(context),
+                                    icon: const Icon(Icons.replay),
+                                    label: const Text('Baştan başla'),
+                                  ),
+                                ] else
+                                  FilledButton.icon(
+                                    autofocus: true,
+                                    onPressed: () => _play(context),
+                                    icon: const Icon(Icons.play_arrow_rounded),
+                                    label: const Text('Oynat'),
+                                  ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: Space.xs,
+                  right: Space.xs,
+                  child: IconButton(
+                    tooltip: 'Kapat',
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
               ],
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// "Yönetmen: ..." gibi künye satırı.
+class _Credit extends StatelessWidget {
+  const _Credit({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: Space.sm),
+      child: Text.rich(
+        TextSpan(children: [
+          TextSpan(
+              text: '$label  ',
+              style: theme.textTheme.labelMedium?.copyWith(color: c.fgMuted)),
+          TextSpan(text: value, style: theme.textTheme.bodySmall
+              ?.copyWith(color: c.fg)),
+        ]),
       ),
     );
   }
@@ -630,83 +764,203 @@ class _SeriesScreenState extends State<_SeriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = AppColors.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.series.name)),
       body: FutureBuilder<SeriesDetails>(
         future: _details,
         builder: (context, snapshot) {
+          final d = snapshot.data;
+          final Widget body;
           if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            body = EmptyState(
+              icon: Icons.cloud_off_outlined,
+              tone: c.danger,
+              title: 'Dizi bilgisi alınamadı',
+              message: '${snapshot.error}',
+              actions: [
+                FilledButton.icon(
+                  onPressed: () => setState(() => _details =
+                      loadSeriesDetails(widget.source, widget.series.id)),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tekrar dene'),
+                ),
+              ],
+            );
+          } else if (d == null) {
+            body = _content(null);
+          } else if (d.seasons.isEmpty) {
+            body = const EmptyState(
+                icon: Icons.video_library_outlined,
+                title: 'Bu dizide bölüm yok');
+          } else {
+            body = _content(d);
+          }
+          return Stack(
+            children: [
+              Positioned.fill(
+                  child: Backdrop(url: d?.info.backdrop ?? widget.series.poster)),
+              Column(
                 children: [
-                  Text('${snapshot.error}'),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () => setState(() => _details =
-                        loadSeriesDetails(widget.source, widget.series.id)),
-                    child: const Text('Tekrar dene'),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        Space.xs, Space.xs, Space.md, 0),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Geri',
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => Navigator.of(context).maybePop(),
+                        ),
+                        const SizedBox(width: Space.xs),
+                        Text('DİZİLER',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(color: c.fgMuted)),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: body),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// [d] null ise bölümlerin yerinde iskelet.
+  Widget _content(SeriesDetails? d) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    final series = widget.series;
+    final next = d == null ? null : _nextUp(d);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 340,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+                Space.lg, Space.xs, Space.lg, Space.lg),
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 120,
+                    decoration: BoxDecoration(
+                      borderRadius: Radii.mdAll,
+                      border: Border.all(color: c.border),
+                      boxShadow: const [
+                        BoxShadow(
+                            color: Color(0xAA000000),
+                            blurRadius: 24,
+                            offset: Offset(0, 10)),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: Radii.mdAll,
+                      child: AspectRatio(
+                        aspectRatio: 2 / 3,
+                        child: PosterImage(
+                            url: series.poster,
+                            fallbackIcon: Icons.video_library_outlined),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Space.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(series.name,
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleLarge),
+                        const SizedBox(height: Space.sm),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            if (series.rating case final r? when r > 0)
+                              MetaChip(r.toStringAsFixed(1),
+                                  icon: Icons.star_rounded,
+                                  iconColor: c.warning),
+                            if (series.year case final y?) MetaChip('$y'),
+                            if (d != null)
+                              MetaChip('${d.seasons.length} sezon'),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            );
-          }
-          final d = snapshot.data;
-          if (d == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (d.seasons.isEmpty) {
-            return const Center(child: Text('Bu dizide bölüm yok'));
-          }
-          final next = _nextUp(d);
-          final facts = [
-            if (widget.series.year case final y?) '$y',
-            if (widget.series.rating case final r?) '★ ${r.toStringAsFixed(1)}',
-            ?d.info.genre,
-            '${d.seasons.length} sezon',
-          ];
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 300,
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    AspectRatio(
-                      aspectRatio: 2 / 3,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: _Poster(url: widget.series.poster),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(facts.join('  ·  '),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant)),
-                    const SizedBox(height: 12),
-                    if (next != null) ...[
-                      FilledButton.icon(
-                        onPressed: () => _play(next),
-                        icon: const Icon(Icons.play_arrow),
-                        label: Text(
-                            'S${next.season} B${next.number} '
-                            '${_progress[next.key]?.resumable ?? false ? 'devam et' : 'oynat'}'),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    Text(d.info.plot ?? widget.series.plot ?? ''),
-                    if (d.info.cast case final cast?) ...[
-                      const SizedBox(height: 12),
-                      Text('Oyuncular: $cast', style: theme.textTheme.bodySmall),
-                    ],
-                  ],
+              const SizedBox(height: Space.md),
+              if (d?.info.genre case final g?)
+                Text(g,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: c.fgMuted)),
+              const SizedBox(height: Space.md),
+              if (next != null) ...[
+                FilledButton.icon(
+                  autofocus: true,
+                  onPressed: () => _play(next),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text('S${next.season} B${next.number} · '
+                      '${_progress[next.key]?.resumable ?? false ? 'Devam et' : 'Oynat'}'),
                 ),
-              ),
-              const VerticalDivider(width: 1),
-              Expanded(
-                child: DefaultTabController(
+                const SizedBox(height: Space.md),
+              ],
+              if (d == null) ...const [
+                Skeleton(height: 12),
+                SizedBox(height: 8),
+                Skeleton(height: 12),
+                SizedBox(height: 8),
+                Skeleton(height: 12, width: 180),
+              ] else ...[
+                Text(d.info.plot ?? series.plot ?? '',
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: c.fg.withValues(alpha: 0.9))),
+                if (d.info.cast case final cast?)
+                  _Credit(label: 'Oyuncular', value: cast),
+                if (d.info.director case final dir?)
+                  _Credit(label: 'Yönetmen', value: dir),
+              ],
+            ],
+          ),
+        ),
+        Expanded(
+          child: d == null
+              ? ListView(
+                  padding: const EdgeInsets.all(Space.lg),
+                  children: [
+                    for (var i = 0; i < 6; i++)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: Space.md),
+                        child: Row(
+                          children: [
+                            Skeleton(
+                                width: 144, height: 81, radius: Radii.mdAll),
+                            SizedBox(width: Space.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Skeleton(height: 14, width: 220),
+                                  SizedBox(height: 8),
+                                  Skeleton(height: 10),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                )
+              : DefaultTabController(
                   length: d.seasons.length,
                   initialIndex: next == null
                       ? 0
@@ -717,21 +971,26 @@ class _SeriesScreenState extends State<_SeriesScreen> {
                         isScrollable: true,
                         tabAlignment: TabAlignment.start,
                         tabs: [
-                          for (final s in d.seasons.keys)
-                            Tab(text: '$s. sezon'),
+                          for (final MapEntry(key: s, value: list)
+                              in d.seasons.entries)
+                            Tab(text: '$s. sezon  ·  ${list.length}'),
                         ],
                       ),
                       Expanded(
                         child: TabBarView(
                           children: [
                             for (final list in d.seasons.values)
-                              ListView.separated(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
+                              ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(
+                                    Space.md, Space.sm, Space.md, Space.lg),
                                 itemCount: list.length,
-                                separatorBuilder: (_, _) =>
-                                    const Divider(height: 1),
-                                itemBuilder: (context, i) =>
-                                    _episodeTile(list[i]),
+                                itemBuilder: (context, i) => _EpisodeRow(
+                                  episode: list[i],
+                                  progress: _progress[list[i].key],
+                                  next: identical(list[i], next),
+                                  fallbackPoster: series.poster,
+                                  onTap: () => _play(list[i]),
+                                ),
                               ),
                           ],
                         ),
@@ -739,44 +998,168 @@ class _SeriesScreenState extends State<_SeriesScreen> {
                     ],
                   ),
                 ),
-              ),
-            ],
-          );
-        },
-      ),
+        ),
+      ],
     );
   }
+}
 
-  Widget _episodeTile(Episode e) {
+/// Bölüm satırı: küçük görsel, numara, ad, özet, süre ve ilerleme.
+class _EpisodeRow extends StatefulWidget {
+  const _EpisodeRow({
+    required this.episode,
+    required this.progress,
+    required this.next,
+    required this.fallbackPoster,
+    required this.onTap,
+  });
+
+  final Episode episode;
+  final WatchProgress? progress;
+
+  /// Sıradaki bölüm; hafifçe vurgulanır.
+  final bool next;
+  final String? fallbackPoster;
+  final VoidCallback onTap;
+
+  @override
+  State<_EpisodeRow> createState() => _EpisodeRowState();
+}
+
+class _EpisodeRowState extends State<_EpisodeRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
-    final p = _progress[e.key];
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      leading: SizedBox(
-        width: 40,
-        child: Text('${e.number}',
-            textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
-      ),
-      title: Text(e.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (e.plot != null)
-            Text(e.plot!, maxLines: 2, overflow: TextOverflow.ellipsis),
-          if (p != null && !p.finished && p.resumable)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: LinearProgressIndicator(value: p.fraction, minHeight: 3),
+    final motion = Motion.of(context);
+    final e = widget.episode;
+    final p = widget.progress;
+    final finished = p != null && p.finished;
+    final partial = p != null && !p.finished && p.resumable;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: Radii.mdAll,
+            hoverColor: Colors.transparent,
+            child: AnimatedContainer(
+              duration: motion.fast,
+              padding: const EdgeInsets.all(Space.xs),
+              decoration: BoxDecoration(
+                color: _hovered
+                    ? c.surfaceRaised
+                    : widget.next
+                        ? c.muted.withValues(alpha: 0.7)
+                        : Colors.transparent,
+                borderRadius: Radii.mdAll,
+                border: Border.all(
+                    color: widget.next
+                        ? c.accent.withValues(alpha: 0.5)
+                        : Colors.transparent),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 144,
+                    height: 81,
+                    child: ClipRRect(
+                      borderRadius: Radii.smAll,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          PosterImage(
+                            url: e.image ?? widget.fallbackPoster,
+                            cacheWidth: 288,
+                            fallbackIcon: Icons.movie_outlined,
+                          ),
+                          AnimatedOpacity(
+                            duration: motion.fast,
+                            opacity: _hovered ? 1 : 0,
+                            child: ColoredBox(
+                              color: c.scrim.withValues(alpha: 0.5),
+                              child: Icon(Icons.play_arrow_rounded,
+                                  size: 36, color: c.fg),
+                            ),
+                          ),
+                          if (partial || finished)
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: LinearProgressIndicator(
+                                value: finished ? 1 : p.fraction,
+                                minHeight: 3,
+                                color: finished ? c.fgMuted : c.accent,
+                                backgroundColor: const Color(0x66000000),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Space.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text('${e.number}',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                    color: widget.next ? c.accent : c.fgMuted,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures()
+                                    ])),
+                            const SizedBox(width: Space.xs),
+                            Expanded(
+                              child: Text(e.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleSmall),
+                            ),
+                            if (finished)
+                              Tooltip(
+                                message: 'İzlendi',
+                                child: Icon(Icons.check_circle,
+                                    size: IconSizes.md, color: c.success),
+                              )
+                            else if (e.duration case final t?)
+                              Text(formatDuration(t),
+                                  style: theme.textTheme.labelMedium
+                                      ?.copyWith(color: c.fgMuted)),
+                          ],
+                        ),
+                        if (e.plot case final plot?)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(plot,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall),
+                          ),
+                        if (partial)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                                '${formatPosition(p.position)} izlendi',
+                                style: theme.textTheme.labelMedium
+                                    ?.copyWith(color: c.accent)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-        ],
+          ),
+        ),
       ),
-      trailing: p != null && p.finished
-          ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
-          : e.duration == null
-              ? null
-              : Text(formatDuration(e.duration!),
-                  style: theme.textTheme.bodySmall),
-      onTap: () => _play(e),
     );
   }
 }
