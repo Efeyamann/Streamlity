@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "अभी: {language}",
   "settingsAbout": "जानकारी",
   "settingsAboutText": "Windows, macOS और Linux के लिए ओपन-सोर्स IPTV प्लेयर।",
-  "translationNote": "अनुवाद अपने-आप तैयार किए गए हैं; कोई गलती दिखे तो हमें बताएँ।"
+  "translationNote": "अनुवाद अपने-आप तैयार किए गए हैं; कोई गलती दिखे तो हमें बताएँ।",
+
+  "editCategories": "श्रेणियाँ संपादित करें",
+  "editCategoriesHint": "क्रम बदलने के लिए खींचें, छिपाने के लिए आँख वाला आइकन दबाएँ।",
+  "hiddenCount": "{count, plural, =0{कोई छिपी श्रेणी नहीं} other{{count} छिपी हुई}}",
+  "hideMatching": "मिलती श्रेणियाँ छिपाएँ ({count})",
+  "showMatching": "मिलती श्रेणियाँ दिखाएँ ({count})",
+  "moveToTop": "सबसे ऊपर ले जाएँ",
+  "hideCategory": "छिपाएँ",
+  "showCategory": "दिखाएँ",
+  "reset": "रीसेट करें",
+  "dragToReorder": "क्रम बदलने के लिए खींचें"
 }

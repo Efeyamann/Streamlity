@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "Actuellement : {language}",
   "settingsAbout": "À propos",
   "settingsAboutText": "Lecteur IPTV open source pour Windows, macOS et Linux.",
-  "translationNote": "Les traductions ont été préparées automatiquement ; signale-nous toute erreur."
+  "translationNote": "Les traductions ont été préparées automatiquement ; signale-nous toute erreur.",
+
+  "editCategories": "Modifier les catégories",
+  "editCategoriesHint": "Fais glisser pour réorganiser, utilise l'œil pour masquer.",
+  "hiddenCount": "{count, plural, =0{Aucune catégorie masquée} =1{1 masquée} other{{count} masquées}}",
+  "hideMatching": "Masquer les résultats ({count})",
+  "showMatching": "Afficher les résultats ({count})",
+  "moveToTop": "Placer en haut",
+  "hideCategory": "Masquer",
+  "showCategory": "Afficher",
+  "reset": "Réinitialiser",
+  "dragToReorder": "Faire glisser pour réorganiser"
 }

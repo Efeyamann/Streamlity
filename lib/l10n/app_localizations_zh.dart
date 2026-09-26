@@ -631,4 +631,46 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get translationNote => '翻译由系统自动生成；如发现错误，欢迎告诉我们。';
+
+  @override
+  String get editCategories => '编辑分类';
+
+  @override
+  String get editCategoriesHint => '拖动以排序，点击眼睛图标隐藏。';
+
+  @override
+  String hiddenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已隐藏 $count 个',
+      zero: '没有隐藏的分类',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hideMatching(int count) {
+    return '隐藏匹配项（$count）';
+  }
+
+  @override
+  String showMatching(int count) {
+    return '显示匹配项（$count）';
+  }
+
+  @override
+  String get moveToTop => '移到顶部';
+
+  @override
+  String get hideCategory => '隐藏';
+
+  @override
+  String get showCategory => '显示';
+
+  @override
+  String get reset => '重置';
+
+  @override
+  String get dragToReorder => '拖动以排序';
 }

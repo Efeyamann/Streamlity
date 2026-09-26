@@ -651,4 +651,48 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get translationNote =>
       'Las traducciones se prepararon automáticamente; avísanos si ves algún error.';
+
+  @override
+  String get editCategories => 'Editar categorías';
+
+  @override
+  String get editCategoriesHint =>
+      'Arrastra para ordenar; usa el ojo para ocultar.';
+
+  @override
+  String hiddenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ocultas',
+      one: '1 oculta',
+      zero: 'Ninguna categoría oculta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hideMatching(int count) {
+    return 'Ocultar coincidencias ($count)';
+  }
+
+  @override
+  String showMatching(int count) {
+    return 'Mostrar coincidencias ($count)';
+  }
+
+  @override
+  String get moveToTop => 'Mover arriba del todo';
+
+  @override
+  String get hideCategory => 'Ocultar';
+
+  @override
+  String get showCategory => 'Mostrar';
+
+  @override
+  String get reset => 'Restablecer';
+
+  @override
+  String get dragToReorder => 'Arrastra para ordenar';
 }

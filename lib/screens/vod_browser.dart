@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../models/category_layout.dart';
 import '../models/playlist.dart' show searchKey;
 import '../models/playlist_source.dart';
 import '../models/vod.dart';
@@ -10,6 +11,7 @@ import '../services/xtream_vod.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets/common.dart';
 import '../ui/widgets/poster.dart';
+import 'category_editor.dart';
 import 'vod_player_screen.dart';
 
 enum _Sort {
@@ -43,6 +45,8 @@ class VodBrowser extends StatefulWidget {
     required this.catalog,
     required this.onRetry,
     required this.progressStore,
+    required this.layout,
+    required this.onLayoutChanged,
   });
 
   final XtreamSource source;
@@ -50,6 +54,10 @@ class VodBrowser extends StatefulWidget {
   final Future<VodCatalog> catalog;
   final VoidCallback onRetry;
   final WatchProgressStore progressStore;
+
+  /// Kullanıcının kategori sırası ve gizledikleri (kategori kimliğiyle).
+  final CategoryLayout layout;
+  final ValueChanged<CategoryLayout> onLayoutChanged;
 
   @override
   State<VodBrowser> createState() => _VodBrowserState();
@@ -59,6 +67,9 @@ class _VodBrowserState extends State<VodBrowser> {
   /// null: tümü; [_continueKey]: izlemeye devam et.
   String? _category;
   static const _continueKey = '\u0000devam';
+
+  /// "Tüm kategoriler" başlığı; yanında düzenleme düğmesi durur.
+  static const _allHeader = '\u0000all';
   String _categoryQuery = '';
   String _query = '';
   _Sort _sort = _Sort.provider;
@@ -119,10 +130,13 @@ class _VodBrowserState extends State<VodBrowser> {
 
   List<VodItem> _visible(VodCatalog catalog) {
     final query = searchKey(_query.trim());
+    final hidden = widget.layout.hidden;
     final items = catalog.items.where((i) {
       if (_category == _continueKey) {
         if (!(_progress[i.key]?.resumable ?? false)) return false;
-      } else if (_category != null && i.categoryId != _category) {
+      } else if (_category != null
+          ? i.categoryId != _category
+          : hidden.contains(i.categoryId)) {
         return false;
       }
       return query.isEmpty || searchKey(i.name).contains(query);
@@ -185,16 +199,36 @@ class _VodBrowserState extends State<VodBrowser> {
     );
   }
 
+  Future<void> _editCategories(VodCatalog catalog) async {
+    final counts = _countsFor(catalog);
+    final layout = await showCategoryEditor(
+      context,
+      entries: [
+        for (final c in catalog.categories)
+          (key: c.id, label: c.name, count: counts[c.id]),
+      ],
+      layout: widget.layout,
+    );
+    if (layout == null || !mounted) return;
+    if (_category case final c? when layout.isHidden(c)) {
+      setState(() => _category = null);
+    }
+    widget.onLayoutChanged(layout);
+  }
+
   Widget _categories(VodCatalog catalog) {
     final c = AppColors.of(context);
     final l = context.l10n;
     final counts = _countsFor(catalog);
     final query = searchKey(_categoryQuery.trim());
+    final layout = widget.layout;
+    final arranged = layout.visible(catalog.categories, (c) => c.id);
     final cats = query.isEmpty
-        ? catalog.categories
-        : catalog.categories
-            .where((c) => searchKey(c.name).contains(query))
-            .toList();
+        ? arranged
+        : arranged.where((c) => searchKey(c.name).contains(query)).toList();
+    final visibleCount = layout.hidden.isEmpty
+        ? catalog.items.length
+        : catalog.items.where((i) => !layout.isHidden(i.categoryId ?? '')).length;
     final resumable = _movies
         ? catalog.items.where((i) => _progress[i.key]?.resumable ?? false).length
         : 0;
@@ -204,14 +238,16 @@ class _VodBrowserState extends State<VodBrowser> {
     final pinned = query.isEmpty
         ? [
             for (final k in _favoriteGroups)
-              if (k.startsWith(prefix)) ?byId[k.substring(prefix.length)],
+              if (k.startsWith(prefix) &&
+                  !layout.isHidden(k.substring(prefix.length)))
+                ?byId[k.substring(prefix.length)],
           ]
         : const <VodCategory>[];
     // (anahtar, etiket, ikon, sayı, başlık mı, yıldızlı kategori mi)
     final rows = <(String?, String, IconData?, int?, bool, bool)>[
       if (query.isEmpty)
         (null, _movies ? l.allMovies : l.allSeries, Icons.apps,
-            catalog.items.length, false, false),
+            visibleCount, false, false),
       if (query.isEmpty && resumable > 0)
         (_continueKey, l.continueWatching, Icons.history, resumable, false,
             false),
@@ -220,7 +256,8 @@ class _VodBrowserState extends State<VodBrowser> {
         for (final cat in pinned)
           (cat.id, cat.name, null, counts[cat.id], false, true),
       ],
-      if (query.isEmpty) (null, l.allCategories, null, null, true, false),
+      if (query.isEmpty)
+        (_allHeader, l.allCategories, null, null, true, false),
       for (final cat in cats)
         (cat.id, cat.name, null, counts[cat.id], false, true),
     ];
@@ -240,7 +277,18 @@ class _VodBrowserState extends State<VodBrowser> {
             itemCount: rows.length,
             itemBuilder: (context, i) {
               final (key, label, icon, count, header, category) = rows[i];
-              if (header) return SectionHeader(label);
+              if (header) {
+                return SectionHeader(
+                  label,
+                  padding: EditCategoriesButton.headerPadding,
+                  trailing: key == _allHeader
+                      ? EditCategoriesButton(
+                          hiddenCount: layout.hidden.length,
+                          onPressed: () => _editCategories(catalog),
+                        )
+                      : null,
+                );
+              }
               final favorite =
                   category && favorites.contains(_groupKey(key!));
               return NavRow(

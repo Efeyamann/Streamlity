@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "Сейчас: {language}",
   "settingsAbout": "О приложении",
   "settingsAboutText": "IPTV-плеер с открытым исходным кодом для Windows, macOS и Linux.",
-  "translationNote": "Переводы подготовлены автоматически; сообщите нам, если заметите ошибку."
+  "translationNote": "Переводы подготовлены автоматически; сообщите нам, если заметите ошибку.",
+
+  "editCategories": "Настроить категории",
+  "editCategoriesHint": "Перетаскивайте, чтобы изменить порядок; скрывайте значком глаза.",
+  "hiddenCount": "{count, plural, =0{Скрытых категорий нет} one{Скрыта {count}} few{Скрыто {count}} many{Скрыто {count}} other{Скрыто {count}}}",
+  "hideMatching": "Скрыть найденные ({count})",
+  "showMatching": "Показать найденные ({count})",
+  "moveToTop": "Переместить наверх",
+  "hideCategory": "Скрыть",
+  "showCategory": "Показать",
+  "reset": "Сбросить",
+  "dragToReorder": "Перетащите, чтобы изменить порядок"
 }

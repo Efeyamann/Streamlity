@@ -643,4 +643,47 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get translationNote =>
       'Terjemahan disiapkan secara otomatis; beri tahu kami jika menemukan kesalahan.';
+
+  @override
+  String get editCategories => 'Atur kategori';
+
+  @override
+  String get editCategoriesHint =>
+      'Seret untuk mengurutkan, gunakan ikon mata untuk menyembunyikan.';
+
+  @override
+  String hiddenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tersembunyi',
+      zero: 'Tidak ada kategori tersembunyi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hideMatching(int count) {
+    return 'Sembunyikan yang cocok ($count)';
+  }
+
+  @override
+  String showMatching(int count) {
+    return 'Tampilkan yang cocok ($count)';
+  }
+
+  @override
+  String get moveToTop => 'Pindahkan ke atas';
+
+  @override
+  String get hideCategory => 'Sembunyikan';
+
+  @override
+  String get showCategory => 'Tampilkan';
+
+  @override
+  String get reset => 'Atur ulang';
+
+  @override
+  String get dragToReorder => 'Seret untuk mengurutkan';
 }

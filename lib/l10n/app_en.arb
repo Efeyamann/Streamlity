@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "Currently: {language}",
   "settingsAbout": "About",
   "settingsAboutText": "Open-source IPTV player for Windows, macOS and Linux.",
-  "translationNote": "Translations were prepared automatically; let us know if you spot a mistake."
+  "translationNote": "Translations were prepared automatically; let us know if you spot a mistake.",
+
+  "editCategories": "Edit categories",
+  "editCategoriesHint": "Drag to reorder, use the eye icon to hide.",
+  "hiddenCount": "{count, plural, =0{No hidden categories} other{{count} hidden}}",
+  "hideMatching": "Hide matches ({count})",
+  "showMatching": "Show matches ({count})",
+  "moveToTop": "Move to top",
+  "hideCategory": "Hide",
+  "showCategory": "Show",
+  "reset": "Reset",
+  "dragToReorder": "Drag to reorder"
 }

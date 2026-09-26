@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "Saat ini: {language}",
   "settingsAbout": "Tentang",
   "settingsAboutText": "Pemutar IPTV sumber terbuka untuk Windows, macOS, dan Linux.",
-  "translationNote": "Terjemahan disiapkan secara otomatis; beri tahu kami jika menemukan kesalahan."
+  "translationNote": "Terjemahan disiapkan secara otomatis; beri tahu kami jika menemukan kesalahan.",
+
+  "editCategories": "Atur kategori",
+  "editCategoriesHint": "Seret untuk mengurutkan, gunakan ikon mata untuk menyembunyikan.",
+  "hiddenCount": "{count, plural, =0{Tidak ada kategori tersembunyi} other{{count} tersembunyi}}",
+  "hideMatching": "Sembunyikan yang cocok ({count})",
+  "showMatching": "Tampilkan yang cocok ({count})",
+  "moveToTop": "Pindahkan ke atas",
+  "hideCategory": "Sembunyikan",
+  "showCategory": "Tampilkan",
+  "reset": "Atur ulang",
+  "dragToReorder": "Seret untuk mengurutkan"
 }

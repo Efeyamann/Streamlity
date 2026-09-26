@@ -7,9 +7,11 @@ import 'package:streamlity/l10n/l10n.dart';
 import 'package:streamlity/services/playlist_loader.dart';
 import 'package:streamlity/services/watch_progress_store.dart';
 
-/// Mesajdaki yer tutucu adları ({name}, {count, plural, ...}).
+/// Mesajdaki yer tutucu adları: `{name}` ya da `{count, plural, ...}`.
+/// Çoğul dallarının metni (`=0{Gizli kategori yok}`) sayılmaz.
 Set<String> _placeholders(String message) => {
-      for (final m in RegExp(r'\{([A-Za-z_]\w*)').allMatches(message))
+      for (final m
+          in RegExp(r'\{([A-Za-z_]\w*)\s*[,}]').allMatches(message))
         m.group(1)!,
     };
 

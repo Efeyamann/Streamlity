@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "Aktuell: {language}",
   "settingsAbout": "Über",
   "settingsAboutText": "Open-Source-IPTV-Player für Windows, macOS und Linux.",
-  "translationNote": "Die Übersetzungen wurden automatisch erstellt; melde uns gern Fehler."
+  "translationNote": "Die Übersetzungen wurden automatisch erstellt; melde uns gern Fehler.",
+
+  "editCategories": "Kategorien bearbeiten",
+  "editCategoriesHint": "Ziehen zum Sortieren, Augensymbol zum Ausblenden.",
+  "hiddenCount": "{count, plural, =0{Keine ausgeblendeten Kategorien} other{{count} ausgeblendet}}",
+  "hideMatching": "Treffer ausblenden ({count})",
+  "showMatching": "Treffer einblenden ({count})",
+  "moveToTop": "Nach oben verschieben",
+  "hideCategory": "Ausblenden",
+  "showCategory": "Einblenden",
+  "reset": "Zurücksetzen",
+  "dragToReorder": "Zum Sortieren ziehen"
 }

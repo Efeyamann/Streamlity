@@ -658,4 +658,50 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get translationNote =>
       'Переводы подготовлены автоматически; сообщите нам, если заметите ошибку.';
+
+  @override
+  String get editCategories => 'Настроить категории';
+
+  @override
+  String get editCategoriesHint =>
+      'Перетаскивайте, чтобы изменить порядок; скрывайте значком глаза.';
+
+  @override
+  String hiddenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Скрыто $count',
+      many: 'Скрыто $count',
+      few: 'Скрыто $count',
+      one: 'Скрыта $count',
+      zero: 'Скрытых категорий нет',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hideMatching(int count) {
+    return 'Скрыть найденные ($count)';
+  }
+
+  @override
+  String showMatching(int count) {
+    return 'Показать найденные ($count)';
+  }
+
+  @override
+  String get moveToTop => 'Переместить наверх';
+
+  @override
+  String get hideCategory => 'Скрыть';
+
+  @override
+  String get showCategory => 'Показать';
+
+  @override
+  String get reset => 'Сбросить';
+
+  @override
+  String get dragToReorder => 'Перетащите, чтобы изменить порядок';
 }

@@ -647,4 +647,47 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get translationNote =>
       'अनुवाद अपने-आप तैयार किए गए हैं; कोई गलती दिखे तो हमें बताएँ।';
+
+  @override
+  String get editCategories => 'श्रेणियाँ संपादित करें';
+
+  @override
+  String get editCategoriesHint =>
+      'क्रम बदलने के लिए खींचें, छिपाने के लिए आँख वाला आइकन दबाएँ।';
+
+  @override
+  String hiddenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count छिपी हुई',
+      zero: 'कोई छिपी श्रेणी नहीं',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hideMatching(int count) {
+    return 'मिलती श्रेणियाँ छिपाएँ ($count)';
+  }
+
+  @override
+  String showMatching(int count) {
+    return 'मिलती श्रेणियाँ दिखाएँ ($count)';
+  }
+
+  @override
+  String get moveToTop => 'सबसे ऊपर ले जाएँ';
+
+  @override
+  String get hideCategory => 'छिपाएँ';
+
+  @override
+  String get showCategory => 'दिखाएँ';
+
+  @override
+  String get reset => 'रीसेट करें';
+
+  @override
+  String get dragToReorder => 'क्रम बदलने के लिए खींचें';
 }

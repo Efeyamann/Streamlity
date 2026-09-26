@@ -1161,6 +1161,66 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Çeviriler otomatik hazırlandı; hata görürsen bildir.'**
   String get translationNote;
+
+  /// No description provided for @editCategories.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategorileri düzenle'**
+  String get editCategories;
+
+  /// No description provided for @editCategoriesHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sürükleyerek sırala, göz simgesiyle gizle.'**
+  String get editCategoriesHint;
+
+  /// No description provided for @hiddenCount.
+  ///
+  /// In tr, this message translates to:
+  /// **'{count, plural, =0{Gizli kategori yok} other{{count} gizli}}'**
+  String hiddenCount(int count);
+
+  /// No description provided for @hideMatching.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eşleşenleri gizle ({count})'**
+  String hideMatching(int count);
+
+  /// No description provided for @showMatching.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eşleşenleri göster ({count})'**
+  String showMatching(int count);
+
+  /// No description provided for @moveToTop.
+  ///
+  /// In tr, this message translates to:
+  /// **'En üste taşı'**
+  String get moveToTop;
+
+  /// No description provided for @hideCategory.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gizle'**
+  String get hideCategory;
+
+  /// No description provided for @showCategory.
+  ///
+  /// In tr, this message translates to:
+  /// **'Göster'**
+  String get showCategory;
+
+  /// No description provided for @reset.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıfırla'**
+  String get reset;
+
+  /// No description provided for @dragToReorder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıralamak için sürükle'**
+  String get dragToReorder;
 }
 
 class _AppLocalizationsDelegate

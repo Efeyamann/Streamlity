@@ -663,4 +663,51 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get translationNote => 'أُعدّت الترجمات آليًا؛ أخبرنا إن لاحظت خطأً.';
+
+  @override
+  String get editCategories => 'تعديل الفئات';
+
+  @override
+  String get editCategoriesHint =>
+      'اسحب لإعادة الترتيب، واستخدم أيقونة العين للإخفاء.';
+
+  @override
+  String hiddenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count فئة مخفية',
+      many: '$count فئة مخفية',
+      few: '$count فئات مخفية',
+      two: 'فئتان مخفيتان',
+      one: 'فئة مخفية واحدة',
+      zero: 'لا توجد فئات مخفية',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hideMatching(int count) {
+    return 'إخفاء المطابقات ($count)';
+  }
+
+  @override
+  String showMatching(int count) {
+    return 'إظهار المطابقات ($count)';
+  }
+
+  @override
+  String get moveToTop => 'النقل إلى الأعلى';
+
+  @override
+  String get hideCategory => 'إخفاء';
+
+  @override
+  String get showCategory => 'إظهار';
+
+  @override
+  String get reset => 'إعادة الضبط';
+
+  @override
+  String get dragToReorder => 'اسحب لإعادة الترتيب';
 }

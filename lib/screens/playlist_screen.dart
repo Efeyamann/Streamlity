@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../models/category_layout.dart';
 import '../models/epg.dart';
 import '../models/playlist.dart';
 import '../models/playlist_source.dart';
 import '../models/saved_source.dart';
 import '../models/vod.dart';
 import '../services/app_mute.dart';
+import '../services/category_layout_store.dart';
 import '../services/epg_loader.dart';
 import '../services/favorites_store.dart';
 import '../services/playlist_loader.dart';
@@ -26,6 +28,7 @@ import '../ui/widgets/channel_tile.dart';
 import '../ui/widgets/common.dart';
 import 'schedule_dialog.dart';
 import 'track_menu.dart';
+import 'category_editor.dart';
 import 'home_view.dart';
 import 'search_view.dart';
 import 'vod_browser.dart';
@@ -84,6 +87,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   final _groupsStore = FavoritesStore.groups();
   List<String> _favoriteGroups = [];
 
+  /// Kullanıcının kategori sırası ve gizledikleri.
+  final _layoutStore = CategoryLayoutStore();
+  CategoryLayout _groupLayout = CategoryLayout.empty;
+  final _vodLayouts = <VodKind, CategoryLayout>{};
+
   /// Son izlenen kanalların anahtarları; en yenisi başta.
   List<String> _recents = [];
   static const _maxRecents = 30;
@@ -136,6 +144,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     appMuted.addListener(_applyMute);
     _load();
     _loadContinue();
+    _loadVodLayouts();
   }
 
   @override
@@ -164,6 +173,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       final playlist = await loadSource(_source);
       final recents = await _recentsStore.readList(_source);
       final favoriteGroups = await _groupsStore.readList(_source);
+      final layout = await _layoutStore.read(_source, CategoryKind.live);
       if (!mounted) return;
       setState(() {
         _playlist = playlist;
@@ -173,6 +183,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         };
         _recents = recents;
         _favoriteGroups = favoriteGroups;
+        _groupLayout = layout;
         _group = null;
         _query = '';
       });
@@ -359,6 +370,22 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     setState(() => _section = section);
   }
 
+  static CategoryKind _categoryKind(VodKind kind) =>
+      kind == VodKind.movie ? CategoryKind.movies : CategoryKind.series;
+
+  Future<void> _loadVodLayouts() async {
+    for (final kind in VodKind.values) {
+      final layout = await _layoutStore.read(_source, _categoryKind(kind));
+      if (!mounted) return;
+      setState(() => _vodLayouts[kind] = layout);
+    }
+  }
+
+  void _setVodLayout(VodKind kind, CategoryLayout layout) {
+    setState(() => _vodLayouts[kind] = layout);
+    _layoutStore.write(_source, _categoryKind(kind), layout);
+  }
+
   Future<VodCatalog> _catalog(VodKind kind) =>
       _catalogs[kind] ??= loadVodCatalog(_source as XtreamSource, kind);
 
@@ -425,7 +452,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       ],
       favoriteGroups: playlist == null
           ? const []
-          : _favoriteGroups.where(playlist.groups.contains).toList(),
+          : [
+              for (final g in _favoriteGroups)
+                if (playlist.groups.contains(g) && !_groupLayout.isHidden(g)) g,
+            ],
       groupCounts: playlist?.groupCounts ?? const {},
       nowOn: (c) => _epg?.current(c.tvgId, _now),
       onResume: _resume,
@@ -436,7 +466,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           icon: Icons.live_tv_rounded,
           label: l.sectionLive,
           detail:
-              playlist == null ? null : l.channelCount(playlist.channelCount),
+              playlist == null ? null : l.channelCount(_visibleChannelCount(playlist)),
           onTap: () => _setSection(_Section.live),
         ),
         if (xtream) ...[
@@ -471,6 +501,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       source: source,
       kind: kind,
       catalog: _catalog(kind),
+      layout: _vodLayouts[kind] ?? CategoryLayout.empty,
+      onLayoutChanged: (layout) => _setVodLayout(kind, layout),
       onRetry: () => setState(() => _catalogs.remove(kind)),
       progressStore: _progressStore,
     );
@@ -519,6 +551,30 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       ],
     );
     action?.call();
+  }
+
+  /// Gizlenen kategorilerin kanalları düşülmüş sayı.
+  int _visibleChannelCount(Playlist playlist) =>
+      playlist.channelCount -
+      _groupLayout.hidden
+          .fold(0, (sum, g) => sum + (playlist.groupCounts[g] ?? 0));
+
+  Future<void> _editGroups(Playlist playlist) async {
+    final l = context.l10n;
+    final layout = await showCategoryEditor(
+      context,
+      entries: [
+        for (final g in playlist.groups)
+          (key: g, label: l.group(g), count: playlist.groupCounts[g]),
+      ],
+      layout: _groupLayout,
+    );
+    if (layout == null || !mounted) return;
+    setState(() {
+      _groupLayout = layout;
+      if (_group case final g? when layout.isHidden(g)) _group = null;
+    });
+    await _layoutStore.write(_source, CategoryKind.live, layout);
   }
 
   void _toggleFavoriteGroup(String group) {
@@ -626,8 +682,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             if (query.isEmpty || searchKey(c.name).contains(query)) c,
       ];
     }
+    final hidden = _groupLayout.hidden;
     return playlist.channels.where((c) {
-      if (_group != null && (c.group ?? Playlist.ungrouped) != _group) {
+      final group = c.group ?? Playlist.ungrouped;
+      if (_group != null ? group != _group : hidden.contains(group)) {
         return false;
       }
       // Aramada başlık satırları anlamsız.
@@ -754,6 +812,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     } else if (_section == _Section.search) {
       body = SearchView(
         playlist: playlist,
+        hiddenGroups: _groupLayout.hidden,
+        hiddenVod: {
+          for (final MapEntry(:key, :value) in _vodLayouts.entries)
+            key: value.hidden,
+        },
         catalog: xtream ? _catalog : null,
         nowOn: (c) => _epg?.current(c.tvgId, _now),
         now: _now,
@@ -939,11 +1002,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         SizedBox(
           width: 248,
           child: _GroupList(
-            groups: playlist.groups,
+            groups: _groupLayout.visible(playlist.groups, (g) => g),
+            hiddenCount: _groupLayout.hidden.length,
+            onEdit: () => _editGroups(playlist),
             counts: playlist.groupCounts,
             selected: _group,
             specials: [
-              (null, l.allChannels, Icons.apps, playlist.channelCount),
+              (null, l.allChannels, Icons.apps, _visibleChannelCount(playlist)),
               (_recentsGroup, l.recentlyWatched, Icons.history,
                   _recents.length),
             ],
@@ -1061,6 +1126,8 @@ typedef _GroupRow = ({
 class _GroupList extends StatefulWidget {
   const _GroupList({
     required this.groups,
+    required this.hiddenCount,
+    required this.onEdit,
     required this.counts,
     required this.selected,
     required this.specials,
@@ -1070,6 +1137,8 @@ class _GroupList extends StatefulWidget {
   });
 
   final List<String> groups;
+  final int hiddenCount;
+  final VoidCallback onEdit;
   final Map<String, int> counts;
   final String? selected;
   final List<_Special> specials;
@@ -1082,6 +1151,8 @@ class _GroupList extends StatefulWidget {
 }
 
 class _GroupListState extends State<_GroupList> {
+  /// "Tüm kategoriler" başlığı; yanında düzenleme düğmesi durur.
+  static const _allHeader = '\u0000all';
   String _query = '';
 
   @override
@@ -1111,7 +1182,7 @@ class _GroupListState extends State<_GroupList> {
               header: false, group: true),
       ],
       if (query.isEmpty)
-        (key: null, label: l.allCategories, icon: null, count: null,
+        (key: _allHeader, label: l.allCategories, icon: null, count: null,
             header: true, group: false),
       for (final g in groups)
         (key: g, label: l.group(g), icon: null, count: widget.counts[g],
@@ -1139,7 +1210,18 @@ class _GroupListState extends State<_GroupList> {
                   itemCount: rows.length,
                   itemBuilder: (context, i) {
                     final row = rows[i];
-                    if (row.header) return SectionHeader(row.label);
+                    if (row.header) {
+                      return SectionHeader(
+                        row.label,
+                        padding: EditCategoriesButton.headerPadding,
+                        trailing: row.key == _allHeader
+                            ? EditCategoriesButton(
+                                hiddenCount: widget.hiddenCount,
+                                onPressed: widget.onEdit,
+                              )
+                            : null,
+                      );
+                    }
                     final key = row.key;
                     final favorite = key != null && favorites.contains(key);
                     return NavRow(

@@ -649,4 +649,47 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get translationNote =>
       'অনুবাদগুলো স্বয়ংক্রিয়ভাবে তৈরি; কোনো ভুল চোখে পড়লে আমাদের জানান।';
+
+  @override
+  String get editCategories => 'বিভাগ সম্পাদনা';
+
+  @override
+  String get editCategoriesHint =>
+      'ক্রম বদলাতে টেনে আনুন, লুকাতে চোখের আইকন ব্যবহার করুন।';
+
+  @override
+  String hiddenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি লুকানো',
+      zero: 'কোনো লুকানো বিভাগ নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hideMatching(int count) {
+    return 'মিলে যাওয়াগুলো লুকান ($count)';
+  }
+
+  @override
+  String showMatching(int count) {
+    return 'মিলে যাওয়াগুলো দেখান ($count)';
+  }
+
+  @override
+  String get moveToTop => 'সবার উপরে নিন';
+
+  @override
+  String get hideCategory => 'লুকান';
+
+  @override
+  String get showCategory => 'দেখান';
+
+  @override
+  String get reset => 'রিসেট';
+
+  @override
+  String get dragToReorder => 'ক্রম বদলাতে টেনে আনুন';
 }

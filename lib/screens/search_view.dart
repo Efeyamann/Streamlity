@@ -20,6 +20,8 @@ class SearchView extends StatefulWidget {
     super.key,
     required this.playlist,
     required this.catalog,
+    this.hiddenGroups = const {},
+    this.hiddenVod = const {},
     required this.nowOn,
     required this.now,
     required this.onPlayChannel,
@@ -28,6 +30,12 @@ class SearchView extends StatefulWidget {
 
   /// Kanal listesi; yüklenmediyse null.
   final Playlist? playlist;
+
+  /// Kullanıcının gizlediği kanal kategorileri; aramada çıkmaz.
+  final Set<String> hiddenGroups;
+
+  /// Gizlenen film ve dizi kategorileri (kategori kimliği).
+  final Map<VodKind, Set<String>> hiddenVod;
 
   /// Film ya da dizi kataloğu; M3U listede null.
   final Future<VodCatalog> Function(VodKind kind)? catalog;
@@ -77,9 +85,13 @@ class _SearchViewState extends State<SearchView> {
     final channels = playlist.channels;
     final keys = _channelKeys[playlist] ??=
         [for (final c in channels) searchKey(c.name)];
+    final hidden = widget.hiddenGroups;
     return [
       for (var i = 0; i < channels.length; i++)
-        if (!channels[i].isSeparator && keys[i].contains(query)) channels[i],
+        if (!channels[i].isSeparator &&
+            keys[i].contains(query) &&
+            !hidden.contains(channels[i].group ?? Playlist.ungrouped))
+          channels[i],
     ];
   }
 
@@ -190,7 +202,13 @@ class _SearchViewState extends State<SearchView> {
         final data = snapshot.data;
         if (snapshot.hasError) return const SizedBox.shrink();
         if (data == null) return _loadingShelf(title, 150, 280);
-        final items = _items(data, query);
+        final hidden = widget.hiddenVod[
+                identical(catalog, _movies) ? VodKind.movie : VodKind.series] ??
+            const <String>{};
+        final items = [
+          for (final i in _items(data, query))
+            if (!hidden.contains(i.categoryId)) i,
+        ];
         if (items.isEmpty) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.only(top: Space.xl),

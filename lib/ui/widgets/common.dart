@@ -418,3 +418,42 @@ class _NavRowState extends State<NavRow> {
     );
   }
 }
+
+/// Kategori başlığının yanındaki düzenleme düğmesi; gizli kategori varsa
+/// sayısını da gösterir.
+class EditCategoriesButton extends StatelessWidget {
+  const EditCategoriesButton(
+      {super.key, required this.hiddenCount, required this.onPressed});
+
+  /// Düğmeyi taşıyan bölüm başlığının boşluğu.
+  static const headerPadding =
+      EdgeInsetsDirectional.fromSTEB(Space.md, Space.xs, Space.xs, 0);
+
+  final int hiddenCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l = context.l10n;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (hiddenCount > 0)
+          Text(l.hiddenCount(hiddenCount),
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: c.fgSubtle, letterSpacing: 0)),
+        IconButton(
+          tooltip: l.editCategories,
+          visualDensity: VisualDensity.compact,
+          iconSize: IconSizes.md,
+          color: c.fgMuted,
+          icon: const Icon(Icons.tune),
+          onPressed: onPressed,
+        ),
+      ],
+    );
+  }
+}

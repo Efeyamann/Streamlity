@@ -218,5 +218,19 @@
   "@systemLanguageCurrent": {"placeholders": {"language": {"type": "String"}}},
   "settingsAbout": "Hakkında",
   "settingsAboutText": "Windows, macOS ve Linux için açık kaynak IPTV oynatıcısı.",
-  "translationNote": "Çeviriler otomatik hazırlandı; hata görürsen bildir."
+  "translationNote": "Çeviriler otomatik hazırlandı; hata görürsen bildir.",
+
+  "editCategories": "Kategorileri düzenle",
+  "editCategoriesHint": "Sürükleyerek sırala, göz simgesiyle gizle.",
+  "hiddenCount": "{count, plural, =0{Gizli kategori yok} other{{count} gizli}}",
+  "@hiddenCount": {"placeholders": {"count": {"type": "int"}}},
+  "hideMatching": "Eşleşenleri gizle ({count})",
+  "@hideMatching": {"placeholders": {"count": {"type": "int"}}},
+  "showMatching": "Eşleşenleri göster ({count})",
+  "@showMatching": {"placeholders": {"count": {"type": "int"}}},
+  "moveToTop": "En üste taşı",
+  "hideCategory": "Gizle",
+  "showCategory": "Göster",
+  "reset": "Sıfırla",
+  "dragToReorder": "Sıralamak için sürükle"
 }

@@ -647,4 +647,46 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get translationNote =>
       'Çeviriler otomatik hazırlandı; hata görürsen bildir.';
+
+  @override
+  String get editCategories => 'Kategorileri düzenle';
+
+  @override
+  String get editCategoriesHint => 'Sürükleyerek sırala, göz simgesiyle gizle.';
+
+  @override
+  String hiddenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count gizli',
+      zero: 'Gizli kategori yok',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hideMatching(int count) {
+    return 'Eşleşenleri gizle ($count)';
+  }
+
+  @override
+  String showMatching(int count) {
+    return 'Eşleşenleri göster ($count)';
+  }
+
+  @override
+  String get moveToTop => 'En üste taşı';
+
+  @override
+  String get hideCategory => 'Gizle';
+
+  @override
+  String get showCategory => 'Göster';
+
+  @override
+  String get reset => 'Sıfırla';
+
+  @override
+  String get dragToReorder => 'Sıralamak için sürükle';
 }

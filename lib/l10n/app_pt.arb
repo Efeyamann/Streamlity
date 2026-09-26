@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "Atual: {language}",
   "settingsAbout": "Sobre",
   "settingsAboutText": "Player de IPTV de código aberto para Windows, macOS e Linux.",
-  "translationNote": "As traduções foram preparadas automaticamente; avise-nos se encontrar algum erro."
+  "translationNote": "As traduções foram preparadas automaticamente; avise-nos se encontrar algum erro.",
+
+  "editCategories": "Editar categorias",
+  "editCategoriesHint": "Arraste para reordenar; use o olho para ocultar.",
+  "hiddenCount": "{count, plural, =0{Nenhuma categoria oculta} =1{1 oculta} other{{count} ocultas}}",
+  "hideMatching": "Ocultar correspondências ({count})",
+  "showMatching": "Mostrar correspondências ({count})",
+  "moveToTop": "Mover para o topo",
+  "hideCategory": "Ocultar",
+  "showCategory": "Mostrar",
+  "reset": "Redefinir",
+  "dragToReorder": "Arraste para reordenar"
 }

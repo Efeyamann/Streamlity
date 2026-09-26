@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "বর্তমানে: {language}",
   "settingsAbout": "সম্পর্কে",
   "settingsAboutText": "Windows, macOS ও Linux-এর জন্য ওপেন-সোর্স IPTV প্লেয়ার।",
-  "translationNote": "অনুবাদগুলো স্বয়ংক্রিয়ভাবে তৈরি; কোনো ভুল চোখে পড়লে আমাদের জানান।"
+  "translationNote": "অনুবাদগুলো স্বয়ংক্রিয়ভাবে তৈরি; কোনো ভুল চোখে পড়লে আমাদের জানান।",
+
+  "editCategories": "বিভাগ সম্পাদনা",
+  "editCategoriesHint": "ক্রম বদলাতে টেনে আনুন, লুকাতে চোখের আইকন ব্যবহার করুন।",
+  "hiddenCount": "{count, plural, =0{কোনো লুকানো বিভাগ নেই} other{{count}টি লুকানো}}",
+  "hideMatching": "মিলে যাওয়াগুলো লুকান ({count})",
+  "showMatching": "মিলে যাওয়াগুলো দেখান ({count})",
+  "moveToTop": "সবার উপরে নিন",
+  "hideCategory": "লুকান",
+  "showCategory": "দেখান",
+  "reset": "রিসেট",
+  "dragToReorder": "ক্রম বদলাতে টেনে আনুন"
 }

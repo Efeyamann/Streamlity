@@ -186,5 +186,16 @@
   "systemLanguageCurrent": "Ahora: {language}",
   "settingsAbout": "Acerca de",
   "settingsAboutText": "Reproductor IPTV de código abierto para Windows, macOS y Linux.",
-  "translationNote": "Las traducciones se prepararon automáticamente; avísanos si ves algún error."
+  "translationNote": "Las traducciones se prepararon automáticamente; avísanos si ves algún error.",
+
+  "editCategories": "Editar categorías",
+  "editCategoriesHint": "Arrastra para ordenar; usa el ojo para ocultar.",
+  "hiddenCount": "{count, plural, =0{Ninguna categoría oculta} =1{1 oculta} other{{count} ocultas}}",
+  "hideMatching": "Ocultar coincidencias ({count})",
+  "showMatching": "Mostrar coincidencias ({count})",
+  "moveToTop": "Mover arriba del todo",
+  "hideCategory": "Ocultar",
+  "showCategory": "Mostrar",
+  "reset": "Restablecer",
+  "dragToReorder": "Arrastra para ordenar"
 }

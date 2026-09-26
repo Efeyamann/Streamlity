@@ -32,6 +32,16 @@ class FavoritesStore {
   FavoritesStore.recents({Future<Directory> Function()? directory})
       : this(directory: directory, fileName: 'recents.json');
 
+  /// Kullanıcının kategori sırası (canlı TV'de grup adı, film/dizide
+  /// `m:<id>` / `s:<id>`); boşsa sağlayıcının sırası.
+  FavoritesStore.categoryOrder({Future<Directory> Function()? directory})
+      : this(directory: directory, fileName: 'category_order.json');
+
+  /// Gizlenen kategoriler; anahtarlar [FavoritesStore.categoryOrder] ile
+  /// aynı.
+  FavoritesStore.hiddenCategories({Future<Directory> Function()? directory})
+      : this(directory: directory, fileName: 'hidden_categories.json');
+
   final Future<Directory> Function() _directory;
   final String fileName;
   Map<String, List<String>>? _cache;
