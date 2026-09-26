@@ -41,7 +41,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
       size = Win32Window::Size(width, height);
     }
   }
-  if (!window.Create(L"streamlity", origin, size)) {
+  if (!window.Create(L"Streamlity", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

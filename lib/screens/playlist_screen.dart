@@ -18,6 +18,8 @@ import '../services/stall_watchdog.dart';
 import '../services/stream_slot.dart';
 import '../services/watch_progress_store.dart';
 import '../services/xtream_vod.dart';
+import '../ui/tokens.dart';
+import '../ui/widgets/app_rail.dart';
 import 'schedule_dialog.dart';
 import 'track_menu.dart';
 import 'vod_browser.dart';
@@ -628,116 +630,166 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   @override
   Widget build(BuildContext context) {
     final playlist = _playlist;
-    if (playlist == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(widget.saved.name)),
-        body: Center(
-          child: _loading || _error == null
-              ? const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Kanal listesi yükleniyor…'),
-                  ],
-                )
-              : _LoadError(message: _error!, onRetry: _load),
-        ),
-      );
-    }
-
-    final channels = _visibleChannels(playlist);
-    final expiresAt = playlist.expiresAt;
-    final onAir = _epg?.current(_current?.tvgId, _now);
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Flexible(
-              child: Text(
-                _section == _Section.live
-                    ? _current?.name ?? widget.saved.name
-                    : widget.saved.name,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (_source is XtreamSource) ...[
-              const SizedBox(width: 24),
-              SegmentedButton<_Section>(
-                showSelectedIcon: false,
-                segments: const [
-                  ButtonSegment(
-                      value: _Section.live,
-                      icon: Icon(Icons.live_tv),
-                      label: Text('Canlı TV')),
-                  ButtonSegment(
-                      value: _Section.movies,
-                      icon: Icon(Icons.movie),
-                      label: Text('Filmler')),
-                  ButtonSegment(
-                      value: _Section.series,
-                      icon: Icon(Icons.video_library),
-                      label: Text('Diziler')),
+    final xtream = _source is XtreamSource;
+    final Widget body;
+    if (_section != _Section.live) {
+      // Katalog kanal listesinden bağımsız; liste yüklenirken de açılabilir.
+      body = _vodBody(_source as XtreamSource);
+    } else if (playlist == null) {
+      body = Center(
+        child: _loading || _error == null
+            ? const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: Space.md),
+                  Text('Kanal listesi yükleniyor…'),
                 ],
-                selected: {_section},
-                onSelectionChanged: (s) => _setSection(s.single),
+              )
+            : _LoadError(message: _error!, onRetry: _load),
+      );
+    } else {
+      body = _liveBody(playlist, _visibleChannels(playlist),
+          _epg?.current(_current?.tvgId, _now));
+    }
+    return Scaffold(
+      body: Row(
+        children: [
+          AppRail<_Section>(
+            selected: _section,
+            onSelected: _setSection,
+            items: [
+              const RailItem(
+                value: _Section.live,
+                icon: Icons.live_tv_outlined,
+                selectedIcon: Icons.live_tv,
+                label: 'Canlı TV',
+              ),
+              if (xtream) ...const [
+                RailItem(
+                  value: _Section.movies,
+                  icon: Icons.movie_outlined,
+                  selectedIcon: Icons.movie,
+                  label: 'Filmler',
+                ),
+                RailItem(
+                  value: _Section.series,
+                  icon: Icons.video_library_outlined,
+                  selectedIcon: Icons.video_library,
+                  label: 'Diziler',
+                ),
+              ],
+            ],
+            footer: [
+              RailButton(
+                icon: Icons.layers_outlined,
+                label: 'Listeler',
+                tooltip: 'Listelere dön',
+                onTap: () => Navigator.of(context).maybePop(),
               ),
             ],
-          ],
-        ),
-        actions: [
-          if (_active case final active?)
-            TrackMenus(key: ObjectKey(active), player: active.player),
-          if (appMuted.value && _slots.isNotEmpty)
-            IconButton(
-              tooltip: 'Sesi aç (M)',
-              icon: const Icon(Icons.volume_off),
-              onPressed: _toggleMute,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                _topBar(context, playlist),
+                Expanded(child: body),
+              ],
             ),
-          if (_hasSchedule(_current))
-            IconButton(
-              tooltip: 'Yayın akışı',
-              icon: const Icon(Icons.calendar_view_day),
-              onPressed: () => _showSchedule(_current!),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Sayfa başlığı ve oynatıcıya ait eylemler.
+  Widget _topBar(BuildContext context, Playlist? playlist) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    final expiresAt = playlist?.expiresAt;
+    final title = switch (_section) {
+      _Section.live => _current?.name ?? 'Canlı TV',
+      _Section.movies => 'Filmler',
+      _Section.series => 'Diziler',
+    };
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.only(left: Space.lg, right: Space.md),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.border)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.saved.name.toUpperCase(),
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(color: c.fgMuted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: theme.textTheme.titleLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          if (_epgLoading)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  SizedBox.square(
-                    dimension: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  SizedBox(width: 8),
-                  Text('Yayın akışı güncelleniyor'),
-                ],
+          ),
+          if (_section == _Section.live) ...[
+            if (_active case final active?)
+              TrackMenus(key: ObjectKey(active), player: active.player),
+            if (appMuted.value && _slots.isNotEmpty)
+              IconButton(
+                tooltip: 'Sesi aç (M)',
+                icon: const Icon(Icons.volume_off),
+                onPressed: _toggleMute,
               ),
+            if (_hasSchedule(_current))
+              IconButton(
+                tooltip: 'Yayın akışı',
+                icon: const Icon(Icons.calendar_view_day),
+                onPressed: () => _showSchedule(_current!),
+              ),
+          ],
+          if (_epgLoading)
+            const _StatusPill(
+              leading: SizedBox.square(
+                dimension: 12,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              label: 'Yayın akışı güncelleniyor',
             )
           else if (_epgError != null)
             Tooltip(
               message: _epgError!,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(Icons.event_busy),
+              child: _StatusPill(
+                leading: Icon(Icons.event_busy,
+                    size: IconSizes.sm, color: c.warning),
+                label: 'Yayın akışı alınamadı',
               ),
             ),
           if (expiresAt != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                'Bitiş: ${formatDate(expiresAt)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+            _StatusPill(
+              leading: Icon(Icons.event_outlined,
+                  size: IconSizes.sm,
+                  color: _expiresSoon(expiresAt) ? c.warning : c.fgMuted),
+              label: 'Bitiş ${formatDate(expiresAt)}',
+              color: _expiresSoon(expiresAt) ? c.warning : null,
             ),
-          const SizedBox(width: 8),
         ],
       ),
-      body: _section != _Section.live
-          ? _vodBody(_source as XtreamSource)
-          : _liveBody(playlist, channels, onAir),
     );
   }
+
+  static bool _expiresSoon(DateTime expiresAt) =>
+      expiresAt.difference(DateTime.now()) < const Duration(days: 7);
 
   Widget _liveBody(Playlist playlist, List<Channel> channels, Programme? onAir) {
     return Row(
@@ -1303,6 +1355,46 @@ class _LoadError extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Üst çubuktaki küçük durum etiketi.
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.leading, required this.label, this.color});
+
+  final Widget leading;
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: Space.xs),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: c.surfaceRaised,
+          borderRadius: const BorderRadius.all(Radius.circular(999)),
+          border: Border.all(color: c.border),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: Space.sm, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              leading,
+              const SizedBox(width: 6),
+              Text(label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelMedium
+                      ?.copyWith(color: color ?? c.fgMuted)),
+            ],
+          ),
+        ),
       ),
     );
   }
