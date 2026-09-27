@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show AppExitResponse;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -269,7 +270,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     _recentsStore.writeList(_source, _recents);
   }
 
-  /// Kanalı yeni bir karede açar ve sesi ona verir.
+  /// Kanalı yeni bir karede açar ve sesi ona verir. Birden fazla karede
+  /// ses açıksa (karışık ses) yeni kare sessiz başlar, diğerleri sürer.
   void _addSlot(Channel channel) {
     if (_slots.length >= _maxSlots) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -277,18 +279,47 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       ));
       return;
     }
-    final slot = StreamSlot(channel)..muted = appMuted.value;
+    final mixing = _slots.where((s) => s.audible).length > 1;
+    if (!mixing) {
+      for (final s in _slots) {
+        s.audible = false;
+      }
+    }
+    final slot = StreamSlot(channel)
+      ..muted = appMuted.value
+      ..audible = !mixing;
     _slots.add(slot);
     _activate(slot);
     _remember(channel);
   }
 
+  /// Kareyi seçer: kanal listesi ve kısayollar ona gider. Ses yalnız tek
+  /// karede açıkken seçimle birlikte taşınır.
   void _activate(StreamSlot slot) {
-    setState(() => _active = slot);
-    for (final s in _slots) {
-      s.backgrounded = !identical(s, slot);
+    final follow = audioFollowsSelection(_slots.map((s) => s.audible));
+    setState(() {
+      _active = slot;
+      if (follow) {
+        for (final s in _slots) {
+          s.audible = identical(s, slot);
+        }
+      }
+    });
+  }
+
+  /// Karenin sesini açar ya da kapatır; diğer karelere dokunmaz. Uygulama
+  /// sessizdeyse sessizlik kalkar ve ses bu karede açılır.
+  void _toggleSlotAudio(StreamSlot slot) {
+    if (appMuted.value) {
+      setState(() => slot.audible = true);
+      appMuted.value = false;
+    } else {
+      setState(() => slot.audible = !slot.audible);
     }
   }
+
+  void _setSlotVolume(StreamSlot slot, double volume) =>
+      setState(() => slot.volume = volume);
 
   void _toggleMute() => appMuted.value = !appMuted.value;
 
@@ -367,6 +398,12 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       } else {
         _activate(next);
       }
+    }
+    // Ses kapanan karedeyse seçili kareye geçer; tek karede kare çubuğu
+    // olmadığı için ses hep açık.
+    if (_active case final active?
+        when _slots.length == 1 || !_slots.any((s) => s.audible)) {
+      setState(() => active.audible = true);
     }
     // Karenin widget'ları ağaçtan çıktıktan sonra kapat.
     WidgetsBinding.instance.addPostFrameCallback((_) => slot.dispose());
@@ -961,7 +998,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 _SlotBar(
                   channel: slot.channel,
                   active: active,
+                  audible: slot.audible,
                   muted: appMuted.value,
+                  volume: slot.volume,
+                  onToggleAudio: () => _toggleSlotAudio(slot),
+                  onVolume: (v) => _setSlotVolume(slot, v),
                   focused: identical(slot, _focus),
                   onFocus: () => _toggleFocus(slot),
                   onClose: () => _closeSlot(slot),
@@ -1779,13 +1820,17 @@ class _NoChannel extends StatelessWidget {
   }
 }
 
-/// Çoklu izlemede karenin üstündeki şerit: kanal adı, ses durumu, büyüt ve
-/// kapat.
-class _SlotBar extends StatelessWidget {
+/// Çoklu izlemede karenin üstündeki şerit: sesi aç/kapat ve düzeyi, kanal
+/// adı, büyüt ve kapat.
+class _SlotBar extends StatefulWidget {
   const _SlotBar({
     required this.channel,
     required this.active,
+    required this.audible,
     required this.muted,
+    required this.volume,
+    required this.onToggleAudio,
+    required this.onVolume,
     required this.focused,
     required this.onFocus,
     required this.onClose,
@@ -1793,60 +1838,132 @@ class _SlotBar extends StatelessWidget {
 
   final Channel channel;
   final bool active;
+
+  /// Bu karenin sesi açık mı ve uygulama geneli sessizlik.
+  final bool audible;
   final bool muted;
+  final double volume;
+  final VoidCallback onToggleAudio;
+  final ValueChanged<double> onVolume;
   final bool focused;
   final VoidCallback onFocus;
   final VoidCallback onClose;
 
   @override
+  State<_SlotBar> createState() => _SlotBarState();
+}
+
+class _SlotBarState extends State<_SlotBar> {
+  /// Ses düzeyi çubuğu fare kare çubuğunun üzerindeyken görünür.
+  bool _hovered = false;
+
+  /// Hoparlörün ya da ses çubuğunun üzerinde tekerlek sesi 5'er değiştirir.
+  void _onPointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent || !widget.audible || widget.muted) {
+      return;
+    }
+    GestureBinding.instance.pointerSignalResolver.register(event, (e) {
+      final step = (e as PointerScrollEvent).scrollDelta.dy < 0 ? 5 : -5;
+      widget.onVolume((widget.volume + step).clamp(0, 100).toDouble());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final audible = active && !muted;
+    final l = context.l10n;
+    final on = widget.audible && !widget.muted;
+    final icon = !on
+        ? Icons.volume_off
+        : widget.volume == 0
+            ? Icons.volume_mute
+            : widget.volume < 50
+                ? Icons.volume_down
+                : Icons.volume_up;
     return Align(
       alignment: Alignment.topCenter,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [c.scrim, Colors.transparent],
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [c.scrim, Colors.transparent],
+            ),
           ),
-        ),
-        child: Padding(
-          padding:
-              const EdgeInsetsDirectional.fromSTEB(Space.sm, 6, Space.xxs, Space.md),
-          child: Row(
-            children: [
-              Tooltip(
-                message: audible ? context.l10n.audioInThisTile : context.l10n.muted,
-                child: Icon(audible ? Icons.volume_up : Icons.volume_off,
-                    size: IconSizes.sm, color: audible ? c.accent : c.fgMuted),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  channel.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: active ? c.fg : c.fgMuted),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(
+                Space.xxs, 2, Space.xxs, Space.md),
+            child: Row(
+              children: [
+                Listener(
+                  onPointerSignal: _onPointerSignal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: widget.muted
+                            ? l.unmuteShortcut
+                            : widget.audible
+                                ? l.tileMute
+                                : l.tileUnmute,
+                        iconSize: IconSizes.md,
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(icon, color: on ? c.accent : c.fgMuted),
+                        onPressed: widget.onToggleAudio,
+                      ),
+                      if (on && _hovered)
+                        SizedBox(
+                          width: 96,
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(
+                                  enabledThumbRadius: 6),
+                              overlayShape: const RoundSliderOverlayShape(
+                                  overlayRadius: 12),
+                            ),
+                            child: Slider(
+                              value: widget.volume.clamp(0, 100).toDouble(),
+                              max: 100,
+                              semanticFormatterCallback: (v) =>
+                                  '${l.volumeLevel} ${v.round()}',
+                              onChanged: widget.onVolume,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: focused ? context.l10n.backToGrid : context.l10n.enlarge,
-                iconSize: IconSizes.md,
-                visualDensity: VisualDensity.compact,
-                icon: Icon(focused ? Icons.grid_view : Icons.open_in_full),
-                onPressed: onFocus,
-              ),
-              IconButton(
-                tooltip: context.l10n.closeTile,
-                iconSize: IconSizes.md,
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.close),
-                onPressed: onClose,
-              ),
-            ],
+                const SizedBox(width: Space.xxs),
+                Expanded(
+                  child: Text(
+                    widget.channel.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: widget.active ? c.fg : c.fgMuted),
+                  ),
+                ),
+                IconButton(
+                  tooltip: widget.focused ? l.backToGrid : l.enlarge,
+                  iconSize: IconSizes.md,
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                      widget.focused ? Icons.grid_view : Icons.open_in_full),
+                  onPressed: widget.onFocus,
+                ),
+                IconButton(
+                  tooltip: l.closeTile,
+                  iconSize: IconSizes.md,
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.close),
+                  onPressed: widget.onClose,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -298,12 +298,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hintFullscreen => 'Plein écran';
 
   @override
-  String get audioInThisTile => 'Son dans cette vignette';
-
-  @override
-  String get muted => 'Son coupé';
-
-  @override
   String get backToGrid => 'Retour à la grille';
 
   @override
@@ -846,4 +840,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pickDay => 'Choisir un jour';
+
+  @override
+  String get tileMute => 'Couper le son de cette vignette';
+
+  @override
+  String get tileUnmute => 'Activer le son de cette vignette';
+
+  @override
+  String get volumeLevel => 'Volume';
 }

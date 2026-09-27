@@ -78,8 +78,6 @@
   "hintPreviousChannel": "Vorheriger Sender",
   "hintMute": "Ton aus / an",
   "hintFullscreen": "Vollbild",
-  "audioInThisTile": "Ton in dieser Kachel",
-  "muted": "Stumm",
   "backToGrid": "Zurück zum Raster",
   "enlarge": "Vergrößern",
   "closeTile": "Kachel schließen",
@@ -243,5 +241,9 @@
   "guideNoProgramme": "Keine Programminformationen",
   "guideHint": "Fahre über eine Sendung, um Details zu sehen. Ein Klick auf die laufende Sendung öffnet den Sender; archivierte Sendungen starten von Anfang an.",
   "watchLive": "Live ansehen",
-  "pickDay": "Tag wählen"
+  "pickDay": "Tag wählen",
+
+  "tileMute": "Ton dieser Kachel aus",
+  "tileUnmute": "Ton dieser Kachel an",
+  "volumeLevel": "Lautstärke"
 }

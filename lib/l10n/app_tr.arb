@@ -90,8 +90,6 @@
   "hintPreviousChannel": "Önceki kanal",
   "hintMute": "Sesi kapat / aç",
   "hintFullscreen": "Tam ekran",
-  "audioInThisTile": "Ses bu karede",
-  "muted": "Sessiz",
   "backToGrid": "Izgaraya dön",
   "enlarge": "Büyüt",
   "closeTile": "Kareyi kapat",
@@ -279,5 +277,9 @@
   "guideNoProgramme": "Program bilgisi yok",
   "guideHint": "Ayrıntılar için bir programın üzerine gel. Yayındaki programa tıklayınca kanal açılır; arşivdeki geçmiş yayınlar baştan oynar.",
   "watchLive": "Canlı izle",
-  "pickDay": "Gün seç"
+  "pickDay": "Gün seç",
+
+  "tileMute": "Bu karenin sesini kapat",
+  "tileUnmute": "Bu karenin sesini aç",
+  "volumeLevel": "Ses düzeyi"
 }

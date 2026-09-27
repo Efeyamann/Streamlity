@@ -556,18 +556,6 @@ abstract class AppLocalizations {
   /// **'Tam ekran'**
   String get hintFullscreen;
 
-  /// No description provided for @audioInThisTile.
-  ///
-  /// In tr, this message translates to:
-  /// **'Ses bu karede'**
-  String get audioInThisTile;
-
-  /// No description provided for @muted.
-  ///
-  /// In tr, this message translates to:
-  /// **'Sessiz'**
-  String get muted;
-
   /// No description provided for @backToGrid.
   ///
   /// In tr, this message translates to:
@@ -1479,6 +1467,24 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Gün seç'**
   String get pickDay;
+
+  /// No description provided for @tileMute.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu karenin sesini kapat'**
+  String get tileMute;
+
+  /// No description provided for @tileUnmute.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu karenin sesini aç'**
+  String get tileUnmute;
+
+  /// No description provided for @volumeLevel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ses düzeyi'**
+  String get volumeLevel;
 }
 
 class _AppLocalizationsDelegate

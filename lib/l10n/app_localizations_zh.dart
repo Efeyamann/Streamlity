@@ -290,12 +290,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hintFullscreen => '全屏';
 
   @override
-  String get audioInThisTile => '此画面的声音';
-
-  @override
-  String get muted => '已静音';
-
-  @override
   String get backToGrid => '返回网格';
 
   @override
@@ -809,4 +803,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pickDay => '选择日期';
+
+  @override
+  String get tileMute => '关闭此画面的声音';
+
+  @override
+  String get tileUnmute => '打开此画面的声音';
+
+  @override
+  String get volumeLevel => '音量';
 }

@@ -297,12 +297,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get hintFullscreen => 'Tela cheia';
 
   @override
-  String get audioInThisTile => 'Som neste quadro';
-
-  @override
-  String get muted => 'Sem som';
-
-  @override
   String get backToGrid => 'Voltar à grade';
 
   @override
@@ -841,4 +835,13 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get pickDay => 'Escolher dia';
+
+  @override
+  String get tileMute => 'Silenciar este quadro';
+
+  @override
+  String get tileUnmute => 'Ativar o som deste quadro';
+
+  @override
+  String get volumeLevel => 'Volume';
 }

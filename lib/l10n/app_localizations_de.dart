@@ -298,12 +298,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hintFullscreen => 'Vollbild';
 
   @override
-  String get audioInThisTile => 'Ton in dieser Kachel';
-
-  @override
-  String get muted => 'Stumm';
-
-  @override
   String get backToGrid => 'Zurück zum Raster';
 
   @override
@@ -842,4 +836,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pickDay => 'Tag wählen';
+
+  @override
+  String get tileMute => 'Ton dieser Kachel aus';
+
+  @override
+  String get tileUnmute => 'Ton dieser Kachel an';
+
+  @override
+  String get volumeLevel => 'Lautstärke';
 }

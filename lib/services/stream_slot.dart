@@ -28,6 +28,10 @@ class StreamSlot {
     _stallTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!_disposed) watchdog.check(playing: player.state.playing);
     });
+    // Tek karede oynatıcının kendi ses çubuğuyla değişen düzey korunsun.
+    _volumeSub = player.stream.volume.listen((v) {
+      if (audio.output > 0 && v > 0) audio.volume = v;
+    });
     play(channel);
   }
 
@@ -38,6 +42,7 @@ class StreamSlot {
   final videoKey = GlobalKey<VideoState>();
   late final StallWatchdog watchdog;
   late final StreamSubscription<Duration> _positionSub;
+  late final StreamSubscription<double> _volumeSub;
   late final Timer _stallTimer;
   Duration _lastPosition = Duration.zero;
   bool _disposed = false;
@@ -49,14 +54,8 @@ class StreamSlot {
   Channel? _previous;
   Channel? get previous => _previous;
 
-  /// Sessize alınmadan önceki ses düzeyi; kullanıcı değiştirmiş olabilir.
-  double _volume = 100;
-
-  /// Çoklu izlemede sesi başka karede olduğu için.
-  bool _backgrounded = false;
-
-  /// Kullanıcı sessize aldığı için; tüm karelerde ortak tutulur.
-  bool _muted = false;
+  /// Karenin sesi açık mı, düzeyi ve uygulama geneli sessizlik.
+  final audio = SlotAudio();
 
   void play(Channel channel) {
     if (_disposed) return;
@@ -67,28 +66,30 @@ class StreamSlot {
     player.open(Media(channel.url));
   }
 
-  /// Çoklu izlemede ses yalnız seçili karede çalar.
-  set backgrounded(bool value) {
-    if (value == _backgrounded) return;
-    _backgrounded = value;
+  /// Çoklu izlemede her karenin sesi ayrı açılıp kapatılır.
+  bool get audible => audio.audible;
+  set audible(bool value) {
+    if (value == audio.audible) return;
+    audio.audible = value;
     _applyVolume();
   }
 
+  /// Karenin ses düzeyi (0–100); kapalıyken de hatırlanır.
+  double get volume => audio.volume;
+  set volume(double value) {
+    audio.volume = value.clamp(0, 100);
+    _applyVolume();
+  }
+
+  /// Uygulama geneli sessizlik; tüm karelerde ortak tutulur.
   set muted(bool value) {
-    if (value == _muted) return;
-    _muted = value;
+    if (value == audio.muted) return;
+    audio.muted = value;
     _applyVolume();
   }
 
   void _applyVolume() {
-    if (_disposed) return;
-    if (_backgrounded || _muted) {
-      final current = player.state.volume;
-      if (current > 0) _volume = current;
-      player.setVolume(0);
-    } else {
-      player.setVolume(_volume);
-    }
+    if (!_disposed) player.setVolume(audio.output);
   }
 
   Future<void> dispose() async {
@@ -96,8 +97,24 @@ class StreamSlot {
     _disposed = true;
     _stallTimer.cancel();
     await _positionSub.cancel();
+    await _volumeSub.cancel();
     watchdog.stop();
     watchdog.dispose();
     await player.dispose();
   }
 }
+
+/// Bir karenin ses durumu; oynatıcıya giden düzey [output].
+class SlotAudio {
+  bool audible = true;
+  double volume = 100;
+  bool muted = false;
+
+  double get output => audible && !muted ? volume : 0;
+}
+
+/// Kare seçilince ses de ona geçsin mi: yalnız tek karede ses açıkken.
+/// Birden fazla karede ses açıksa (ör. iki maç) ya da hepsi kapalıysa
+/// seçim sesi değiştirmez.
+bool audioFollowsSelection(Iterable<bool> audible) =>
+    audible.where((a) => a).length == 1;

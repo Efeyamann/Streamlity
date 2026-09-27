@@ -78,8 +78,6 @@
   "hintPreviousChannel": "Canal anterior",
   "hintMute": "Silenciar / activar",
   "hintFullscreen": "Pantalla completa",
-  "audioInThisTile": "Sonido en este recuadro",
-  "muted": "Silenciado",
   "backToGrid": "Volver a la cuadrícula",
   "enlarge": "Ampliar",
   "closeTile": "Cerrar recuadro",
@@ -243,5 +241,9 @@
   "guideNoProgramme": "Sin información de programación",
   "guideHint": "Pasa el cursor sobre un programa para ver los detalles. Haz clic en lo que se emite ahora para abrir el canal; los programas archivados se reproducen desde el inicio.",
   "watchLive": "Ver en directo",
-  "pickDay": "Elegir día"
+  "pickDay": "Elegir día",
+
+  "tileMute": "Silenciar este recuadro",
+  "tileUnmute": "Activar el sonido de este recuadro",
+  "volumeLevel": "Volumen"
 }

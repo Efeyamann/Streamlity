@@ -298,12 +298,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get hintFullscreen => 'পূর্ণ পর্দা';
 
   @override
-  String get audioInThisTile => 'এই পর্দার শব্দ';
-
-  @override
-  String get muted => 'মিউট';
-
-  @override
   String get backToGrid => 'গ্রিডে ফিরুন';
 
   @override
@@ -832,4 +826,13 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get pickDay => 'দিন বেছে নিন';
+
+  @override
+  String get tileMute => 'এই পর্দার শব্দ বন্ধ করুন';
+
+  @override
+  String get tileUnmute => 'এই পর্দার শব্দ চালু করুন';
+
+  @override
+  String get volumeLevel => 'শব্দের মাত্রা';
 }

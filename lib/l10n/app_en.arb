@@ -78,8 +78,6 @@
   "hintPreviousChannel": "Previous channel",
   "hintMute": "Mute / unmute",
   "hintFullscreen": "Full screen",
-  "audioInThisTile": "Audio in this tile",
-  "muted": "Muted",
   "backToGrid": "Back to grid",
   "enlarge": "Enlarge",
   "closeTile": "Close tile",
@@ -243,5 +241,9 @@
   "guideNoProgramme": "No programme information",
   "guideHint": "Hover over a programme for details. Click what's on now to open the channel; archived past programmes play from the start.",
   "watchLive": "Watch live",
-  "pickDay": "Pick a day"
+  "pickDay": "Pick a day",
+
+  "tileMute": "Mute this tile",
+  "tileUnmute": "Unmute this tile",
+  "volumeLevel": "Volume"
 }

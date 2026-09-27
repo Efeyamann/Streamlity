@@ -296,12 +296,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hintFullscreen => 'Tam ekran';
 
   @override
-  String get audioInThisTile => 'Ses bu karede';
-
-  @override
-  String get muted => 'Sessiz';
-
-  @override
   String get backToGrid => 'Izgaraya dön';
 
   @override
@@ -835,4 +829,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pickDay => 'Gün seç';
+
+  @override
+  String get tileMute => 'Bu karenin sesini kapat';
+
+  @override
+  String get tileUnmute => 'Bu karenin sesini aç';
+
+  @override
+  String get volumeLevel => 'Ses düzeyi';
 }

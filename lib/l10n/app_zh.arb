@@ -78,8 +78,6 @@
   "hintPreviousChannel": "上一个频道",
   "hintMute": "静音 / 取消静音",
   "hintFullscreen": "全屏",
-  "audioInThisTile": "此画面的声音",
-  "muted": "已静音",
   "backToGrid": "返回网格",
   "enlarge": "放大",
   "closeTile": "关闭画面",
@@ -243,5 +241,9 @@
   "guideNoProgramme": "暂无节目信息",
   "guideHint": "将鼠标悬停在节目上可查看详情。点击正在播出的节目会打开频道；可回看的往期节目从头播放。",
   "watchLive": "观看直播",
-  "pickDay": "选择日期"
+  "pickDay": "选择日期",
+
+  "tileMute": "关闭此画面的声音",
+  "tileUnmute": "打开此画面的声音",
+  "volumeLevel": "音量"
 }

@@ -292,12 +292,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get hintFullscreen => 'Layar penuh';
 
   @override
-  String get audioInThisTile => 'Suara di kotak ini';
-
-  @override
-  String get muted => 'Dibisukan';
-
-  @override
   String get backToGrid => 'Kembali ke kisi';
 
   @override
@@ -831,4 +825,13 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pickDay => 'Pilih hari';
+
+  @override
+  String get tileMute => 'Bisukan kotak ini';
+
+  @override
+  String get tileUnmute => 'Nyalakan suara kotak ini';
+
+  @override
+  String get volumeLevel => 'Volume';
 }

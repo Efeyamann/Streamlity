@@ -297,12 +297,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hintFullscreen => 'Full screen';
 
   @override
-  String get audioInThisTile => 'Audio in this tile';
-
-  @override
-  String get muted => 'Muted';
-
-  @override
   String get backToGrid => 'Back to grid';
 
   @override
@@ -836,4 +830,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pickDay => 'Pick a day';
+
+  @override
+  String get tileMute => 'Mute this tile';
+
+  @override
+  String get tileUnmute => 'Unmute this tile';
+
+  @override
+  String get volumeLevel => 'Volume';
 }

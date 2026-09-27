@@ -78,8 +78,6 @@
   "hintPreviousChannel": "Canal anterior",
   "hintMute": "Silenciar / ativar som",
   "hintFullscreen": "Tela cheia",
-  "audioInThisTile": "Som neste quadro",
-  "muted": "Sem som",
   "backToGrid": "Voltar à grade",
   "enlarge": "Ampliar",
   "closeTile": "Fechar quadro",
@@ -243,5 +241,9 @@
   "guideNoProgramme": "Sem informações de programação",
   "guideHint": "Passe o mouse sobre um programa para ver os detalhes. Clique no que está passando agora para abrir o canal; programas arquivados são reproduzidos desde o início.",
   "watchLive": "Assistir ao vivo",
-  "pickDay": "Escolher dia"
+  "pickDay": "Escolher dia",
+
+  "tileMute": "Silenciar este quadro",
+  "tileUnmute": "Ativar o som deste quadro",
+  "volumeLevel": "Volume"
 }

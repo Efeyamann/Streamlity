@@ -78,8 +78,6 @@
   "hintPreviousChannel": "Chaîne précédente",
   "hintMute": "Couper / rétablir le son",
   "hintFullscreen": "Plein écran",
-  "audioInThisTile": "Son dans cette vignette",
-  "muted": "Son coupé",
   "backToGrid": "Retour à la grille",
   "enlarge": "Agrandir",
   "closeTile": "Fermer la vignette",
@@ -243,5 +241,9 @@
   "guideNoProgramme": "Aucune information sur les programmes",
   "guideHint": "Survole un programme pour voir les détails. Clique sur le programme en cours pour ouvrir la chaîne ; les programmes archivés se lisent depuis le début.",
   "watchLive": "Regarder en direct",
-  "pickDay": "Choisir un jour"
+  "pickDay": "Choisir un jour",
+
+  "tileMute": "Couper le son de cette vignette",
+  "tileUnmute": "Activer le son de cette vignette",
+  "volumeLevel": "Volume"
 }

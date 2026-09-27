@@ -316,12 +316,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get hintFullscreen => 'ملء الشاشة';
 
   @override
-  String get audioInThisTile => 'الصوت من هذه النافذة';
-
-  @override
-  String get muted => 'مكتوم';
-
-  @override
   String get backToGrid => 'العودة إلى الشبكة';
 
   @override
@@ -856,4 +850,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pickDay => 'اختر يومًا';
+
+  @override
+  String get tileMute => 'كتم صوت هذه النافذة';
+
+  @override
+  String get tileUnmute => 'تشغيل صوت هذه النافذة';
+
+  @override
+  String get volumeLevel => 'مستوى الصوت';
 }

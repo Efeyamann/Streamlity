@@ -296,12 +296,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hintFullscreen => 'Pantalla completa';
 
   @override
-  String get audioInThisTile => 'Sonido en este recuadro';
-
-  @override
-  String get muted => 'Silenciado';
-
-  @override
   String get backToGrid => 'Volver a la cuadrícula';
 
   @override
@@ -843,4 +837,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pickDay => 'Elegir día';
+
+  @override
+  String get tileMute => 'Silenciar este recuadro';
+
+  @override
+  String get tileUnmute => 'Activar el sonido de este recuadro';
+
+  @override
+  String get volumeLevel => 'Volumen';
 }

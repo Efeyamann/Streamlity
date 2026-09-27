@@ -307,12 +307,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hintFullscreen => 'Полный экран';
 
   @override
-  String get audioInThisTile => 'Звук в этом окне';
-
-  @override
-  String get muted => 'Без звука';
-
-  @override
   String get backToGrid => 'Вернуться к сетке';
 
   @override
@@ -851,4 +845,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pickDay => 'Выбрать день';
+
+  @override
+  String get tileMute => 'Выключить звук в этом окне';
+
+  @override
+  String get tileUnmute => 'Включить звук в этом окне';
+
+  @override
+  String get volumeLevel => 'Громкость';
 }

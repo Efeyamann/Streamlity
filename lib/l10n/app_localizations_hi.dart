@@ -296,12 +296,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get hintFullscreen => 'पूर्ण स्क्रीन';
 
   @override
-  String get audioInThisTile => 'इस विंडो की आवाज़';
-
-  @override
-  String get muted => 'म्यूट';
-
-  @override
   String get backToGrid => 'ग्रिड पर वापस';
 
   @override
@@ -834,4 +828,13 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get pickDay => 'दिन चुनें';
+
+  @override
+  String get tileMute => 'इस विंडो की आवाज़ बंद करें';
+
+  @override
+  String get tileUnmute => 'इस विंडो की आवाज़ चालू करें';
+
+  @override
+  String get volumeLevel => 'आवाज़ का स्तर';
 }
