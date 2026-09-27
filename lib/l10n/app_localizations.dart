@@ -1413,6 +1413,72 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Tam ekrandan çık (Esc)'**
   String get exitFullscreenGrid;
+
+  /// No description provided for @sectionGuide.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rehber'**
+  String get sectionGuide;
+
+  /// No description provided for @guideLoading.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayın akışı yükleniyor…'**
+  String get guideLoading;
+
+  /// No description provided for @guideNoEpgTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayın akışı yok'**
+  String get guideNoEpgTitle;
+
+  /// No description provided for @guideNoEpgMessage.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu liste yayın akışı (EPG) adresi içermiyor.'**
+  String get guideNoEpgMessage;
+
+  /// No description provided for @guideOnlyWithEpg.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnız yayın akışı olan kanallar'**
+  String get guideOnlyWithEpg;
+
+  /// No description provided for @guideNoChannelsWithEpg.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kategoride yayın akışı olan kanal yok'**
+  String get guideNoChannelsWithEpg;
+
+  /// No description provided for @guideShowAllChannels.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm kanalları göster'**
+  String get guideShowAllChannels;
+
+  /// No description provided for @guideNoProgramme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Program bilgisi yok'**
+  String get guideNoProgramme;
+
+  /// No description provided for @guideHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayrıntılar için bir programın üzerine gel. Yayındaki programa tıklayınca kanal açılır; arşivdeki geçmiş yayınlar baştan oynar.'**
+  String get guideHint;
+
+  /// No description provided for @watchLive.
+  ///
+  /// In tr, this message translates to:
+  /// **'Canlı izle'**
+  String get watchLive;
+
+  /// No description provided for @pickDay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gün seç'**
+  String get pickDay;
 }
 
 class _AppLocalizationsDelegate

@@ -799,4 +799,39 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => 'फ़ुल स्क्रीन से बाहर निकलें (Esc)';
+
+  @override
+  String get sectionGuide => 'गाइड';
+
+  @override
+  String get guideLoading => 'टीवी गाइड लोड हो रही है…';
+
+  @override
+  String get guideNoEpgTitle => 'कोई टीवी गाइड नहीं';
+
+  @override
+  String get guideNoEpgMessage => 'इस सूची में टीवी गाइड (EPG) का पता नहीं है।';
+
+  @override
+  String get guideOnlyWithEpg => 'केवल गाइड वाले चैनल';
+
+  @override
+  String get guideNoChannelsWithEpg =>
+      'इस श्रेणी में किसी चैनल की गाइड नहीं है';
+
+  @override
+  String get guideShowAllChannels => 'सभी चैनल दिखाएँ';
+
+  @override
+  String get guideNoProgramme => 'कार्यक्रम की जानकारी नहीं';
+
+  @override
+  String get guideHint =>
+      'विवरण के लिए किसी कार्यक्रम पर माउस ले जाएँ। अभी चल रहे कार्यक्रम पर क्लिक करने से चैनल खुलता है; संग्रहीत पुराने कार्यक्रम शुरू से चलते हैं।';
+
+  @override
+  String get watchLive => 'लाइव देखें';
+
+  @override
+  String get pickDay => 'दिन चुनें';
 }

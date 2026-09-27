@@ -799,4 +799,40 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => 'Tam ekrandan çık (Esc)';
+
+  @override
+  String get sectionGuide => 'Rehber';
+
+  @override
+  String get guideLoading => 'Yayın akışı yükleniyor…';
+
+  @override
+  String get guideNoEpgTitle => 'Yayın akışı yok';
+
+  @override
+  String get guideNoEpgMessage =>
+      'Bu liste yayın akışı (EPG) adresi içermiyor.';
+
+  @override
+  String get guideOnlyWithEpg => 'Yalnız yayın akışı olan kanallar';
+
+  @override
+  String get guideNoChannelsWithEpg =>
+      'Bu kategoride yayın akışı olan kanal yok';
+
+  @override
+  String get guideShowAllChannels => 'Tüm kanalları göster';
+
+  @override
+  String get guideNoProgramme => 'Program bilgisi yok';
+
+  @override
+  String get guideHint =>
+      'Ayrıntılar için bir programın üzerine gel. Yayındaki programa tıklayınca kanal açılır; arşivdeki geçmiş yayınlar baştan oynar.';
+
+  @override
+  String get watchLive => 'Canlı izle';
+
+  @override
+  String get pickDay => 'Gün seç';
 }

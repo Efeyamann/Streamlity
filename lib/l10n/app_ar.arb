@@ -231,5 +231,17 @@
   "searchFilterAll": "الكل",
   "seeAll": "عرض الكل",
   "fullscreenGrid": "ملء الشاشة (F)",
-  "exitFullscreenGrid": "الخروج من ملء الشاشة (Esc)"
+  "exitFullscreenGrid": "الخروج من ملء الشاشة (Esc)",
+
+  "sectionGuide": "الدليل",
+  "guideLoading": "جارٍ تحميل دليل البرامج…",
+  "guideNoEpgTitle": "لا يوجد دليل برامج",
+  "guideNoEpgMessage": "لا تتضمن هذه القائمة عنوان دليل البرامج (EPG).",
+  "guideOnlyWithEpg": "القنوات التي لها دليل فقط",
+  "guideNoChannelsWithEpg": "لا توجد في هذه الفئة قنوات لها دليل",
+  "guideShowAllChannels": "عرض كل القنوات",
+  "guideNoProgramme": "لا توجد معلومات عن البرامج",
+  "guideHint": "مرّر المؤشر فوق برنامج لعرض التفاصيل. انقر على البرنامج المعروض الآن لفتح القناة، وتُعرض البرامج المؤرشفة من البداية.",
+  "watchLive": "مشاهدة مباشرة",
+  "pickDay": "اختر يومًا"
 }

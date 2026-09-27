@@ -30,6 +30,7 @@ import '../ui/widgets/common.dart';
 import 'schedule_dialog.dart';
 import 'track_menu.dart';
 import 'category_editor.dart';
+import 'guide_view.dart';
 import 'pin_dialog.dart';
 import 'home_view.dart';
 import 'search_view.dart';
@@ -55,7 +56,7 @@ class PlaylistScreen extends StatefulWidget {
   State<PlaylistScreen> createState() => _PlaylistScreenState();
 }
 
-enum _Section { home, live, movies, series, search }
+enum _Section { home, live, guide, movies, series, search }
 
 class _PlaylistScreenState extends State<PlaylistScreen> {
   _Section _section = _Section.home;
@@ -126,6 +127,9 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
   /// Çoklu izlemede tüm karelerin tam ekranı; yalnız oynatıcılar görünür.
   bool _gridFullscreen = false;
+
+  /// Rehberde yalnız yayın akışı olan kanallar.
+  bool _guideEpgOnly = true;
 
   /// media_kit'in kendi tam ekranında kullandığı pencere kanalı.
   static const _nativeWindow =
@@ -459,7 +463,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     // Başka bölümdeyken canlı yayın bağlantı hakkını tutmasın.
     if (section != _Section.live) _stopLive();
     if (section == _Section.home) _loadContinue();
-    setState(() => _section = section);
+    // Kanal araması yalnız Canlı TV'de; dönünce arama kutusu boş gelir.
+    setState(() {
+      _section = section;
+      _query = '';
+    });
   }
 
   static CategoryKind _categoryKind(VodKind kind) =>
@@ -1013,13 +1021,15 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         onPlayChannel: _watchChannel,
         onOpenVod: _openVod,
       );
-    } else if (_section != _Section.live) {
+    } else if (_section == _Section.movies || _section == _Section.series) {
       // Katalog kanal listesinden bağımsız; liste yüklenirken de açılabilir.
       body = _vodBody(_source as XtreamSource);
     } else if (playlist == null) {
       body = _loading || _error == null
           ? const _LiveSkeleton()
           : _LoadError(message: l.error(_error!), onRetry: _load);
+    } else if (_section == _Section.guide) {
+      body = _guideBody(playlist);
     } else {
       body = _liveBody(playlist, _visibleChannels(playlist),
           _epg?.current(_current?.tvgId, _now));
@@ -1042,6 +1052,12 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 icon: Icons.live_tv_outlined,
                 selectedIcon: Icons.live_tv,
                 label: l.sectionLive,
+              ),
+              RailItem(
+                value: _Section.guide,
+                icon: Icons.view_timeline_outlined,
+                selectedIcon: Icons.view_timeline,
+                label: l.sectionGuide,
               ),
               if (xtream) ...[
                 RailItem(
@@ -1103,6 +1119,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       _Section.home => l.sectionHome,
       _Section.search => l.sectionSearch,
       _Section.live => _current?.name ?? l.sectionLive,
+      _Section.guide => l.sectionGuide,
       _Section.movies => l.sectionMovies,
       _Section.series => l.sectionSeries,
     };
@@ -1158,6 +1175,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 onPressed: () => _showSchedule(_current!),
               ),
           ],
+          if (_section == _Section.guide && _epg != null)
+            IconButton(
+              tooltip: l.guideOnlyWithEpg,
+              isSelected: _guideEpgOnly,
+              icon: const Icon(Icons.filter_alt_outlined),
+              selectedIcon: Icon(Icons.filter_alt, color: c.accent),
+              onPressed: () => setState(() => _guideEpgOnly = !_guideEpgOnly),
+            ),
           if (_epgLoading)
             _StatusPill(
               leading: const SizedBox.square(
@@ -1191,30 +1216,110 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   static bool _expiresSoon(DateTime expiresAt) =>
       expiresAt.difference(DateTime.now()) < const Duration(days: 7);
 
+  /// Canlı TV ve rehberin ortak kategori sütunu.
+  Widget _groupList(Playlist playlist) {
+    final l = context.l10n;
+    return SizedBox(
+      width: 208,
+      child: _GroupList(
+        groups: _groupLayout.visible(playlist.groups, (g) => g),
+        hiddenCount: _groupLayout.hidden.length,
+        locked: _groupLayout.locked,
+        locksActive: parentalLock.active,
+        onEdit: () => _editGroups(playlist),
+        counts: playlist.groupCounts,
+        selected: _group,
+        specials: [
+          (null, l.allChannels, Icons.apps, _visibleChannelCount(playlist)),
+          (_recentsGroup, l.recentlyWatched, Icons.history,
+              _recentChannels().length),
+        ],
+        favoriteGroups: _favoriteGroups,
+        onToggleFavorite: _toggleFavoriteGroup,
+        onSelected: _selectGroup,
+      ),
+    );
+  }
+
+  /// Seçili kategorinin ızgara rehberi.
+  Widget _guideBody(Playlist playlist) {
+    final l = context.l10n;
+    final c = AppColors.of(context);
+    final epg = _epg;
+    final source = _source;
+    final Widget content;
+    if (epg == null) {
+      content = switch ((_epgLoading, _epgError)) {
+        (true, _) => EmptyState(
+            icon: Icons.view_timeline_outlined,
+            title: l.guideLoading,
+          ),
+        (false, final error?) => EmptyState(
+            icon: Icons.event_busy,
+            tone: c.danger,
+            title: l.epgFailed,
+            message: l.error(error),
+            actions: [
+              FilledButton(
+                onPressed: () => _loadEpg(playlist),
+                child: Text(l.retry),
+              ),
+            ],
+          ),
+        _ => EmptyState(
+            icon: Icons.event_busy,
+            title: l.guideNoEpgTitle,
+            message: l.guideNoEpgMessage,
+          ),
+      };
+    } else {
+      final channels = [
+        for (final ch in _visibleChannels(playlist))
+          if (!ch.isSeparator &&
+              (!_guideEpgOnly || epg.programmesFor(ch.tvgId).isNotEmpty))
+            ch,
+      ];
+      content = channels.isEmpty
+          ? EmptyState(
+              icon: Icons.event_busy,
+              title: _guideEpgOnly ? l.guideNoChannelsWithEpg : l.noChannelFound,
+              actions: [
+                if (_guideEpgOnly)
+                  OutlinedButton(
+                    onPressed: () => setState(() => _guideEpgOnly = false),
+                    child: Text(l.guideShowAllChannels),
+                  ),
+              ],
+            )
+          : GuideView(
+              channels: channels,
+              epg: epg,
+              now: _now,
+              scrollKey: _group,
+              archiveDays: (ch) => source is XtreamSource && ch.id != null
+                  ? ch.archiveDays
+                  : 0,
+              onWatch: _watchChannel,
+              onArchive: (ch, p) {
+                if (source is XtreamSource) _playArchive(source, ch, p);
+              },
+              onSchedule: _showSchedule,
+            );
+    }
+    return Row(
+      children: [
+        _groupList(playlist),
+        const VerticalDivider(width: 1),
+        Expanded(child: content),
+      ],
+    );
+  }
+
   Widget _liveBody(Playlist playlist, List<Channel> channels, Programme? onAir) {
     final l = context.l10n;
     return Row(
       children: [
-        SizedBox(
-          width: 208,
-          child: _GroupList(
-            groups: _groupLayout.visible(playlist.groups, (g) => g),
-            hiddenCount: _groupLayout.hidden.length,
-            locked: _groupLayout.locked,
-            locksActive: parentalLock.active,
-            onEdit: () => _editGroups(playlist),
-            counts: playlist.groupCounts,
-            selected: _group,
-            specials: [
-              (null, l.allChannels, Icons.apps, _visibleChannelCount(playlist)),
-              (_recentsGroup, l.recentlyWatched, Icons.history,
-                  _recentChannels().length),
-            ],
-            favoriteGroups: _favoriteGroups,
-            onToggleFavorite: _toggleFavoriteGroup,
-            onSelected: _selectGroup,
-          ),
-        ),
+        _groupList(playlist),
         const VerticalDivider(width: 1),
         SizedBox(
           width: 292,

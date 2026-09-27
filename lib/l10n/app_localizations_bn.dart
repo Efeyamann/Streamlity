@@ -798,4 +798,38 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => 'পূর্ণ স্ক্রিন থেকে বের হন (Esc)';
+
+  @override
+  String get sectionGuide => 'গাইড';
+
+  @override
+  String get guideLoading => 'টিভি গাইড লোড হচ্ছে…';
+
+  @override
+  String get guideNoEpgTitle => 'কোনো টিভি গাইড নেই';
+
+  @override
+  String get guideNoEpgMessage => 'এই তালিকায় টিভি গাইডের (EPG) ঠিকানা নেই।';
+
+  @override
+  String get guideOnlyWithEpg => 'শুধু গাইডসহ চ্যানেল';
+
+  @override
+  String get guideNoChannelsWithEpg => 'এই বিভাগে গাইডসহ কোনো চ্যানেল নেই';
+
+  @override
+  String get guideShowAllChannels => 'সব চ্যানেল দেখান';
+
+  @override
+  String get guideNoProgramme => 'অনুষ্ঠানের তথ্য নেই';
+
+  @override
+  String get guideHint =>
+      'বিস্তারিত দেখতে কোনো অনুষ্ঠানের ওপর মাউস রাখুন। এখন চলা অনুষ্ঠানে ক্লিক করলে চ্যানেল খোলে; আর্কাইভ করা পুরোনো অনুষ্ঠান শুরু থেকে চলে।';
+
+  @override
+  String get watchLive => 'লাইভ দেখুন';
+
+  @override
+  String get pickDay => 'দিন বেছে নিন';
 }

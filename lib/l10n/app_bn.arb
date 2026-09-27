@@ -231,5 +231,17 @@
   "searchFilterAll": "সব",
   "seeAll": "সব দেখুন",
   "fullscreenGrid": "পূর্ণ স্ক্রিন (F)",
-  "exitFullscreenGrid": "পূর্ণ স্ক্রিন থেকে বের হন (Esc)"
+  "exitFullscreenGrid": "পূর্ণ স্ক্রিন থেকে বের হন (Esc)",
+
+  "sectionGuide": "গাইড",
+  "guideLoading": "টিভি গাইড লোড হচ্ছে…",
+  "guideNoEpgTitle": "কোনো টিভি গাইড নেই",
+  "guideNoEpgMessage": "এই তালিকায় টিভি গাইডের (EPG) ঠিকানা নেই।",
+  "guideOnlyWithEpg": "শুধু গাইডসহ চ্যানেল",
+  "guideNoChannelsWithEpg": "এই বিভাগে গাইডসহ কোনো চ্যানেল নেই",
+  "guideShowAllChannels": "সব চ্যানেল দেখান",
+  "guideNoProgramme": "অনুষ্ঠানের তথ্য নেই",
+  "guideHint": "বিস্তারিত দেখতে কোনো অনুষ্ঠানের ওপর মাউস রাখুন। এখন চলা অনুষ্ঠানে ক্লিক করলে চ্যানেল খোলে; আর্কাইভ করা পুরোনো অনুষ্ঠান শুরু থেকে চলে।",
+  "watchLive": "লাইভ দেখুন",
+  "pickDay": "দিন বেছে নিন"
 }

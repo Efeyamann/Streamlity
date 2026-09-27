@@ -231,5 +231,17 @@
   "searchFilterAll": "Semua",
   "seeAll": "Lihat semua",
   "fullscreenGrid": "Layar penuh (F)",
-  "exitFullscreenGrid": "Keluar dari layar penuh (Esc)"
+  "exitFullscreenGrid": "Keluar dari layar penuh (Esc)",
+
+  "sectionGuide": "Panduan",
+  "guideLoading": "Memuat panduan TV…",
+  "guideNoEpgTitle": "Tidak ada panduan TV",
+  "guideNoEpgMessage": "Daftar ini tidak menyertakan alamat panduan TV (EPG).",
+  "guideOnlyWithEpg": "Hanya saluran dengan panduan",
+  "guideNoChannelsWithEpg": "Tidak ada saluran dengan panduan di kategori ini",
+  "guideShowAllChannels": "Tampilkan semua saluran",
+  "guideNoProgramme": "Tidak ada info acara",
+  "guideHint": "Arahkan kursor ke acara untuk melihat detail. Klik acara yang sedang tayang untuk membuka saluran; acara lama yang diarsipkan diputar dari awal.",
+  "watchLive": "Tonton langsung",
+  "pickDay": "Pilih hari"
 }

@@ -42,14 +42,20 @@ WizardStyle=modern
 CloseApplications=yes
 
 [Languages]
+; Uygulamanın 12 diliyle aynı. Inno Setup'la gelmeyen ya da yalnız yeni
+; sürümlerinde gelen çeviriler languages\ altında (Inno Setup 6.7.1'den).
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
-Name: "german"; MessagesFile: "compiler:Languages\German.isl"
-Name: "french"; MessagesFile: "compiler:Languages\French.isl"
+Name: "chinesesimplified"; MessagesFile: "languages\ChineseSimplified.isl"
+Name: "hindi"; MessagesFile: "languages\Hindi.islu"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
-Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
+Name: "arabic"; MessagesFile: "languages\Arabic.isl"
+Name: "french"; MessagesFile: "compiler:Languages\French.isl"
+Name: "bengali"; MessagesFile: "languages\Bengali.islu"
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
+Name: "indonesian"; MessagesFile: "languages\Indonesian.isl"
+Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked

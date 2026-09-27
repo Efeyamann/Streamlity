@@ -816,4 +816,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => 'Выйти из полноэкранного режима (Esc)';
+
+  @override
+  String get sectionGuide => 'Телегид';
+
+  @override
+  String get guideLoading => 'Загрузка телегида…';
+
+  @override
+  String get guideNoEpgTitle => 'Нет телегида';
+
+  @override
+  String get guideNoEpgMessage => 'В этом списке нет адреса телегида (EPG).';
+
+  @override
+  String get guideOnlyWithEpg => 'Только каналы с телегидом';
+
+  @override
+  String get guideNoChannelsWithEpg =>
+      'В этой категории нет каналов с телегидом';
+
+  @override
+  String get guideShowAllChannels => 'Показать все каналы';
+
+  @override
+  String get guideNoProgramme => 'Нет данных о передачах';
+
+  @override
+  String get guideHint =>
+      'Наведите курсор на передачу, чтобы увидеть подробности. Нажмите на текущую передачу, чтобы открыть канал; передачи из архива воспроизводятся с начала.';
+
+  @override
+  String get watchLive => 'Смотреть в эфире';
+
+  @override
+  String get pickDay => 'Выбрать день';
 }

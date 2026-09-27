@@ -795,4 +795,40 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => 'Keluar dari layar penuh (Esc)';
+
+  @override
+  String get sectionGuide => 'Panduan';
+
+  @override
+  String get guideLoading => 'Memuat panduan TV…';
+
+  @override
+  String get guideNoEpgTitle => 'Tidak ada panduan TV';
+
+  @override
+  String get guideNoEpgMessage =>
+      'Daftar ini tidak menyertakan alamat panduan TV (EPG).';
+
+  @override
+  String get guideOnlyWithEpg => 'Hanya saluran dengan panduan';
+
+  @override
+  String get guideNoChannelsWithEpg =>
+      'Tidak ada saluran dengan panduan di kategori ini';
+
+  @override
+  String get guideShowAllChannels => 'Tampilkan semua saluran';
+
+  @override
+  String get guideNoProgramme => 'Tidak ada info acara';
+
+  @override
+  String get guideHint =>
+      'Arahkan kursor ke acara untuk melihat detail. Klik acara yang sedang tayang untuk membuka saluran; acara lama yang diarsipkan diputar dari awal.';
+
+  @override
+  String get watchLive => 'Tonton langsung';
+
+  @override
+  String get pickDay => 'Pilih hari';
 }

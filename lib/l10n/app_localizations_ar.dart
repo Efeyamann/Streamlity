@@ -821,4 +821,39 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => 'الخروج من ملء الشاشة (Esc)';
+
+  @override
+  String get sectionGuide => 'الدليل';
+
+  @override
+  String get guideLoading => 'جارٍ تحميل دليل البرامج…';
+
+  @override
+  String get guideNoEpgTitle => 'لا يوجد دليل برامج';
+
+  @override
+  String get guideNoEpgMessage =>
+      'لا تتضمن هذه القائمة عنوان دليل البرامج (EPG).';
+
+  @override
+  String get guideOnlyWithEpg => 'القنوات التي لها دليل فقط';
+
+  @override
+  String get guideNoChannelsWithEpg => 'لا توجد في هذه الفئة قنوات لها دليل';
+
+  @override
+  String get guideShowAllChannels => 'عرض كل القنوات';
+
+  @override
+  String get guideNoProgramme => 'لا توجد معلومات عن البرامج';
+
+  @override
+  String get guideHint =>
+      'مرّر المؤشر فوق برنامج لعرض التفاصيل. انقر على البرنامج المعروض الآن لفتح القناة، وتُعرض البرامج المؤرشفة من البداية.';
+
+  @override
+  String get watchLive => 'مشاهدة مباشرة';
+
+  @override
+  String get pickDay => 'اختر يومًا';
 }

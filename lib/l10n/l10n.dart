@@ -61,6 +61,21 @@ extension AppLocalizationsFormat on AppLocalizations {
   /// "Pzt 26 Eyl" gibi kısa gün ve tarih.
   String weekdayDate(DateTime d) => DateFormat.MMMEd(localeName).format(d);
 
+  /// Yerel [day] için "Bugün", "Yarın", "Dün" ya da kısa gün ve tarih.
+  String dayLabel(DateTime day, DateTime now) {
+    final d = day.toLocal(), n = now.toLocal();
+    // Yaz saati geçişinde 23 ya da 25 saatlik günler şaşırtmasın.
+    final diff = DateTime.utc(d.year, d.month, d.day)
+        .difference(DateTime.utc(n.year, n.month, n.day))
+        .inDays;
+    return switch (diff) {
+      0 => today,
+      1 => tomorrow,
+      -1 => yesterday,
+      _ => weekdayDate(d),
+    };
+  }
+
   String duration(Duration d) {
     final h = d.inHours, m = d.inMinutes % 60;
     return h > 0 ? durationHoursMinutes(h, m) : durationMinutes(m);

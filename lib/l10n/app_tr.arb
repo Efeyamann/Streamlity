@@ -267,5 +267,17 @@
   "searchFilterAll": "Tümü",
   "seeAll": "Tümünü gör",
   "fullscreenGrid": "Tam ekran (F)",
-  "exitFullscreenGrid": "Tam ekrandan çık (Esc)"
+  "exitFullscreenGrid": "Tam ekrandan çık (Esc)",
+
+  "sectionGuide": "Rehber",
+  "guideLoading": "Yayın akışı yükleniyor…",
+  "guideNoEpgTitle": "Yayın akışı yok",
+  "guideNoEpgMessage": "Bu liste yayın akışı (EPG) adresi içermiyor.",
+  "guideOnlyWithEpg": "Yalnız yayın akışı olan kanallar",
+  "guideNoChannelsWithEpg": "Bu kategoride yayın akışı olan kanal yok",
+  "guideShowAllChannels": "Tüm kanalları göster",
+  "guideNoProgramme": "Program bilgisi yok",
+  "guideHint": "Ayrıntılar için bir programın üzerine gel. Yayındaki programa tıklayınca kanal açılır; arşivdeki geçmiş yayınlar baştan oynar.",
+  "watchLive": "Canlı izle",
+  "pickDay": "Gün seç"
 }

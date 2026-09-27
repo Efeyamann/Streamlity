@@ -231,5 +231,17 @@
   "searchFilterAll": "Todo",
   "seeAll": "Ver todo",
   "fullscreenGrid": "Pantalla completa (F)",
-  "exitFullscreenGrid": "Salir de pantalla completa (Esc)"
+  "exitFullscreenGrid": "Salir de pantalla completa (Esc)",
+
+  "sectionGuide": "Guía",
+  "guideLoading": "Cargando la guía…",
+  "guideNoEpgTitle": "No hay guía de TV",
+  "guideNoEpgMessage": "Esta lista no incluye una dirección de guía (EPG).",
+  "guideOnlyWithEpg": "Solo canales con guía",
+  "guideNoChannelsWithEpg": "Ningún canal de esta categoría tiene guía",
+  "guideShowAllChannels": "Mostrar todos los canales",
+  "guideNoProgramme": "Sin información de programación",
+  "guideHint": "Pasa el cursor sobre un programa para ver los detalles. Haz clic en lo que se emite ahora para abrir el canal; los programas archivados se reproducen desde el inicio.",
+  "watchLive": "Ver en directo",
+  "pickDay": "Elegir día"
 }

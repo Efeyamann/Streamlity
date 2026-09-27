@@ -806,4 +806,40 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => 'Vollbild beenden (Esc)';
+
+  @override
+  String get sectionGuide => 'TV-Guide';
+
+  @override
+  String get guideLoading => 'TV-Guide wird geladen…';
+
+  @override
+  String get guideNoEpgTitle => 'Kein TV-Guide';
+
+  @override
+  String get guideNoEpgMessage =>
+      'Diese Liste enthält keine TV-Guide-Adresse (EPG).';
+
+  @override
+  String get guideOnlyWithEpg => 'Nur Sender mit TV-Guide';
+
+  @override
+  String get guideNoChannelsWithEpg =>
+      'In dieser Kategorie hat kein Sender einen TV-Guide';
+
+  @override
+  String get guideShowAllChannels => 'Alle Sender anzeigen';
+
+  @override
+  String get guideNoProgramme => 'Keine Programminformationen';
+
+  @override
+  String get guideHint =>
+      'Fahre über eine Sendung, um Details zu sehen. Ein Klick auf die laufende Sendung öffnet den Sender; archivierte Sendungen starten von Anfang an.';
+
+  @override
+  String get watchLive => 'Live ansehen';
+
+  @override
+  String get pickDay => 'Tag wählen';
 }

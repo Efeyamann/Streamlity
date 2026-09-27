@@ -231,5 +231,17 @@
   "searchFilterAll": "全部",
   "seeAll": "查看全部",
   "fullscreenGrid": "全屏 (F)",
-  "exitFullscreenGrid": "退出全屏 (Esc)"
+  "exitFullscreenGrid": "退出全屏 (Esc)",
+
+  "sectionGuide": "节目指南",
+  "guideLoading": "正在加载节目指南…",
+  "guideNoEpgTitle": "没有节目指南",
+  "guideNoEpgMessage": "此列表未包含节目指南（EPG）地址。",
+  "guideOnlyWithEpg": "仅显示有节目指南的频道",
+  "guideNoChannelsWithEpg": "此分类中没有带节目指南的频道",
+  "guideShowAllChannels": "显示所有频道",
+  "guideNoProgramme": "暂无节目信息",
+  "guideHint": "将鼠标悬停在节目上可查看详情。点击正在播出的节目会打开频道；可回看的往期节目从头播放。",
+  "watchLive": "观看直播",
+  "pickDay": "选择日期"
 }

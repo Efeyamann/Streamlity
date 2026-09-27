@@ -231,5 +231,17 @@
   "searchFilterAll": "All",
   "seeAll": "See all",
   "fullscreenGrid": "Fullscreen (F)",
-  "exitFullscreenGrid": "Exit fullscreen (Esc)"
+  "exitFullscreenGrid": "Exit fullscreen (Esc)",
+
+  "sectionGuide": "Guide",
+  "guideLoading": "Loading TV guide…",
+  "guideNoEpgTitle": "No TV guide",
+  "guideNoEpgMessage": "This list doesn't include a TV guide (EPG) address.",
+  "guideOnlyWithEpg": "Only channels with a guide",
+  "guideNoChannelsWithEpg": "No channels in this category have a guide",
+  "guideShowAllChannels": "Show all channels",
+  "guideNoProgramme": "No programme information",
+  "guideHint": "Hover over a programme for details. Click what's on now to open the channel; archived past programmes play from the start.",
+  "watchLive": "Watch live",
+  "pickDay": "Pick a day"
 }

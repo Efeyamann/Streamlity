@@ -806,4 +806,39 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => 'Sair da tela cheia (Esc)';
+
+  @override
+  String get sectionGuide => 'Guia';
+
+  @override
+  String get guideLoading => 'Carregando o guia…';
+
+  @override
+  String get guideNoEpgTitle => 'Sem guia de TV';
+
+  @override
+  String get guideNoEpgMessage =>
+      'Esta lista não inclui um endereço de guia (EPG).';
+
+  @override
+  String get guideOnlyWithEpg => 'Somente canais com guia';
+
+  @override
+  String get guideNoChannelsWithEpg => 'Nenhum canal desta categoria tem guia';
+
+  @override
+  String get guideShowAllChannels => 'Mostrar todos os canais';
+
+  @override
+  String get guideNoProgramme => 'Sem informações de programação';
+
+  @override
+  String get guideHint =>
+      'Passe o mouse sobre um programa para ver os detalhes. Clique no que está passando agora para abrir o canal; programas arquivados são reproduzidos desde o início.';
+
+  @override
+  String get watchLive => 'Assistir ao vivo';
+
+  @override
+  String get pickDay => 'Escolher dia';
 }

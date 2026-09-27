@@ -45,14 +45,6 @@ class _ScheduleDialog extends StatelessWidget {
   final DateTime now;
   final int archiveDays;
 
-  static String _dayLabel(AppLocalizations l, DateTime day, DateTime today) =>
-      switch (day.difference(today).inDays) {
-        0 => l.today,
-        1 => l.tomorrow,
-        -1 => l.yesterday,
-        _ => l.weekdayDate(day),
-      };
-
   @override
   Widget build(BuildContext context) {
     final days = scheduleByDay(programmes, now, pastDays: archiveDays);
@@ -137,7 +129,7 @@ class _ScheduleDialog extends StatelessWidget {
                   tabAlignment: TabAlignment.start,
                   tabs: [
                     for (final day in days.keys)
-                      Tab(text: _dayLabel(l, day, today)),
+                      Tab(text: l.dayLabel(day, now)),
                   ],
                 ),
                 Flexible(

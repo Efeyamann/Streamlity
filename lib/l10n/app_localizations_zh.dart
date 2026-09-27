@@ -776,4 +776,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get exitFullscreenGrid => '退出全屏 (Esc)';
+
+  @override
+  String get sectionGuide => '节目指南';
+
+  @override
+  String get guideLoading => '正在加载节目指南…';
+
+  @override
+  String get guideNoEpgTitle => '没有节目指南';
+
+  @override
+  String get guideNoEpgMessage => '此列表未包含节目指南（EPG）地址。';
+
+  @override
+  String get guideOnlyWithEpg => '仅显示有节目指南的频道';
+
+  @override
+  String get guideNoChannelsWithEpg => '此分类中没有带节目指南的频道';
+
+  @override
+  String get guideShowAllChannels => '显示所有频道';
+
+  @override
+  String get guideNoProgramme => '暂无节目信息';
+
+  @override
+  String get guideHint => '将鼠标悬停在节目上可查看详情。点击正在播出的节目会打开频道；可回看的往期节目从头播放。';
+
+  @override
+  String get watchLive => '观看直播';
+
+  @override
+  String get pickDay => '选择日期';
 }

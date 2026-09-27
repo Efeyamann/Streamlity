@@ -231,5 +231,17 @@
   "searchFilterAll": "Alle",
   "seeAll": "Alle anzeigen",
   "fullscreenGrid": "Vollbild (F)",
-  "exitFullscreenGrid": "Vollbild beenden (Esc)"
+  "exitFullscreenGrid": "Vollbild beenden (Esc)",
+
+  "sectionGuide": "TV-Guide",
+  "guideLoading": "TV-Guide wird geladen…",
+  "guideNoEpgTitle": "Kein TV-Guide",
+  "guideNoEpgMessage": "Diese Liste enthält keine TV-Guide-Adresse (EPG).",
+  "guideOnlyWithEpg": "Nur Sender mit TV-Guide",
+  "guideNoChannelsWithEpg": "In dieser Kategorie hat kein Sender einen TV-Guide",
+  "guideShowAllChannels": "Alle Sender anzeigen",
+  "guideNoProgramme": "Keine Programminformationen",
+  "guideHint": "Fahre über eine Sendung, um Details zu sehen. Ein Klick auf die laufende Sendung öffnet den Sender; archivierte Sendungen starten von Anfang an.",
+  "watchLive": "Live ansehen",
+  "pickDay": "Tag wählen"
 }
