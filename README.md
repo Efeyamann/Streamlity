@@ -64,7 +64,8 @@ current user only, and you can choose to install for all users.
 **"Windows protected your PC"?** Early releases aren't code-signed yet, so
 Windows SmartScreen may warn you the first time. Click **More info**, then
 **Run anyway**. Every release is built from this repository's source code by
-[GitHub Actions](.github/workflows/release.yml).
+[GitHub Actions](.github/workflows/release.yml). See the
+[code signing policy](CODE_SIGNING.md) for how releases will be signed.
 
 Until macOS and Linux builds are available, you can build Streamlity from source
 on those platforms (see below).
@@ -126,6 +127,17 @@ assets/
   branding/   Logo and app icon (SVG and PNG)
 tool/         Icon generator
 ```
+
+## Privacy
+
+Streamlity doesn't collect anything about you.
+
+- It only connects to the playlists, Xtream Codes servers and program guides
+  you add, to load channels, programs and video streams.
+- It has no analytics, telemetry, ads or accounts.
+- Your settings, favorites and watch history stay on your computer.
+- Playlist passwords are kept in your operating system's secure storage
+  (Windows Credential Manager, macOS Keychain, or the Secret Service on Linux).
 
 ## Contributing
 
