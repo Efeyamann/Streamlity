@@ -33,6 +33,8 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 LicenseFile=..\..\LICENSE
 SetupIconFile=..\runner\resources\app_icon.ico
+; Programlar listesinde sürümsüz ad; winget ve güncellemeler aynı adı görür.
+UninstallDisplayName=Streamlity
 UninstallDisplayIcon={app}\streamlity.exe
 OutputDir={#OutputDir}
 OutputBaseFilename=Streamlity-{#AppVersion}-windows-x64-setup
