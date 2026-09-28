@@ -97,6 +97,11 @@ install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   COMPONENT Runtime)
 
+# Pencere ikonu (my_application.cc bunu çalıştırılabilir dosyanın yanından okur).
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/branding/streamlity_icon_1024.png"
+  DESTINATION "${INSTALL_BUNDLE_DATA_DIR}" RENAME "streamlity.png"
+  COMPONENT Runtime)
+
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 

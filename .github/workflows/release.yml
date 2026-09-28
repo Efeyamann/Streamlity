@@ -1,8 +1,8 @@
 # Streamlity'yi derler ve paketler.
-# - `v*` etiketi push edilince: Windows dosyalarıyla taslak bir GitHub Release açar.
+# - `v*` etiketi push edilince: Windows, macOS ve Linux dosyalarıyla taslak bir
+#   GitHub Release açar.
 # - Elle çalıştırılınca (Actions > Release > Run workflow): yalnız derler, dosyalar
 #   çalıştırmanın "Artifacts" bölümüne düşer.
-# macOS ve Linux henüz denenmediği için release'e eklenmez, yalnız artifact olarak üretilir.
 name: Release
 
 on:
@@ -83,7 +83,6 @@ jobs:
   macos:
     needs: version
     runs-on: macos-latest
-    continue-on-error: true
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
@@ -95,21 +94,28 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter build macos --release
+      - name: İmza ve mimari denetimi
+        run: |
+          app=build/macos/Build/Products/Release/Streamlity.app
+          # Ad-hoc imza; Apple Silicon imzasız uygulamayı hiç açmaz.
+          codesign --verify --deep --strict --verbose=2 "$app"
+          lipo -info "$app/Contents/MacOS/Streamlity"
       - name: DMG
         run: |
-          mkdir -p dist
-          hdiutil create -volname Streamlity \
-            -srcfolder build/macos/Build/Products/Release/streamlity.app \
+          mkdir -p dist dmg
+          cp -R build/macos/Build/Products/Release/Streamlity.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname Streamlity -srcfolder dmg \
             -ov -format UDZO "dist/Streamlity-$VERSION-macos.dmg"
       - uses: actions/upload-artifact@v4
         with:
           name: macos
           path: dist/*
+          if-no-files-found: error
 
   linux:
     needs: version
     runs-on: ubuntu-latest
-    continue-on-error: true
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
@@ -130,23 +136,30 @@ jobs:
         run: |
           mkdir -p dist
           tar -czf "dist/Streamlity-$VERSION-linux-x64.tar.gz" \
-            -C build/linux/x64/release bundle
+            -C build/linux/x64/release \
+            --transform "s,^bundle,Streamlity-$VERSION," bundle
+      - name: .deb
+        run: |
+          bash linux/packaging/build_deb.sh "$VERSION" \
+            build/linux/x64/release/bundle dist
+          dpkg-deb --info dist/*.deb
       - uses: actions/upload-artifact@v4
         with:
           name: linux
           path: dist/*
+          if-no-files-found: error
 
   release:
     if: github.ref_type == 'tag'
-    needs: [version, windows]
+    needs: [version, windows, macos, linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: windows
           path: dist
+          merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
           name: Streamlity ${{ needs.version.outputs.version }}

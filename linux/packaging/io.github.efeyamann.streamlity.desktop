@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Streamlity
+GenericName=IPTV Player
+Comment=Watch live TV, movies and series from your IPTV provider
+Exec=streamlity
+Icon=io.github.efeyamann.streamlity
+Terminal=false
+Categories=AudioVideo;Video;Player;TV;
+Keywords=IPTV;M3U;Xtream;TV;
+StartupWMClass=io.github.efeyamann.streamlity

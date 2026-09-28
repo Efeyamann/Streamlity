@@ -14,7 +14,12 @@ class SourceStore {
 
   /// Çoklu liste desteğinden önceki tek kayıt; ilk okumada taşınır.
   static const _legacyKey = 'playlist_source';
-  static const _storage = FlutterSecureStorage();
+  // macOS: veri koruma anahtarlığı, ekip kimliğiyle imzalı uygulama ve
+  // keychain-access-groups izni ister. Ad-hoc imzalı sürümde bu olmadığından
+  // klasik oturum anahtarlığı kullanılır.
+  static const _storage = FlutterSecureStorage(
+    mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+  );
 
   Future<List<SavedSource>> readAll() async {
     try {

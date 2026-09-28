@@ -55,8 +55,8 @@ Get the latest version from the
 | Platform | Download |
 | --- | --- |
 | Windows 10 / 11 (x64) | `Streamlity-<version>-windows-x64-setup.exe` (installer) or `…-windows-x64.zip` (no install) |
-| macOS | Coming soon |
-| Linux | Coming soon |
+| macOS 12 or later (Apple Silicon and Intel) | `Streamlity-<version>-macos.dmg` |
+| Linux (x64) | `Streamlity-<version>-linux-amd64.deb` (Ubuntu 24.04+, Debian 13+) or `…-linux-x64.tar.gz` |
 
 The installer doesn't need administrator rights: by default it installs for the
 current user only, and you can choose to install for all users.
@@ -70,8 +70,20 @@ Windows SmartScreen may warn you the first time. Click **More info**, then
 Free code signing provided by [SignPath.io](https://about.signpath.io/),
 certificate by [SignPath Foundation](https://signpath.org/).
 
-Until macOS and Linux builds are available, you can build Streamlity from source
-on those platforms (see below).
+**macOS:** open the `.dmg` and drag Streamlity to Applications. The app isn't
+notarized by Apple yet, so the first launch is blocked. Open
+**System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+
+**Linux:** install the `.deb` with
+
+```bash
+sudo apt install ./Streamlity-<version>-linux-amd64.deb
+```
+
+On other distributions, extract the `.tar.gz` and run `streamlity` inside it.
+It needs GTK 3, libmpv 2 and libsecret (for example
+`sudo apt install libgtk-3-0 libmpv2 libsecret-1-0`), plus a secret service
+such as GNOME Keyring or KWallet to store playlist passwords.
 
 ## Keyboard shortcuts
 
