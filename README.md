@@ -67,6 +67,9 @@ Windows SmartScreen may warn you the first time. Click **More info**, then
 [GitHub Actions](.github/workflows/release.yml). See the
 [code signing policy](CODE_SIGNING.md) for how releases will be signed.
 
+Free code signing provided by [SignPath.io](https://about.signpath.io/),
+certificate by [SignPath Foundation](https://signpath.org/).
+
 Until macOS and Linux builds are available, you can build Streamlity from source
 on those platforms (see below).
 
