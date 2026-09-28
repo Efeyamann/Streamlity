@@ -73,11 +73,31 @@ jobs:
             "/DSourceDir=$pwd\build\windows\x64\runner\Release" `
             "/DOutputDir=$pwd\dist" windows\installer\streamlity.iss
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-      # SignPath onayı gelince imzalama adımı buraya eklenecek.
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: dist/*
+          if-no-files-found: error
+      # Microsoft Store paketi. Store imzaladığı için release'e eklenmez;
+      # Partner Center'a yüklenmek üzere ayrı artifact olur. pubspec'teki
+      # msix_config'de Store kimliği yoksa atlanır.
+      - name: Microsoft Store paketi (MSIX)
+        id: msix
+        shell: pwsh
+        run: |
+          if (-not (Select-String -Path pubspec.yaml -Pattern '^\s*identity_name:\s*"?[A-Za-z0-9]')) {
+            'Store kimliği henüz yok, MSIX atlanıyor.'
+            exit 0
+          }
+          dart run msix:create --store --version "$env:VERSION.0" `
+            --output-path store --output-name "Streamlity-$env:VERSION-store"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          "built=true" >> $env:GITHUB_OUTPUT
+      - if: steps.msix.outputs.built == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: microsoft-store
+          path: store/*.msix
           if-no-files-found: error
 
   macos:

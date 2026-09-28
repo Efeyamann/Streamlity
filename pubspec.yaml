@@ -55,6 +55,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  msix: ^3.18.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -112,3 +113,19 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Microsoft Store paketi (MSIX). Release workflow'u Windows build'inden
+# `dart run msix:create --store` ile üretir; paketi Store imzalar.
+# identity_name, publisher ve publisher_display_name Partner Center'daki
+# Product identity sayfasından gelir; boşken workflow MSIX adımını atlar.
+msix_config:
+  display_name: Streamlity
+  identity_name: Heretia.Streamlity
+  publisher: CN=A4D628A3-8377-4A4F-BE8D-6FEF0285A7D1
+  publisher_display_name: Heretia
+  logo_path: assets/branding/streamlity_mark_1024.png
+  capabilities: internetClient
+  languages: en-us, tr-tr, zh-cn, hi-in, es-es, ar-sa, fr-fr, bn-bd, pt-br, ru-ru, id-id, de-de
+  os_min_version: 10.0.17763.0
+  build_windows: false
+  store: true
