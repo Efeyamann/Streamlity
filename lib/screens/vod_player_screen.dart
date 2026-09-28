@@ -9,6 +9,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../l10n/l10n.dart';
 import '../models/playlist_source.dart';
 import '../services/app_mute.dart';
+import '../services/player_setup.dart';
 import '../services/watch_progress_store.dart';
 import '../ui/player_controls.dart';
 import '../ui/tokens.dart';
@@ -71,7 +72,9 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
     _saveTimer = Timer.periodic(const Duration(seconds: 10), (_) => _save());
     appMuted.addListener(_applyMute);
     _applyMute();
-    _player.open(Media(widget.url, start: widget.start));
+    configurePlayer(_player).then((_) {
+      if (!_disposed) _player.open(Media(widget.url, start: widget.start));
+    });
   }
 
   /// Sessizken ses düzeyi 0; açılınca kullanıcının son düzeyine döner.

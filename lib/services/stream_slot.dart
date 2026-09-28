@@ -5,6 +5,7 @@ import 'package:media_kit/media_kit.dart' hide Playlist;
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../models/playlist.dart';
+import 'player_setup.dart';
 import 'stall_watchdog.dart';
 
 /// Ekrandaki tek oynatıcı: kendi libmpv örneği, kanalı ve takılma bekçisi.
@@ -12,9 +13,7 @@ import 'stall_watchdog.dart';
 class StreamSlot {
   StreamSlot(Channel channel) : _channel = channel {
     watchdog = StallWatchdog(
-      onRetry: (_) {
-        if (!_disposed) player.open(Media(_channel.url));
-      },
+      onRetry: (_) => _open(_channel),
       // Asılı bağlantı sağlayıcıdaki bağlantı hakkını tutmasın.
       onGiveUp: () {
         if (!_disposed) player.stop();
@@ -37,6 +36,7 @@ class StreamSlot {
 
   final Player player = Player();
   late final VideoController controller = VideoController(player);
+  late final Future<void> _configured = configurePlayer(player);
 
   /// Tam ekrana klavyeyle geçmek için.
   final videoKey = GlobalKey<VideoState>();
@@ -63,6 +63,13 @@ class StreamSlot {
     _channel = channel;
     _lastPosition = Duration.zero;
     watchdog.start();
+    _open(channel);
+  }
+
+  Future<void> _open(Channel channel) async {
+    await _configured;
+    // Beklerken kanal değiştiyse ya da kare kapandıysa açma.
+    if (_disposed || !identical(channel, _channel)) return;
     player.open(Media(channel.url));
   }
 
