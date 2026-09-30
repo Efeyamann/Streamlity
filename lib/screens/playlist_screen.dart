@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flutter/gestures.dart';
@@ -19,6 +20,7 @@ import '../services/favorites_store.dart';
 import '../services/parental_lock.dart';
 import '../services/playlist_loader.dart';
 import '../services/stall_watchdog.dart';
+import '../services/settings_store.dart';
 import '../services/stream_slot.dart';
 import '../services/watch_progress_store.dart';
 import '../l10n/l10n.dart';
@@ -28,6 +30,7 @@ import '../ui/tokens.dart';
 import '../ui/widgets/app_rail.dart';
 import '../ui/widgets/channel_tile.dart';
 import '../ui/widgets/common.dart';
+import '../ui/widgets/panel_divider.dart';
 import 'schedule_dialog.dart';
 import 'track_menu.dart';
 import 'category_editor.dart';
@@ -61,6 +64,22 @@ enum _Section { home, live, guide, movies, series, search }
 
 class _PlaylistScreenState extends State<PlaylistScreen> {
   _Section _section = _Section.home;
+  double _groupWidth = 208;
+  double _channelWidth = 292;
+  final _settings = SettingsStore();
+
+  Future<void> _loadPanelWidths() async {
+    final widths = await _settings.readPanelWidths();
+    if (!mounted || widths == null) return;
+    setState(() {
+      _groupWidth = widths.groups;
+      _channelWidth = widths.channels;
+    });
+  }
+
+  void _savePanelWidths() {
+    unawaited(_settings.writePanelWidths(_groupWidth, _channelWidth));
+  }
 
   /// Ana sayfadaki "İzlemeye devam et" rafı; son izlenen başta.
   List<WatchEntry> _continue = const [];
@@ -139,6 +158,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   @override
   void initState() {
     super.initState();
+    _loadPanelWidths();
     // Pencere kapanırken widget'lar dispose edilmez; oynatıcıyı burada
     // kapatmazsak libmpv süreç sonlanana kadar ses çalmaya devam eder.
     _lifecycle = AppLifecycleListener(
@@ -1258,10 +1278,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       expiresAt.difference(DateTime.now()) < const Duration(days: 7);
 
   /// Canlı TV ve rehberin ortak kategori sütunu.
-  Widget _groupList(Playlist playlist) {
+  Widget _groupList(Playlist playlist, {double width = 208}) {
     final l = context.l10n;
     return SizedBox(
-      width: 208,
+      width: width,
       child: _GroupList(
         groups: _groupLayout.visible(playlist.groups, (g) => g),
         hiddenCount: _groupLayout.hidden.length,
@@ -1358,12 +1378,33 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
   Widget _liveBody(Playlist playlist, List<Channel> channels, Programme? onAir) {
     final l = context.l10n;
-    return Row(
+    return LayoutBuilder(builder: (context, constraints) {
+      // Leave room for video, including when the window becomes narrower.
+      final budget = math.max(0.0, constraints.maxWidth - 240 - 20);
+      final minGroups = math.min(160.0, budget * .4);
+      final minChannels = math.min(220.0, budget * .6);
+      final groups = _groupWidth.clamp(
+          minGroups, math.min(520.0, budget - minChannels)).toDouble();
+      final channelWidth = _channelWidth.clamp(
+          minChannels, math.min(640.0, budget - groups)).toDouble();
+      final direction = Directionality.of(context) == TextDirection.rtl ? -1 : 1;
+      return Row(
       children: [
-        _groupList(playlist),
-        const VerticalDivider(width: 1),
+        _groupList(playlist, width: groups),
+        PanelDivider(
+          label: l.resizeColumn,
+          onResize: (delta) => setState(() {
+            _groupWidth = (groups + delta * direction).clamp(
+                minGroups, math.min(520.0, budget - channelWidth)).toDouble();
+          }),
+          onResizeEnd: _savePanelWidths,
+          onReset: () {
+            setState(() => _groupWidth = 208);
+            _savePanelWidths();
+          },
+        ),
         SizedBox(
-          width: 292,
+          width: channelWidth,
           child: Column(
             children: [
               Padding(
@@ -1432,7 +1473,18 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             ],
           ),
         ),
-        const VerticalDivider(width: 1),
+        PanelDivider(
+          label: l.resizeColumn,
+          onResize: (delta) => setState(() {
+            _channelWidth = (channelWidth + delta * direction).clamp(
+                minChannels, math.min(640.0, budget - groups)).toDouble();
+          }),
+          onResizeEnd: _savePanelWidths,
+          onReset: () {
+            setState(() => _channelWidth = 292);
+            _savePanelWidths();
+          },
+        ),
         Expanded(
           child: _slots.isEmpty
               ? const _NoChannel()
@@ -1451,6 +1503,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         ),
       ],
     );
+    });
   }
 }
 

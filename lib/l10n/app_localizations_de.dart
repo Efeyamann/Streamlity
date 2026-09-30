@@ -10,6 +10,9 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get resizeColumn => 'Spaltenbreite ändern';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

@@ -1,4 +1,5 @@
 {
+  "resizeColumn": "Изменить ширину столбца",
   "@@locale": "ru",
 
   "appTitle": "Streamlity",

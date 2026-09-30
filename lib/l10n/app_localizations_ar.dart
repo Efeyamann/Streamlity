@@ -10,6 +10,9 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get resizeColumn => 'تغيير عرض العمود';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

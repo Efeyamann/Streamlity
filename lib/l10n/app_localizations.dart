@@ -118,6 +118,12 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @resizeColumn.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sütunu genişlet veya daralt'**
+  String get resizeColumn;
+
   /// No description provided for @appTitle.
   ///
   /// In tr, this message translates to:

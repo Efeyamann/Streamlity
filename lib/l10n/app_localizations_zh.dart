@@ -10,6 +10,9 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get resizeColumn => '调整列宽';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

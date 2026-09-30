@@ -10,6 +10,9 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get resizeColumn => 'Ubah lebar kolom';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

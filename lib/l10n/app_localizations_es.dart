@@ -10,6 +10,9 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get resizeColumn => 'Cambiar el ancho de la columna';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

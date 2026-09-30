@@ -10,6 +10,9 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get resizeColumn => 'Redimensionar coluna';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

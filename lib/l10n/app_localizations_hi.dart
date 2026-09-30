@@ -10,6 +10,9 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get resizeColumn => 'कॉलम की चौड़ाई बदलें';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

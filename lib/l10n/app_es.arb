@@ -1,4 +1,5 @@
 {
+  "resizeColumn": "Cambiar el ancho de la columna",
   "@@locale": "es",
 
   "appTitle": "Streamlity",

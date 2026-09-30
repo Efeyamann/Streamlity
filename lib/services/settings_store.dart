@@ -44,6 +44,23 @@ class SettingsStore {
         }
       });
 
+  Future<({double groups, double channels})?> readPanelWidths() async {
+    final widths = (await _read())['livePanelWidths'];
+    if (widths is! Map) return null;
+    final groups = widths['groups'], channels = widths['channels'];
+    if (groups is! num || channels is! num ||
+        !groups.isFinite || !channels.isFinite) {
+      return null;
+    }
+    return (groups: groups.toDouble().clamp(160, 520).toDouble(),
+        channels: channels.toDouble().clamp(220, 640).toDouble());
+  }
+
+  Future<void> writePanelWidths(double groups, double channels) =>
+      _update((all) {
+        all['livePanelWidths'] = {'groups': groups, 'channels': channels};
+      });
+
   Future<PinHash?> readPin() async {
     final pin = (await _read())['pin'];
     if (pin is! Map) return null;

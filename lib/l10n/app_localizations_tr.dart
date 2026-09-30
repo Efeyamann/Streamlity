@@ -10,6 +10,9 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get resizeColumn => 'Sütunu genişlet veya daralt';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

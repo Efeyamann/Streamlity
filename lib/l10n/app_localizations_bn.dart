@@ -10,6 +10,9 @@ class AppLocalizationsBn extends AppLocalizations {
   AppLocalizationsBn([String locale = 'bn']) : super(locale);
 
   @override
+  String get resizeColumn => 'কলামের প্রস্থ পরিবর্তন করুন';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

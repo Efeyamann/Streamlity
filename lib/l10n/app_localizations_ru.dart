@@ -10,6 +10,9 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get resizeColumn => 'Изменить ширину столбца';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override

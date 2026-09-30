@@ -10,6 +10,9 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get resizeColumn => 'Redimensionner la colonne';
+
+  @override
   String get appTitle => 'Streamlity';
 
   @override
