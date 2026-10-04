@@ -8,6 +8,7 @@ import 'l10n/l10n.dart';
 import 'screens/sources_screen.dart';
 import 'services/app_mute.dart';
 import 'services/parental_lock.dart';
+import 'services/player_setup.dart';
 import 'services/settings_store.dart';
 import 'ui/theme.dart';
 
@@ -16,7 +17,9 @@ Future<void> main() async {
   MediaKit.ensureInitialized();
   // Geliştirme kolaylığı: denemelerde yayınlar sessiz başlasın.
   appMuted.value = Platform.environment['STREAMLITY_MUTED'] == '1';
-  appLanguage.value = await SettingsStore().readLanguage();
+  final settings = SettingsStore();
+  appLanguage.value = await settings.readLanguage();
+  rtxVsr.value = await settings.readRtxVsr();
   await parentalLock.load();
   // Arapçada sayılar Latin rakamıyla yazılıyor (NumberFormat); tarih ve
   // saatler de aynı rakamlarla yazılsın, ekranda iki rakam türü karışmasın.

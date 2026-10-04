@@ -185,6 +185,10 @@
   "systemLanguageCurrent": "Ahora: {language}",
   "settingsAbout": "Acerca de",
   "settingsAboutText": "Reproductor IPTV de código abierto para Windows, macOS y Linux.",
+  "settingsPlayback": "Reproducción",
+  "settingsPlaybackSubtitle": "Calidad de imagen",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "En tarjetas gráficas NVIDIA RTX, escala las emisiones de menor resolución a la resolución de tu pantalla y las hace más nítidas. La mejora de vídeo RTX debe estar activada en la aplicación de NVIDIA. No se usa en la multivista.",
   "translationNote": "Las traducciones se prepararon automáticamente; avísanos si ves algún error.",
 
   "editCategories": "Editar categorías",

@@ -12,7 +12,8 @@ final appLanguage = ValueNotifier<String?>(null);
 /// onaltılık.
 typedef PinHash = ({String salt, String hash});
 
-/// Uygulama ayarları (`settings.json`): dil ve ebeveyn denetimi PIN'i.
+/// Uygulama ayarları (`settings.json`): dil, ebeveyn denetimi PIN'i ve
+/// RTX Video Super Resolution.
 class SettingsStore {
   SettingsStore({Future<Directory> Function()? directory})
       : _directory = directory ?? getApplicationSupportDirectory;
@@ -59,6 +60,16 @@ class SettingsStore {
   Future<void> writePanelWidths(double groups, double channels) =>
       _update((all) {
         all['livePanelWidths'] = {'groups': groups, 'channels': channels};
+      });
+
+  Future<bool> readRtxVsr() async => (await _read())['rtxVsr'] == true;
+
+  Future<void> writeRtxVsr(bool on) => _update((all) {
+        if (on) {
+          all['rtxVsr'] = true;
+        } else {
+          all.remove('rtxVsr');
+        }
       });
 
   Future<PinHash?> readPin() async {

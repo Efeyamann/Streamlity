@@ -87,6 +87,36 @@ if(PLUGIN_BUNDLED_LIBRARIES)
     COMPONENT Runtime)
 endif()
 
+# media_kit'in libmpv'si 2023 tarihli (mpv 0.36) ve NVIDIA RTX Video Super
+# Resolution'ı (d3d11vpp scaling-mode=nvidia) desteklemiyor. Onun yerine
+# windows/libmpv'deki shinchiro/mpv-winbuild-cmake derlemesi kurulur; eklenti
+# kütüphanelerinden sonra kurulduğu için eskisinin üzerine yazar. Kaynak
+# derlemeler 30 gün sonra silindiği için arşiv repoda tutulur.
+set(STREAMLITY_LIBMPV_ARCHIVE
+  "${CMAKE_CURRENT_SOURCE_DIR}/libmpv/mpv-dev-x86_64-20260928-git-e470f8986e.7z")
+set(STREAMLITY_LIBMPV_SHA256
+  "81795d759e01016f1550fd71651a1a5d59ab5c28ef31c0b6793224e9cff39459")
+set(STREAMLITY_LIBMPV_DIR "${CMAKE_BINARY_DIR}/streamlity-libmpv")
+file(SHA256 "${STREAMLITY_LIBMPV_ARCHIVE}" STREAMLITY_LIBMPV_ACTUAL)
+if(NOT STREAMLITY_LIBMPV_ACTUAL STREQUAL STREAMLITY_LIBMPV_SHA256)
+  message(FATAL_ERROR "libmpv arşivinin SHA256 özeti tutmuyor.")
+endif()
+if(NOT EXISTS "${STREAMLITY_LIBMPV_DIR}/${STREAMLITY_LIBMPV_SHA256}")
+  file(REMOVE_RECURSE "${STREAMLITY_LIBMPV_DIR}")
+  file(MAKE_DIRECTORY "${STREAMLITY_LIBMPV_DIR}")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E tar xf "${STREAMLITY_LIBMPV_ARCHIVE}"
+    WORKING_DIRECTORY "${STREAMLITY_LIBMPV_DIR}"
+    RESULT_VARIABLE STREAMLITY_LIBMPV_RESULT)
+  if(NOT STREAMLITY_LIBMPV_RESULT EQUAL 0)
+    message(FATAL_ERROR "libmpv arşivi açılamadı.")
+  endif()
+  file(WRITE "${STREAMLITY_LIBMPV_DIR}/${STREAMLITY_LIBMPV_SHA256}" "")
+endif()
+install(FILES "${STREAMLITY_LIBMPV_DIR}/libmpv-2.dll"
+  DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
+
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/windows/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"

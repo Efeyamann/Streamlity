@@ -638,6 +638,19 @@ class AppLocalizationsId extends AppLocalizations {
       'Pemutar IPTV sumber terbuka untuk Windows, macOS, dan Linux.';
 
   @override
+  String get settingsPlayback => 'Pemutaran';
+
+  @override
+  String get settingsPlaybackSubtitle => 'Kualitas gambar';
+
+  @override
+  String get rtxVsr => 'RTX Video Super Resolution';
+
+  @override
+  String get rtxVsrDetail =>
+      'Pada kartu grafis NVIDIA RTX, memperbesar siaran beresolusi rendah ke resolusi layarmu dan membuatnya lebih tajam. Peningkatan Video RTX harus diaktifkan di aplikasi NVIDIA. Tidak digunakan di multiview.';
+
+  @override
   String get translationNote =>
       'Terjemahan disiapkan secara otomatis; beri tahu kami jika menemukan kesalahan.';
 

@@ -1150,6 +1150,30 @@ abstract class AppLocalizations {
   /// **'Windows, macOS ve Linux için açık kaynak IPTV oynatıcısı.'**
   String get settingsAboutText;
 
+  /// No description provided for @settingsPlayback.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oynatma'**
+  String get settingsPlayback;
+
+  /// No description provided for @settingsPlaybackSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görüntü kalitesi'**
+  String get settingsPlaybackSubtitle;
+
+  /// No description provided for @rtxVsr.
+  ///
+  /// In tr, this message translates to:
+  /// **'RTX Video Super Resolution'**
+  String get rtxVsr;
+
+  /// No description provided for @rtxVsrDetail.
+  ///
+  /// In tr, this message translates to:
+  /// **'NVIDIA RTX ekran kartlarında düşük çözünürlüklü yayınları ekran çözünürlüğüne büyütüp keskinleştirir. NVIDIA Uygulaması\'nda RTX Video iyileştirmesi açık olmalı. Çoklu izlemede kullanılmaz.'**
+  String get rtxVsrDetail;
+
   /// No description provided for @translationNote.
   ///
   /// In tr, this message translates to:

@@ -31,12 +31,24 @@ class StreamSlot {
     _volumeSub = player.stream.volume.listen((v) {
       if (audio.output > 0 && v > 0) audio.volume = v;
     });
+    _live.add(this);
+    _updateVsr();
     play(channel);
+  }
+
+  /// Ekrandaki kareler; VSR yalnız tek kare varken çalışır.
+  static final _live = <StreamSlot>[];
+
+  static void _updateVsr() {
+    for (final slot in _live) {
+      slot._vsr.enabled = _live.length == 1;
+    }
   }
 
   final Player player = Player();
   late final VideoController controller = VideoController(player);
   late final Future<void> _configured = configurePlayer(player);
+  late final _vsr = VideoSuperResolution(player);
 
   /// Tam ekrana klavyeyle geçmek için.
   final videoKey = GlobalKey<VideoState>();
@@ -68,9 +80,10 @@ class StreamSlot {
 
   Future<void> _open(Channel channel) async {
     await _configured;
+    final url = await resolveStreamUrl(channel.url);
     // Beklerken kanal değiştiyse ya da kare kapandıysa açma.
     if (_disposed || !identical(channel, _channel)) return;
-    player.open(Media(channel.url));
+    player.open(Media(url));
   }
 
   /// Çoklu izlemede her karenin sesi ayrı açılıp kapatılır.
@@ -102,6 +115,9 @@ class StreamSlot {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
+    _live.remove(this);
+    _updateVsr();
+    await _vsr.dispose();
     _stallTimer.cancel();
     await _positionSub.cancel();
     await _volumeSub.cancel();

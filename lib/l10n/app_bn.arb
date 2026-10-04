@@ -185,6 +185,10 @@
   "systemLanguageCurrent": "বর্তমানে: {language}",
   "settingsAbout": "সম্পর্কে",
   "settingsAboutText": "Windows, macOS ও Linux-এর জন্য ওপেন-সোর্স IPTV প্লেয়ার।",
+  "settingsPlayback": "প্লেব্যাক",
+  "settingsPlaybackSubtitle": "ছবির মান",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "NVIDIA RTX গ্রাফিক্স কার্ডে কম রেজোলিউশনের স্ট্রিমকে আপনার স্ক্রিনের রেজোলিউশনে বড় করে আরও স্পষ্ট করে। NVIDIA অ্যাপে RTX ভিডিও এনহ্যান্সমেন্ট চালু থাকতে হবে। মাল্টিভিউতে ব্যবহার হয় না।",
   "translationNote": "অনুবাদগুলো স্বয়ংক্রিয়ভাবে তৈরি; কোনো ভুল চোখে পড়লে আমাদের জানান।",
 
   "editCategories": "বিভাগ সম্পাদনা",

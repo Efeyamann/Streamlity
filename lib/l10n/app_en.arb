@@ -185,6 +185,10 @@
   "systemLanguageCurrent": "Currently: {language}",
   "settingsAbout": "About",
   "settingsAboutText": "Open-source IPTV player for Windows, macOS and Linux.",
+  "settingsPlayback": "Playback",
+  "settingsPlaybackSubtitle": "Picture quality",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "On NVIDIA RTX graphics cards, upscales lower-resolution streams to your screen's resolution and sharpens them. RTX Video enhancement must be turned on in the NVIDIA app. Not used in multiview.",
   "translationNote": "Translations were prepared automatically; let us know if you spot a mistake.",
 
   "editCategories": "Edit categories",

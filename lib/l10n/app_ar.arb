@@ -185,6 +185,10 @@
   "systemLanguageCurrent": "الحالية: {language}",
   "settingsAbout": "حول",
   "settingsAboutText": "مشغل IPTV مفتوح المصدر لأنظمة Windows وmacOS وLinux.",
+  "settingsPlayback": "التشغيل",
+  "settingsPlaybackSubtitle": "جودة الصورة",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "على بطاقات رسوميات NVIDIA RTX، يكبّر البث منخفض الدقة إلى دقة شاشتك ويزيد وضوحه. يجب تفعيل تحسين فيديو RTX في تطبيق NVIDIA. لا يُستخدم في المشاهدة المتعددة.",
   "translationNote": "أُعدّت الترجمات آليًا؛ أخبرنا إن لاحظت خطأً.",
 
   "editCategories": "تعديل الفئات",

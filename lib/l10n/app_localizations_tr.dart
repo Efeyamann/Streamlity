@@ -642,6 +642,19 @@ class AppLocalizationsTr extends AppLocalizations {
       'Windows, macOS ve Linux için açık kaynak IPTV oynatıcısı.';
 
   @override
+  String get settingsPlayback => 'Oynatma';
+
+  @override
+  String get settingsPlaybackSubtitle => 'Görüntü kalitesi';
+
+  @override
+  String get rtxVsr => 'RTX Video Super Resolution';
+
+  @override
+  String get rtxVsrDetail =>
+      'NVIDIA RTX ekran kartlarında düşük çözünürlüklü yayınları ekran çözünürlüğüne büyütüp keskinleştirir. NVIDIA Uygulaması\'nda RTX Video iyileştirmesi açık olmalı. Çoklu izlemede kullanılmaz.';
+
+  @override
   String get translationNote =>
       'Çeviriler otomatik hazırlandı; hata görürsen bildir.';
 

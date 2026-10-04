@@ -185,6 +185,10 @@
   "systemLanguageCurrent": "Aktuell: {language}",
   "settingsAbout": "Über",
   "settingsAboutText": "Open-Source-IPTV-Player für Windows, macOS und Linux.",
+  "settingsPlayback": "Wiedergabe",
+  "settingsPlaybackSubtitle": "Bildqualität",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "Skaliert auf NVIDIA-RTX-Grafikkarten Streams mit niedrigerer Auflösung auf die Auflösung deines Bildschirms und schärft sie. In der NVIDIA-App muss die RTX-Videoverbesserung aktiviert sein. Nicht in Multiview verwendet.",
   "translationNote": "Die Übersetzungen wurden automatisch erstellt; melde uns gern Fehler.",
 
   "editCategories": "Kategorien bearbeiten",

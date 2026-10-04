@@ -217,6 +217,10 @@
   "@systemLanguageCurrent": {"placeholders": {"language": {"type": "String"}}},
   "settingsAbout": "Hakkında",
   "settingsAboutText": "Windows, macOS ve Linux için açık kaynak IPTV oynatıcısı.",
+  "settingsPlayback": "Oynatma",
+  "settingsPlaybackSubtitle": "Görüntü kalitesi",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "NVIDIA RTX ekran kartlarında düşük çözünürlüklü yayınları ekran çözünürlüğüne büyütüp keskinleştirir. NVIDIA Uygulaması'nda RTX Video iyileştirmesi açık olmalı. Çoklu izlemede kullanılmaz.",
   "translationNote": "Çeviriler otomatik hazırlandı; hata görürsen bildir.",
 
   "editCategories": "Kategorileri düzenle",

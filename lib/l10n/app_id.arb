@@ -185,6 +185,10 @@
   "systemLanguageCurrent": "Saat ini: {language}",
   "settingsAbout": "Tentang",
   "settingsAboutText": "Pemutar IPTV sumber terbuka untuk Windows, macOS, dan Linux.",
+  "settingsPlayback": "Pemutaran",
+  "settingsPlaybackSubtitle": "Kualitas gambar",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "Pada kartu grafis NVIDIA RTX, memperbesar siaran beresolusi rendah ke resolusi layarmu dan membuatnya lebih tajam. Peningkatan Video RTX harus diaktifkan di aplikasi NVIDIA. Tidak digunakan di multiview.",
   "translationNote": "Terjemahan disiapkan secara otomatis; beri tahu kami jika menemukan kesalahan.",
 
   "editCategories": "Atur kategori",

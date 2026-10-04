@@ -627,6 +627,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAboutText => '适用于 Windows、macOS 和 Linux 的开源 IPTV 播放器。';
 
   @override
+  String get settingsPlayback => '播放';
+
+  @override
+  String get settingsPlaybackSubtitle => '画面质量';
+
+  @override
+  String get rtxVsr => 'RTX Video Super Resolution';
+
+  @override
+  String get rtxVsrDetail =>
+      '在 NVIDIA RTX 显卡上，将较低分辨率的视频放大到屏幕分辨率并使其更清晰。需要在 NVIDIA 应用中开启 RTX 视频增强。多画面模式下不使用。';
+
+  @override
   String get translationNote => '翻译由系统自动生成；如发现错误，欢迎告诉我们。';
 
   @override

@@ -642,6 +642,19 @@ class AppLocalizationsHi extends AppLocalizations {
       'Windows, macOS और Linux के लिए ओपन-सोर्स IPTV प्लेयर।';
 
   @override
+  String get settingsPlayback => 'प्लेबैक';
+
+  @override
+  String get settingsPlaybackSubtitle => 'तस्वीर की गुणवत्ता';
+
+  @override
+  String get rtxVsr => 'RTX Video Super Resolution';
+
+  @override
+  String get rtxVsrDetail =>
+      'NVIDIA RTX ग्राफ़िक्स कार्ड पर कम रिज़ॉल्यूशन वाली स्ट्रीम को आपकी स्क्रीन के रिज़ॉल्यूशन तक बड़ा करके साफ़ बनाता है। NVIDIA ऐप में RTX वीडियो एन्हांसमेंट चालू होना चाहिए। मल्टीव्यू में इस्तेमाल नहीं होता।';
+
+  @override
   String get translationNote =>
       'अनुवाद अपने-आप तैयार किए गए हैं; कोई गलती दिखे तो हमें बताएँ।';
 

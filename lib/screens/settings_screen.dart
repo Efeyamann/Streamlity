@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../services/parental_lock.dart';
+import '../services/player_setup.dart';
 import '../services/settings_store.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets/logo_mark.dart';
@@ -12,7 +13,7 @@ Future<void> openSettings(BuildContext context) =>
       builder: (_) => const SettingsScreen(),
     ));
 
-/// Uygulama ayarları: arayüz dili, ebeveyn denetimi ve hakkında.
+/// Uygulama ayarları: arayüz dili, oynatma, ebeveyn denetimi ve hakkında.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -98,6 +99,10 @@ class SettingsScreen extends StatelessWidget {
                               child: Text(l.translationNote,
                                   style: theme.textTheme.bodySmall),
                             ),
+                          if (rtxVsrSupported) ...[
+                            const SizedBox(height: Space.xl),
+                            const _PlaybackSection(),
+                          ],
                           const SizedBox(height: Space.xl),
                           const _ParentalSection(),
                           const SizedBox(height: Space.xl),
@@ -193,6 +198,92 @@ class _Section extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Oynatma: NVIDIA RTX Video Super Resolution.
+class _PlaybackSection extends StatelessWidget {
+  const _PlaybackSection();
+
+  static final _store = SettingsStore();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return ValueListenableBuilder(
+      valueListenable: rtxVsr,
+      builder: (context, on, _) => _Section(
+        icon: Icons.tune,
+        title: l.settingsPlayback,
+        subtitle: l.settingsPlaybackSubtitle,
+        children: [
+          _Toggle(
+            icon: Icons.live_tv_outlined,
+            label: l.rtxVsr,
+            detail: l.rtxVsrDetail,
+            value: on,
+            onChanged: (value) {
+              rtxVsr.value = value;
+              _store.writeRtxVsr(value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Açma kapama anahtarlı satır.
+class _Toggle extends StatelessWidget {
+  const _Toggle({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.detail,
+  });
+
+  final IconData icon;
+  final String label;
+  final String? detail;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+      child: MergeSemantics(
+        child: InkWell(
+          onTap: () => onChanged(!value),
+          borderRadius: Radii.mdAll,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: Space.sm, vertical: Space.sm),
+            child: Row(
+              children: [
+                Icon(icon, size: IconSizes.md, color: c.fgMuted),
+                const SizedBox(width: Space.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label, style: theme.textTheme.bodyLarge),
+                      if (detail case final detail?)
+                        Text(detail, style: theme.textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: Space.md),
+                Switch(value: value, onChanged: onChanged),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

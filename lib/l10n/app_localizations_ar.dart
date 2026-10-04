@@ -659,6 +659,19 @@ class AppLocalizationsAr extends AppLocalizations {
       'مشغل IPTV مفتوح المصدر لأنظمة Windows وmacOS وLinux.';
 
   @override
+  String get settingsPlayback => 'التشغيل';
+
+  @override
+  String get settingsPlaybackSubtitle => 'جودة الصورة';
+
+  @override
+  String get rtxVsr => 'RTX Video Super Resolution';
+
+  @override
+  String get rtxVsrDetail =>
+      'على بطاقات رسوميات NVIDIA RTX، يكبّر البث منخفض الدقة إلى دقة شاشتك ويزيد وضوحه. يجب تفعيل تحسين فيديو RTX في تطبيق NVIDIA. لا يُستخدم في المشاهدة المتعددة.';
+
+  @override
   String get translationNote => 'أُعدّت الترجمات آليًا؛ أخبرنا إن لاحظت خطأً.';
 
   @override

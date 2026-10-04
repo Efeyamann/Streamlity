@@ -653,6 +653,19 @@ class AppLocalizationsRu extends AppLocalizations {
       'IPTV-плеер с открытым исходным кодом для Windows, macOS и Linux.';
 
   @override
+  String get settingsPlayback => 'Воспроизведение';
+
+  @override
+  String get settingsPlaybackSubtitle => 'Качество изображения';
+
+  @override
+  String get rtxVsr => 'RTX Video Super Resolution';
+
+  @override
+  String get rtxVsrDetail =>
+      'На видеокартах NVIDIA RTX увеличивает потоки низкого разрешения до разрешения экрана и делает их чётче. В приложении NVIDIA должно быть включено улучшение видео RTX. В мультипросмотре не используется.';
+
+  @override
   String get translationNote =>
       'Переводы подготовлены автоматически; сообщите нам, если заметите ошибку.';
 

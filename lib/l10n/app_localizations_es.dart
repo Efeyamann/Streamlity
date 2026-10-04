@@ -646,6 +646,19 @@ class AppLocalizationsEs extends AppLocalizations {
       'Reproductor IPTV de código abierto para Windows, macOS y Linux.';
 
   @override
+  String get settingsPlayback => 'Reproducción';
+
+  @override
+  String get settingsPlaybackSubtitle => 'Calidad de imagen';
+
+  @override
+  String get rtxVsr => 'RTX Video Super Resolution';
+
+  @override
+  String get rtxVsrDetail =>
+      'En tarjetas gráficas NVIDIA RTX, escala las emisiones de menor resolución a la resolución de tu pantalla y las hace más nítidas. La mejora de vídeo RTX debe estar activada en la aplicación de NVIDIA. No se usa en la multivista.';
+
+  @override
   String get translationNote =>
       'Las traducciones se prepararon automáticamente; avísanos si ves algún error.';
 

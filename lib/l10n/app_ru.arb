@@ -185,6 +185,10 @@
   "systemLanguageCurrent": "Сейчас: {language}",
   "settingsAbout": "О приложении",
   "settingsAboutText": "IPTV-плеер с открытым исходным кодом для Windows, macOS и Linux.",
+  "settingsPlayback": "Воспроизведение",
+  "settingsPlaybackSubtitle": "Качество изображения",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "На видеокартах NVIDIA RTX увеличивает потоки низкого разрешения до разрешения экрана и делает их чётче. В приложении NVIDIA должно быть включено улучшение видео RTX. В мультипросмотре не используется.",
   "translationNote": "Переводы подготовлены автоматически; сообщите нам, если заметите ошибку.",
 
   "editCategories": "Настроить категории",

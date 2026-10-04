@@ -49,6 +49,7 @@ class VodPlayerScreen extends StatefulWidget {
 class _VodPlayerScreenState extends State<VodPlayerScreen> {
   final _player = Player();
   late final _controller = VideoController(_player);
+  late final _vsr = VideoSuperResolution(_player);
   late final Timer _saveTimer;
   late final AppLifecycleListener _lifecycle;
   bool _disposed = false;
@@ -72,8 +73,10 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
     _saveTimer = Timer.periodic(const Duration(seconds: 10), (_) => _save());
     appMuted.addListener(_applyMute);
     _applyMute();
-    configurePlayer(_player).then((_) {
-      if (!_disposed) _player.open(Media(widget.url, start: widget.start));
+    _vsr.enabled = true;
+    configurePlayer(_player).then((_) async {
+      final url = await resolveStreamUrl(widget.url);
+      if (!_disposed) _player.open(Media(url, start: widget.start));
     });
   }
 
@@ -112,6 +115,7 @@ class _VodPlayerScreenState extends State<VodPlayerScreen> {
     _disposed = true;
     _saveTimer.cancel();
     await _errorSub.cancel();
+    await _vsr.dispose();
     await _player.dispose();
   }
 

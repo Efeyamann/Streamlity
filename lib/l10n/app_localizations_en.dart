@@ -643,6 +643,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Open-source IPTV player for Windows, macOS and Linux.';
 
   @override
+  String get settingsPlayback => 'Playback';
+
+  @override
+  String get settingsPlaybackSubtitle => 'Picture quality';
+
+  @override
+  String get rtxVsr => 'RTX Video Super Resolution';
+
+  @override
+  String get rtxVsrDetail =>
+      'On NVIDIA RTX graphics cards, upscales lower-resolution streams to your screen\'s resolution and sharpens them. RTX Video enhancement must be turned on in the NVIDIA app. Not used in multiview.';
+
+  @override
   String get translationNote =>
       'Translations were prepared automatically; let us know if you spot a mistake.';
 

@@ -185,6 +185,10 @@
   "systemLanguageCurrent": "अभी: {language}",
   "settingsAbout": "जानकारी",
   "settingsAboutText": "Windows, macOS और Linux के लिए ओपन-सोर्स IPTV प्लेयर।",
+  "settingsPlayback": "प्लेबैक",
+  "settingsPlaybackSubtitle": "तस्वीर की गुणवत्ता",
+  "rtxVsr": "RTX Video Super Resolution",
+  "rtxVsrDetail": "NVIDIA RTX ग्राफ़िक्स कार्ड पर कम रिज़ॉल्यूशन वाली स्ट्रीम को आपकी स्क्रीन के रिज़ॉल्यूशन तक बड़ा करके साफ़ बनाता है। NVIDIA ऐप में RTX वीडियो एन्हांसमेंट चालू होना चाहिए। मल्टीव्यू में इस्तेमाल नहीं होता।",
   "translationNote": "अनुवाद अपने-आप तैयार किए गए हैं; कोई गलती दिखे तो हमें बताएँ।",
 
   "editCategories": "श्रेणियाँ संपादित करें",
